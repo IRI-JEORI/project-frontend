@@ -4,7 +4,6 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -43,17 +42,13 @@ export const HomeScreen = ({navigation}: Props) => {
             style={{width: 49 * scale, height: 39 * scale}}
             resizeMode="contain"
           />
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="설정"
-            hitSlop={12}
-            onPress={() => navigation.navigate('Settings')}>
+          <View>
             <Image
               source={require('../assets/images/settings.png')}
               style={{width: 24 * scale, height: 24 * scale}}
               resizeMode="contain"
             />
-          </TouchableOpacity>
+          </View>
         </View>
 
         <Text
@@ -85,7 +80,6 @@ export const HomeScreen = ({navigation}: Props) => {
             type="normal"
             title="눈눈"
             scale={scale}
-            onPress={() => navigation.navigate('Calendar')}
           />
           <GroupCard
             type="add"

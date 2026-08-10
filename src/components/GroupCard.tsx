@@ -6,7 +6,7 @@ type GroupCardProps = {
   type: 'normal' | 'add';
   title: string;
   scale: number;
-  onPress: () => void;
+  onPress?: () => void;
 };
 
 export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
@@ -17,9 +17,9 @@ export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
 
   return (
     <TouchableOpacity
-      accessibilityRole="button"
+      accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={title}
-      activeOpacity={0.75}
+      activeOpacity={onPress ? 0.75 : 1}
       onPress={onPress}
       style={{width: 154 * scale, height: 166 * scale}}>
       <View
