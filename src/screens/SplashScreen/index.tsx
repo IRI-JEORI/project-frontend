@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { colors } from '../../theme/tokens';
-import Logo from './components/Logo';
+import Logo from '../../components/Logo';
 
 const TOP_SPACING = 325;
 const BOTTOM_SPACING = 386.83;

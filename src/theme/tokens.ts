@@ -4,4 +4,10 @@ export const colors = {
   brownLight: '#6E6662',
   cream: '#F5F1E6',
   gray: '#B8B2B0',
+  white: '#FFFFFF',
+  border: '#E5E1DD',
+};
+
+export const spacing = {
+  formGap: 24,
 };
