@@ -1,8 +1,8 @@
 import React from 'react';
-import PermissionScreen from './src/screens/PermissionScreen';
+import HomeScreen from './src/screens/HomeScreen';
 
 const App = () => {
-  return <PermissionScreen />;
+  return <HomeScreen />;
 };
 
 export default App;

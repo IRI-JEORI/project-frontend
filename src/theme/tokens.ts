@@ -6,6 +6,14 @@ export const colors = {
   gray: '#B8B2B0',
   white: '#FFFFFF',
   border: '#E5E1DD',
+  grayMedium: '#98918E',
+  yellowLight: '#FFF1AC',
+  yellow: '#FFE255',
+  black: '#000000',
+  folderGray: '#EAEAEA',
+  mint: '#C7ECEC',
+  bannerBg: '#F6F6F6',
+  grayBorder: '#B3B3B3',
 };
 
 export const spacing = {
