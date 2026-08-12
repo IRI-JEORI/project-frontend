@@ -1,0 +1,15 @@
+<svg width="32" height="14" viewBox="0 0 32 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="32" height="14" fill="#707070"/>
+<g id="08. &#236;&#132;&#164;&#236;&#160;&#149; &#237;&#153;&#148;&#235;&#169;&#180; 01">
+<rect width="402" height="874" transform="translate(-335 -250)" fill="white"/>
+<g id="Toggle - Switch">
+<rect width="32" height="14" rx="7" fill="#34C759"/>
+<g id="Frame">
+<rect id="AX Label" x="6" y="4.5" width="0.5" height="5" fill="white"/>
+</g>
+<g id="Knob">
+<rect x="11.5" y="1" width="19.5" height="12" rx="6" fill="white"/>
+</g>
+</g>
+</g>
+</svg>
