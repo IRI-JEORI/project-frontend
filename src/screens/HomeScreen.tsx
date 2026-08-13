@@ -14,6 +14,7 @@ import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import { FilterTabs } from '../components/FilterTabs';
 import { GroupCard } from '../components/GroupCard';
+import NotificationBell from '../assets/images/notification-bell.svg';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
@@ -44,27 +45,60 @@ export const HomeScreen = ({ navigation }: Props) => {
             style={{ width: 49 * scale, height: 39 * scale }}
             resizeMode="contain"
           />
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="설정"
-            activeOpacity={0.7}
-            hitSlop={12}
-            onPress={() => navigation.navigate('Settings')}>
-            <Image
-              source={require('../assets/images/settings.png')}
-              style={{ width: 24 * scale, height: 24 * scale }}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          <View style={[styles.headerActions, {columnGap: 18 * scale}]}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="알림"
+              activeOpacity={0.7}
+              hitSlop={12}>
+              <NotificationBell width={20 * scale} height={20 * scale} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="설정"
+              activeOpacity={0.7}
+              hitSlop={12}
+              onPress={() => navigation.navigate('Settings')}>
+              <Image
+                source={require('../assets/images/settings.png')}
+                style={{ width: 24 * scale, height: 24 * scale }}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.notificationCard,
+            {
+              left: 28 * scale,
+              top: 85 * scale,
+              width: 346 * scale,
+              height: 69 * scale,
+              borderRadius: 8 * scale,
+              paddingHorizontal: 12 * scale,
+              paddingTop: 14 * scale,
+            },
+          ]}>
+          <Text style={styles.notificationEyebrow}>NUNNUN을 잘 활용하려면?</Text>
+          <Text style={styles.notificationMessage}>
+            시간표를 추가하면 수면 시간을 추천받을 수 있어요
+          </Text>
+          <View style={[styles.notificationDots, {right: 14 * scale, top: 8 * scale}]}>
+            <View style={[styles.notificationDot, styles.notificationDotActive]} />
+            <View style={styles.notificationDot} />
+            <View style={styles.notificationDot} />
+          </View>
         </View>
 
         <Text
-          style={[styles.headerTitle, { left: 34.5 * scale, top: 99 * scale }]}
+          style={[styles.headerTitle, { left: 34.5 * scale, top: 190 * scale }]}
         >
           눈눈님의 그룹
         </Text>
 
-        <View style={[styles.tabsPosition, { top: 136 * scale }]}>
+        <View style={[styles.tabsPosition, { top: 227 * scale }]}>
           <FilterTabs
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -77,7 +111,7 @@ export const HomeScreen = ({ navigation }: Props) => {
             styles.cardsGrid,
             {
               left: 33.97 * scale,
-              top: 232 * scale,
+              top: 323 * scale,
               width: 326.69 * scale,
               columnGap: 18.69 * scale,
               rowGap: 53 * scale,
@@ -133,6 +167,48 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationCard: {
+    position: 'absolute',
+    backgroundColor: Colors.background,
+    shadowColor: Colors.textBlack,
+    shadowOffset: {width: 2, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 13,
+    elevation: 4,
+  },
+  notificationEyebrow: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 12,
+    lineHeight: 15,
+  },
+  notificationMessage: {
+    marginTop: 4,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  notificationDots: {
+    position: 'absolute',
+    flexDirection: 'row',
+    columnGap: 4,
+  },
+  notificationDot: {
+    width: 4.4,
+    height: 4.4,
+    borderRadius: 3,
+    backgroundColor: '#333333',
+    opacity: 0.3,
+  },
+  notificationDotActive: {
+    opacity: 1,
+    backgroundColor: Colors.textBlack,
   },
   tabsPosition: {
     position: 'absolute',
