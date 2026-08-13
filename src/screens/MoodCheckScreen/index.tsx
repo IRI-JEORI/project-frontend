@@ -3,9 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/tokens';
 import MoodSelector from './components/MoodSelector';
 
-const TOP_SPACING = 100;
+const TOP_SPACING = 145;
 const HORIZONTAL_MARGIN = 34;
-const SELECTOR_TOP_SPACING = 32;
+const SELECTOR_TOP_SPACING = 38;
 
 const MoodCheckScreen = () => {
   return (
@@ -27,15 +27,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: HORIZONTAL_MARGIN,
   },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
-    color: colors.brownDarkest,
+    color: colors.black,
   },
   subtitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: colors.brownLight,
-    marginTop: 4,
+    marginTop: 8,
   },
   selectorWrapper: {
     marginTop: SELECTOR_TOP_SPACING,

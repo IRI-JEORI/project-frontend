@@ -40,22 +40,23 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 4.4,
+    height: 4.4,
+    borderRadius: 2.2,
     backgroundColor: colors.border,
   },
   dotActive: {
-    backgroundColor: colors.grayMedium,
+    backgroundColor: colors.black,
   },
   title: {
-    fontSize: 13,
-    color: colors.gray,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.grayBorder,
   },
   subtitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.brownDarkest,
+    color: colors.black,
     marginTop: 4,
   },
 });

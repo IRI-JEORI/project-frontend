@@ -22,14 +22,15 @@ const Button = ({ label, onPress }: ButtonProps) => {
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.brownDarkest,
+    backgroundColor: colors.brown,
     borderRadius: 8,
-    paddingVertical: 14,
+    height: 60,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
-    color: colors.cream,
-    fontSize: 16,
+    color: colors.white,
+    fontSize: 18,
     fontWeight: '600',
   },
 });

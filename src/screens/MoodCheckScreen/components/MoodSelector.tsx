@@ -10,7 +10,8 @@ const MOOD_COLORS = [
   colors.yellow,
 ];
 
-const CIRCLE_SIZE = 56;
+const CIRCLE_SIZE = 50;
+const CIRCLE_GAP = 18;
 
 const MoodSelector = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -51,8 +52,8 @@ const MoodSelector = () => {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    gap: CIRCLE_GAP,
+    marginHorizontal: 6,
   },
   column: {
     alignItems: 'center',

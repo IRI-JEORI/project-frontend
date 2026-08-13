@@ -5,7 +5,7 @@ export const colors = {
   cream: '#F5F1E6',
   gray: '#B8B2B0',
   white: '#FFFFFF',
-  border: '#E5E1DD',
+  border: '#D9D9D9',
   grayMedium: '#98918E',
   yellowLight: '#FFF1AC',
   yellow: '#FFE255',

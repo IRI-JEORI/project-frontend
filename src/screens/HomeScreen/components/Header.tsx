@@ -8,9 +8,9 @@ import { colors } from '../../../theme/tokens';
 const Header = () => {
   return (
     <View style={styles.row}>
-      <Logo width={50} height={40} color={colors.brownDarkest} />
+      <Logo width={48.6} height={38.8} color={colors.brownDarkest} />
       <TouchableOpacity>
-        <Icon xml={bellIconSvg} size={22} color={colors.brownDarkest} />
+        <Icon xml={bellIconSvg} size={20} color={colors.black} />
       </TouchableOpacity>
     </View>
   );

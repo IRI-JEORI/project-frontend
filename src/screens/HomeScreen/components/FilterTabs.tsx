@@ -36,20 +36,22 @@ const styles = StyleSheet.create({
   },
   tab: {
     backgroundColor: colors.folderGray,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 25.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabSelected: {
-    backgroundColor: colors.brownDarkest,
+    backgroundColor: colors.brown,
   },
   label: {
-    fontSize: 13,
-    color: colors.grayMedium,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.grayBorder,
   },
   labelSelected: {
     color: colors.white,
-    fontWeight: '600',
   },
 });
 

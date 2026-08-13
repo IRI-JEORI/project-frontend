@@ -6,8 +6,8 @@ import BottomLinks from './components/BottomLinks';
 import LoginForm from './components/LoginForm';
 
 const LOGO_TOP_SPACING = 198;
-const FORM_TOP_SPACING = 64;
-const FORM_HORIZONTAL_MARGIN = 41;
+const FORM_TOP_SPACING = 60;
+const FORM_WIDTH = 320;
 const BOTTOM_SPACING = 87;
 
 const LoginScreen = () => {
@@ -33,9 +33,8 @@ const styles = StyleSheet.create({
     paddingTop: LOGO_TOP_SPACING,
   },
   form: {
-    alignSelf: 'stretch',
+    width: FORM_WIDTH,
     marginTop: FORM_TOP_SPACING,
-    marginHorizontal: FORM_HORIZONTAL_MARGIN,
   },
   spacer: {
     flex: 1,

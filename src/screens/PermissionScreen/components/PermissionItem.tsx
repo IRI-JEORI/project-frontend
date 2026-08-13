@@ -39,13 +39,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.brownDarkest,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.black,
   },
   description: {
-    fontSize: 13,
-    color: colors.gray,
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.grayBorder,
   },
 });
 

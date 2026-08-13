@@ -20,9 +20,8 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: spacing.formGap,
+    borderRadius: 8,
+    padding: spacing.formGap,
     gap: spacing.formGap,
   },
 });

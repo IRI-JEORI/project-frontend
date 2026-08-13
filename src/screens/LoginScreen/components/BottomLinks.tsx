@@ -22,12 +22,12 @@ const BottomLinks = () => {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
   orText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.brownDarkest,
+    color: colors.black,
   },
   linkRow: {
     flexDirection: 'row',
@@ -35,12 +35,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   link: {
-    fontSize: 13,
-    color: colors.gray,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.grayBorder,
   },
   divider: {
     fontSize: 13,
-    color: colors.gray,
+    color: colors.grayBorder,
   },
 });
 

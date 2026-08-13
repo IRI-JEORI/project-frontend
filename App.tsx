@@ -1,8 +1,8 @@
 import React from 'react';
-import HomeScreen from './src/screens/HomeScreen';
+import MoodCheckScreen from './src/screens/MoodCheckScreen';
 
 const App = () => {
-  return <HomeScreen />;
+  return <MoodCheckScreen />;
 };
 
 export default App;

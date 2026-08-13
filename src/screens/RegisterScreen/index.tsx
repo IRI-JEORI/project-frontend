@@ -4,9 +4,9 @@ import Logo from '../../components/Logo';
 import { colors } from '../../theme/tokens';
 import RegisterForm from './components/RegisterForm';
 
-const LOGO_TOP_SPACING = 120;
-const FORM_TOP_SPACING = 40;
-const FORM_HORIZONTAL_MARGIN = 41;
+const LOGO_TOP_SPACING = 198;
+const FORM_TOP_SPACING = 60;
+const FORM_WIDTH = 320;
 
 const RegisterScreen = () => {
   return (
@@ -27,9 +27,8 @@ const styles = StyleSheet.create({
     paddingTop: LOGO_TOP_SPACING,
   },
   form: {
-    alignSelf: 'stretch',
+    width: FORM_WIDTH,
     marginTop: FORM_TOP_SPACING,
-    marginHorizontal: FORM_HORIZONTAL_MARGIN,
   },
 });
 
