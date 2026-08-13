@@ -25,12 +25,12 @@ const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoommateGroup'>;
-type RoommateDemoState = 'default' | 'eunjiSleeping' | 'bothAwake';
+type RoommateDemoState = 'selfSleeping' | 'eunjiSleeping' | 'bothAwake';
 
 export const RoommateGroupScreen = ({navigation}: Props) => {
   const [complaintVisible, setComplaintVisible] = useState(false);
   const [complaint, setComplaint] = useState('');
-  const [demoState, setDemoState] = useState<RoommateDemoState>('default');
+  const [demoState, setDemoState] = useState<RoommateDemoState>('bothAwake');
   const {width: viewportWidth} = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = contentWidth / DESIGN_WIDTH;
@@ -66,11 +66,16 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
         ) : demoState === 'bothAwake' ? (
           <BothAwakeView
             scale={scale}
-            onToggle={() => setDemoState('default')}
+            onPressSelf={() => setDemoState('selfSleeping')}
+            onPressEunji={() => setDemoState('eunjiSleeping')}
           />
         ) : (
           <>
-        <View
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="나를 깨어 있는 상태로 전환"
+          activeOpacity={0.85}
+          onPress={() => setDemoState('bothAwake')}
           style={[
             styles.myStatusCard,
             {
@@ -90,13 +95,13 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
           </View>
           <StatusMetric value="07:32" label="기상 예정" left={69 * scale} dark />
           <StatusMetric value="4시간째" label="취침 중" left={196 * scale} dark />
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityLabel="은지 취침 상태로 전환"
-          activeOpacity={0.85}
-          onPress={() => setDemoState('eunjiSleeping')}
+          accessibilityLabel="은지 상태 정보"
+          activeOpacity={1}
+          disabled
           style={[
             styles.roommateCard,
             {
@@ -244,10 +249,11 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
 
 type BothAwakeViewProps = {
   scale: number;
-  onToggle: () => void;
+  onPressSelf: () => void;
+  onPressEunji: () => void;
 };
 
-const BothAwakeView = ({scale, onToggle}: BothAwakeViewProps) => (
+const BothAwakeView = ({scale, onPressSelf, onPressEunji}: BothAwakeViewProps) => (
   <>
     <AwakeMemberCard
       name="나"
@@ -256,12 +262,13 @@ const BothAwakeView = ({scale, onToggle}: BothAwakeViewProps) => (
       wakeTime="11:10"
       top={94 * scale}
       scale={scale}
+      onPress={onPressSelf}
     />
     <TouchableOpacity
       accessibilityRole="button"
-      accessibilityLabel="룸메이트 기본 상태로 전환"
+      accessibilityLabel="은지를 취침 상태로 전환"
       activeOpacity={0.85}
-      onPress={onToggle}
+      onPress={onPressEunji}
       style={[
         styles.roommateCard,
         {
@@ -302,10 +309,15 @@ type AwakeMemberCardProps = {
   wakeTime: string;
   top: number;
   scale: number;
+  onPress: () => void;
 };
 
-const AwakeMemberCard = ({name, returnTime, sleepTime, wakeTime, top, scale}: AwakeMemberCardProps) => (
-  <View
+const AwakeMemberCard = ({name, returnTime, sleepTime, wakeTime, top, scale, onPress}: AwakeMemberCardProps) => (
+  <TouchableOpacity
+    accessibilityRole="button"
+    accessibilityLabel={`${name}를 취침 상태로 전환`}
+    activeOpacity={0.85}
+    onPress={onPress}
     style={[
       styles.roommateCard,
       {
@@ -323,7 +335,7 @@ const AwakeMemberCard = ({name, returnTime, sleepTime, wakeTime, top, scale}: Aw
       wakeTime={wakeTime}
       scale={scale}
     />
-  </View>
+  </TouchableOpacity>
 );
 
 type AwakeCardContentProps = {
