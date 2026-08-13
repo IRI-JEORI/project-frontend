@@ -388,18 +388,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 </View>
               </View>
             </>
-          ) : (
-            <View
-              style={[
-                styles.cardPageControl,
-                { bottom: 97 * scale, columnGap: 8 * scale },
-              ]}
-            >
-              <View style={[styles.pageDot, styles.pageDotActive]} />
-              <View style={styles.pageDot} />
-              <View style={styles.pageDot} />
-            </View>
-          )}
+          ) : null}
         </TouchableOpacity>
 
         <View
@@ -487,11 +476,6 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 : '깨우기'}
             </Text>
           </TouchableOpacity>
-        </View>
-
-        <View style={[styles.bottomPageControl, { bottom: 45 * scale }]}>
-          <View style={[styles.pageDot, styles.pageDotActive]} />
-          <View style={styles.pageDot} />
         </View>
 
         <Modal
@@ -629,11 +613,6 @@ const styles = StyleSheet.create({
   awakeDetailText: {
     color: Colors.secondary,
   },
-  cardPageControl: {
-    position: 'absolute',
-    alignSelf: 'center',
-    flexDirection: 'row',
-  },
   memberActionRow: {
     position: 'absolute',
     flexDirection: 'row',
@@ -675,21 +654,6 @@ const styles = StyleSheet.create({
   },
   wakeRequestedButtonText: {
     color: Colors.secondary,
-  },
-  bottomPageControl: {
-    position: 'absolute',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    columnGap: 8,
-  },
-  pageDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.textGray,
-  },
-  pageDotActive: {
-    backgroundColor: Colors.textBlack,
   },
   menuOverlay: {
     flex: 1,
