@@ -14,6 +14,8 @@ export const colors = {
   mint: '#C7ECEC',
   bannerBg: '#F6F6F6',
   grayBorder: '#B3B3B3',
+  brownDark: '#453933',
+  grayText: '#757575',
 };
 
 export const spacing = {

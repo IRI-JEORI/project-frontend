@@ -1,8 +1,8 @@
 import React from 'react';
-import MoodCheckScreen from './src/screens/MoodCheckScreen';
+import PersonalGroupScreen from './src/screens/PersonalGroupScreen';
 
 const App = () => {
-  return <MoodCheckScreen />;
+  return <PersonalGroupScreen />;
 };
 
 export default App;
