@@ -1,15 +1,22 @@
 import React from 'react';
-import {Image, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Colors} from '../constants/Colors';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../constants/Colors';
 
 type GroupCardProps = {
   type: 'normal' | 'add';
   title: string;
   scale: number;
   onPress?: () => void;
+  backColor?: string;
 };
 
-export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
+export const GroupCard = ({
+  type,
+  title,
+  scale,
+  onPress,
+  backColor,
+}: GroupCardProps) => {
   const isAddGroup = type === 'add';
   const folderImage = isAddGroup
     ? require('../assets/images/add-folder.png')
@@ -21,7 +28,8 @@ export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
       accessibilityLabel={title}
       activeOpacity={onPress ? 0.75 : 1}
       onPress={onPress}
-      style={{width: 154 * scale, height: 166 * scale}}>
+      style={{ width: 154 * scale, height: 166 * scale }}
+    >
       <View
         style={[
           styles.folderBack,
@@ -31,14 +39,15 @@ export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
             width: 110 * scale,
             height: 124.856 * scale,
             borderRadius: 14 * scale,
-            backgroundColor: isAddGroup ? Colors.secondary : Colors.primary,
+            backgroundColor:
+              backColor ?? (isAddGroup ? Colors.secondary : Colors.primary),
           },
         ]}
       />
       <Image
         source={folderImage}
         resizeMode="contain"
-        style={{width: 154 * scale, height: 139 * scale}}
+        style={{ width: 154 * scale, height: 139 * scale }}
       />
       {isAddGroup && (
         <View
@@ -51,7 +60,8 @@ export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
               width: 48 * scale,
               height: 48 * scale,
             },
-          ]}>
+          ]}
+        >
           <View
             style={[
               styles.plusVertical,
@@ -74,7 +84,7 @@ export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
           />
         </View>
       )}
-      <Text style={[styles.title, {top: 147 * scale}]}>{title}</Text>
+      <Text style={[styles.title, { top: 147 * scale }]}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -82,7 +92,7 @@ export const GroupCard = ({type, title, scale, onPress}: GroupCardProps) => {
 const styles = StyleSheet.create({
   folderBack: {
     position: 'absolute',
-    transform: [{rotate: '-4.09deg'}],
+    transform: [{ rotate: '-4.09deg' }],
   },
   plusIcon: {
     position: 'absolute',

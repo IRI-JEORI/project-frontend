@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Image,
   StatusBar,
@@ -9,9 +9,12 @@ import {
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
+import { DEMO_USER_STORAGE_KEY, type DemoUser } from '../constants/DemoUser';
 import { FilterTabs } from '../components/FilterTabs';
 import { GroupCard } from '../components/GroupCard';
 import NotificationBell from '../assets/images/notification-bell.svg';
@@ -23,9 +26,30 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export const HomeScreen = ({ navigation }: Props) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [demoUser, setDemoUser] = useState<DemoUser>('jiwoo');
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      AsyncStorage.getItem(DEMO_USER_STORAGE_KEY)
+        .then(savedUser => {
+          if (isActive && (savedUser === 'jiwoo' || savedUser === 'minju')) {
+            setDemoUser(savedUser);
+          }
+        })
+        .catch(() => undefined);
+
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
+
+  const isJiwooInitialHome = demoUser === 'jiwoo';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -45,12 +69,13 @@ export const HomeScreen = ({ navigation }: Props) => {
             style={{ width: 49 * scale, height: 39 * scale }}
             resizeMode="contain"
           />
-          <View style={[styles.headerActions, {columnGap: 18 * scale}]}>
+          <View style={[styles.headerActions, { columnGap: 18 * scale }]}>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="알림"
               activeOpacity={0.7}
-              hitSlop={12}>
+              hitSlop={12}
+            >
               <NotificationBell width={20 * scale} height={20 * scale} />
             </TouchableOpacity>
             <TouchableOpacity
@@ -58,7 +83,8 @@ export const HomeScreen = ({ navigation }: Props) => {
               accessibilityLabel="설정"
               activeOpacity={0.7}
               hitSlop={12}
-              onPress={() => navigation.navigate('Settings')}>
+              onPress={() => navigation.navigate('Settings')}
+            >
               <Image
                 source={require('../assets/images/settings.png')}
                 style={{ width: 24 * scale, height: 24 * scale }}
@@ -80,13 +106,23 @@ export const HomeScreen = ({ navigation }: Props) => {
               paddingHorizontal: 12 * scale,
               paddingTop: 14 * scale,
             },
-          ]}>
-          <Text style={styles.notificationEyebrow}>NUNNUN을 잘 활용하려면?</Text>
+          ]}
+        >
+          <Text style={styles.notificationEyebrow}>
+            NUNNUN을 잘 활용하려면?
+          </Text>
           <Text style={styles.notificationMessage}>
             시간표를 추가하면 수면 시간을 추천받을 수 있어요
           </Text>
-          <View style={[styles.notificationDots, {right: 14 * scale, top: 8 * scale}]}>
-            <View style={[styles.notificationDot, styles.notificationDotActive]} />
+          <View
+            style={[
+              styles.notificationDots,
+              { right: 14 * scale, top: 8 * scale },
+            ]}
+          >
+            <View
+              style={[styles.notificationDot, styles.notificationDotActive]}
+            />
             <View style={styles.notificationDot} />
             <View style={styles.notificationDot} />
           </View>
@@ -95,7 +131,7 @@ export const HomeScreen = ({ navigation }: Props) => {
         <Text
           style={[styles.headerTitle, { left: 34.5 * scale, top: 190 * scale }]}
         >
-          눈눈님의 그룹
+          {isJiwooInitialHome ? '지우님의 그룹' : '눈눈님의 그룹'}
         </Text>
 
         <View style={[styles.tabsPosition, { top: 227 * scale }]}>
@@ -116,20 +152,32 @@ export const HomeScreen = ({ navigation }: Props) => {
               columnGap: 18.69 * scale,
               rowGap: 53 * scale,
             },
-          ]}>
-          <GroupCard
-            type="normal"
-            title="눈눈"
-            scale={scale}
-            onPress={() => navigation.navigate('Group')}
-          />
-          <GroupCard
-            type="normal"
-            title="은지눈눈"
-            scale={scale}
-            onPress={() => navigation.navigate('RoommateGroup')}
-          />
-          <GroupCard type="normal" title="눈눈" scale={scale} />
+          ]}
+        >
+          {isJiwooInitialHome ? (
+            <GroupCard
+              type="normal"
+              title="지우"
+              scale={scale}
+              backColor="#C7ECEC"
+            />
+          ) : (
+            <>
+              <GroupCard
+                type="normal"
+                title="눈눈"
+                scale={scale}
+                onPress={() => navigation.navigate('Group')}
+              />
+              <GroupCard
+                type="normal"
+                title="은지눈눈"
+                scale={scale}
+                onPress={() => navigation.navigate('RoommateGroup')}
+              />
+              <GroupCard type="normal" title="눈눈" scale={scale} />
+            </>
+          )}
           <GroupCard
             type="add"
             title="그룹 추가하기"
@@ -176,7 +224,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     backgroundColor: Colors.background,
     shadowColor: Colors.textBlack,
-    shadowOffset: {width: 2, height: 2},
+    shadowOffset: { width: 2, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 13,
     elevation: 4,

@@ -184,6 +184,29 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="그룹 들어가기"
+          activeOpacity={0.8}
+          onPress={() =>
+            navigation.navigate('WaitingForMembers', {
+              groupType: route.params?.groupType ?? 'wake',
+              groupName: route.params?.groupName ?? '',
+            })
+          }
+          style={[
+            styles.enterGroupButton,
+            {
+              bottom: 22 * scale,
+              width: 346 * scale,
+              height: 60 * scale,
+              borderRadius: 8 * scale,
+            },
+          ]}
+        >
+          <Text style={styles.enterGroupButtonText}>그룹 들어가기</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -275,5 +298,18 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
+  },
+  enterGroupButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.secondary,
+  },
+  enterGroupButtonText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 18,
+    lineHeight: 22,
   },
 });
