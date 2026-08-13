@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../../theme/tokens';
 
 const TABS = ['오늘', '내 고정 시간표'];
 
-const TabBar = () => {
-  const [selected, setSelected] = useState(0);
+export interface TabBarProps {
+  selected: number;
+  onSelect: (index: number) => void;
+}
 
+const TabBar = ({ selected, onSelect }: TabBarProps) => {
   return (
     <View>
       <View style={styles.row}>
         {TABS.map((tab, index) => (
-          <TouchableOpacity key={tab} onPress={() => setSelected(index)}>
+          <TouchableOpacity key={tab} onPress={() => onSelect(index)}>
             <Text
               style={[
                 styles.label,
@@ -63,7 +66,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.black,
   },
   indicatorShifted: {
-    marginLeft: 64,
+    marginLeft: 53,
+    width: 110,
   },
 });
 

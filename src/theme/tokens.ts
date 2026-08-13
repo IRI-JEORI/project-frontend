@@ -11,6 +11,7 @@ export const colors = {
   yellow: '#FFE255',
   black: '#000000',
   folderGray: '#EAEAEA',
+  scheduleGridGray: '#DCDCDD',
   mint: '#C7ECEC',
   bannerBg: '#F6F6F6',
   grayBorder: '#B3B3B3',

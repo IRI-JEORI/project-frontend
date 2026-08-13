@@ -1,17 +1,29 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from '../../../components/Icon';
-import { chevronLeftSvg } from '../../../assets/icons/navIcons';
+import { chevronLeftSvg, plusCircleSvg } from '../../../assets/icons/navIcons';
 import { colors } from '../../../theme/tokens';
 
-const NavHeader = () => {
+export interface NavHeaderProps {
+  title: string;
+  showAddButton?: boolean;
+  onPressAdd?: () => void;
+}
+
+const NavHeader = ({ title, showAddButton, onPressAdd }: NavHeaderProps) => {
   return (
     <View style={styles.row}>
-      <TouchableOpacity style={styles.back}>
+      <TouchableOpacity style={styles.side}>
         <Icon xml={chevronLeftSvg} size={24} color={colors.black} />
       </TouchableOpacity>
-      <Text style={styles.title}>오늘</Text>
-      <View style={styles.back} />
+      <Text style={styles.title}>{title}</Text>
+      {showAddButton ? (
+        <TouchableOpacity style={styles.side} onPress={onPressAdd}>
+          <Icon xml={plusCircleSvg} size={24} color={colors.black} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.side} />
+      )}
     </View>
   );
 };
@@ -23,7 +35,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 28,
   },
-  back: {
+  side: {
     width: 24,
     height: 24,
   },

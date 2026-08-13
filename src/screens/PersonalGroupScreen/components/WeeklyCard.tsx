@@ -12,7 +12,11 @@ const DAYS = [
   { label: '일', date: 9 },
 ];
 
-const WeeklyCard = () => {
+export interface WeeklyCardProps {
+  onPressChangeTime?: () => void;
+}
+
+const WeeklyCard = ({ onPressChangeTime }: WeeklyCardProps) => {
   return (
     <View style={styles.card}>
       <Text style={styles.title}>이번 주 기상 · 귀가</Text>
@@ -38,7 +42,7 @@ const WeeklyCard = () => {
           <Text style={styles.detailTextMedium}>귀가 23:00</Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={onPressChangeTime}>
         <Text style={styles.buttonLabel}>오늘 귀가 시간이 바뀌었어요</Text>
       </TouchableOpacity>
     </View>
