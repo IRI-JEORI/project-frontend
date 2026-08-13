@@ -1,6 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import {
   Image,
+  Modal,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
@@ -14,7 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
-import { DEMO_USER_STORAGE_KEY, type DemoUser } from '../constants/DemoUser';
+import {
+  DEMO_USER_STORAGE_KEY,
+  JIWOO_WAKE_GROUP_STORAGE_KEY,
+  MINJU_WAKE_GROUP_STORAGE_KEY,
+  type DemoUser,
+} from '../constants/DemoUser';
 import { FilterTabs } from '../components/FilterTabs';
 import { GroupCard } from '../components/GroupCard';
 import NotificationBell from '../assets/images/notification-bell.svg';
@@ -26,7 +33,14 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export const HomeScreen = ({ navigation }: Props) => {
   const [activeTab, setActiveTab] = useState(0);
+  const [addGroupMenuVisible, setAddGroupMenuVisible] = useState(false);
   const [demoUser, setDemoUser] = useState<DemoUser>('jiwoo');
+  const [jiwooWakeGroupName, setJiwooWakeGroupName] = useState<string | null>(
+    null,
+  );
+  const [minjuWakeGroupName, setMinjuWakeGroupName] = useState<string | null>(
+    null,
+  );
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
@@ -35,10 +49,18 @@ export const HomeScreen = ({ navigation }: Props) => {
     useCallback(() => {
       let isActive = true;
 
-      AsyncStorage.getItem(DEMO_USER_STORAGE_KEY)
-        .then(savedUser => {
+      Promise.all([
+        AsyncStorage.getItem(DEMO_USER_STORAGE_KEY),
+        AsyncStorage.getItem(JIWOO_WAKE_GROUP_STORAGE_KEY),
+        AsyncStorage.getItem(MINJU_WAKE_GROUP_STORAGE_KEY),
+      ])
+        .then(([savedUser, savedWakeGroupName, savedMinjuWakeGroupName]) => {
           if (isActive && (savedUser === 'jiwoo' || savedUser === 'minju')) {
             setDemoUser(savedUser);
+          }
+          if (isActive) {
+            setJiwooWakeGroupName(savedWakeGroupName);
+            setMinjuWakeGroupName(savedMinjuWakeGroupName);
           }
         })
         .catch(() => undefined);
@@ -131,7 +153,7 @@ export const HomeScreen = ({ navigation }: Props) => {
         <Text
           style={[styles.headerTitle, { left: 34.5 * scale, top: 190 * scale }]}
         >
-          {isJiwooInitialHome ? '지우님의 그룹' : '눈눈님의 그룹'}
+          {isJiwooInitialHome ? '지우님의 그룹' : '민주님의 그룹'}
         </Text>
 
         <View style={[styles.tabsPosition, { top: 227 * scale }]}>
@@ -148,44 +170,107 @@ export const HomeScreen = ({ navigation }: Props) => {
             {
               left: 33.97 * scale,
               top: 323 * scale,
-              width: 326.69 * scale,
-              columnGap: 18.69 * scale,
-              rowGap: 53 * scale,
+              width: 332 * scale,
+              columnGap: 24 * scale,
+              rowGap: 45 * scale,
             },
           ]}
         >
-          {isJiwooInitialHome ? (
+          <GroupCard
+            type="normal"
+            title={isJiwooInitialHome ? '지우' : '민주'}
+            scale={scale}
+            backColor="#C7ECEC"
+          />
+          {isJiwooInitialHome && jiwooWakeGroupName && (
             <GroupCard
               type="normal"
-              title="지우"
+              title={jiwooWakeGroupName}
               scale={scale}
               backColor="#C7ECEC"
+              onPress={() =>
+                navigation.navigate('WaitingForMembers', {
+                  groupType: 'wake',
+                  groupName: jiwooWakeGroupName,
+                })
+              }
             />
-          ) : (
-            <>
-              <GroupCard
-                type="normal"
-                title="눈눈"
-                scale={scale}
-                onPress={() => navigation.navigate('Group')}
-              />
-              <GroupCard
-                type="normal"
-                title="은지눈눈"
-                scale={scale}
-                onPress={() => navigation.navigate('RoommateGroup')}
-              />
-              <GroupCard type="normal" title="눈눈" scale={scale} />
-            </>
+          )}
+          {!isJiwooInitialHome && minjuWakeGroupName && (
+            <GroupCard
+              type="normal"
+              title={minjuWakeGroupName}
+              scale={scale}
+              backColor="#C7ECEC"
+              onPress={() =>
+                navigation.navigate('WaitingForMembers', {
+                  groupType: 'wake',
+                  groupName: minjuWakeGroupName,
+                  viewer: 'minju',
+                })
+              }
+            />
           )}
           <GroupCard
             type="add"
             title="그룹 추가하기"
             scale={scale}
-            onPress={() => navigation.navigate('AddGroup')}
+            onPress={() => setAddGroupMenuVisible(true)}
           />
         </View>
       </View>
+
+      <Modal
+        animationType="fade"
+        onRequestClose={() => setAddGroupMenuVisible(false)}
+        statusBarTranslucent
+        transparent
+        visible={addGroupMenuVisible}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="그룹 추가 메뉴 닫기"
+          onPress={() => setAddGroupMenuVisible(false)}
+          style={styles.addGroupMenuOverlay}
+        >
+          <Pressable
+            onPress={event => event.stopPropagation()}
+            style={[
+              styles.addGroupMenu,
+              {
+                width: 250 * scale,
+                height: 100 * scale,
+                borderRadius: 30 * scale,
+              },
+            ]}
+          >
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="방 생성하기"
+              activeOpacity={0.7}
+              onPress={() => {
+                setAddGroupMenuVisible(false);
+                navigation.navigate('AddGroup');
+              }}
+              style={styles.addGroupMenuItem}
+            >
+              <Text style={styles.addGroupMenuText}>방 생성하기</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="초대 코드 입력하기"
+              activeOpacity={0.7}
+              onPress={() => {
+                setAddGroupMenuVisible(false);
+                navigation.navigate('InviteCode');
+              }}
+              style={styles.addGroupMenuItem}
+            >
+              <Text style={styles.addGroupMenuText}>초대 코드 입력하기</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -268,5 +353,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
+  },
+  addGroupMenuOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+  addGroupMenu: {
+    overflow: 'hidden',
+    paddingVertical: 7,
+    backgroundColor: 'rgba(244, 244, 244, 0.94)',
+    shadowColor: Colors.textBlack,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 12,
+  },
+  addGroupMenuItem: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+  },
+  addGroupMenuText: {
+    color: Colors.textBlack,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 20,
   },
 });

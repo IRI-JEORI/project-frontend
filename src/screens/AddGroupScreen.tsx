@@ -103,10 +103,10 @@ export const AddGroupScreen = ({ navigation }: Props) => {
           />
           <TypeButton
             label="룸메이트 그룹"
-            selected={selectedType === 'roommate'}
+            selected={false}
             width={171 * scale}
             height={44 * scale}
-            onPress={() => setSelectedType('roommate')}
+            onPress={() => undefined}
           />
         </View>
 
@@ -137,7 +137,7 @@ export const AddGroupScreen = ({ navigation }: Props) => {
           activeOpacity={0.8}
           disabled={selectedType === null}
           onPress={() => {
-            if (selectedType) {
+            if (selectedType === 'wake') {
               navigation.navigate('AddGroupName', { groupType: selectedType });
             }
           }}

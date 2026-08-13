@@ -17,6 +17,7 @@ import { Colors } from '../constants/Colors';
 import {
   DEMO_USER_NAMES,
   DEMO_USER_STORAGE_KEY,
+  MINJU_WAKE_REQUEST_STORAGE_KEY,
   type DemoUser,
 } from '../constants/DemoUser';
 import SettingsProfile from '../assets/images/settings-profile.svg';
@@ -30,7 +31,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 export const SettingsScreen = ({ navigation }: Props) => {
   const [calendarEnabled, setCalendarEnabled] = useState(true);
-  const [nickname, setNickname] = useState('눈눈');
+  const [nickname, setNickname] = useState(DEMO_USER_NAMES.jiwoo);
   const [nicknameDraft, setNicknameDraft] = useState('');
   const [showNicknameSheet, setShowNicknameSheet] = useState(false);
   const [demoUser, setDemoUser] = useState<DemoUser>('jiwoo');
@@ -44,6 +45,7 @@ export const SettingsScreen = ({ navigation }: Props) => {
       const savedUser = await AsyncStorage.getItem(DEMO_USER_STORAGE_KEY);
       if (savedUser === 'jiwoo' || savedUser === 'minju') {
         setDemoUser(savedUser);
+        setNickname(DEMO_USER_NAMES[savedUser]);
       }
     };
 
@@ -52,8 +54,18 @@ export const SettingsScreen = ({ navigation }: Props) => {
 
   const selectDemoUser = async (user: DemoUser) => {
     setDemoUser(user);
+    setNickname(DEMO_USER_NAMES[user]);
     setShowDemoUserSheet(false);
     await AsyncStorage.setItem(DEMO_USER_STORAGE_KEY, user);
+
+    if (user === 'minju') {
+      const hasWakeRequest = await AsyncStorage.getItem(
+        MINJU_WAKE_REQUEST_STORAGE_KEY,
+      );
+      if (hasWakeRequest === 'true') {
+        navigation.replace('WakeNotification');
+      }
+    }
   };
 
   return (
@@ -189,17 +201,6 @@ export const SettingsScreen = ({ navigation }: Props) => {
             </View>
           }
         />
-
-        <TouchableOpacity
-          accessibilityRole="button"
-          activeOpacity={0.7}
-          style={[
-            styles.logoutRow,
-            { left: 28 * scale, top: 393 * scale, width: 346 * scale },
-          ]}
-        >
-          <Text style={styles.rowTitle}>로그아웃</Text>
-        </TouchableOpacity>
 
         {showNicknameSheet && (
           <View
@@ -479,12 +480,6 @@ const styles = StyleSheet.create({
   },
   switchOffThumb: {
     backgroundColor: Colors.background,
-  },
-  logoutRow: {
-    position: 'absolute',
-    height: 34,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.gray,
   },
   demoUserValueRow: {
     flexDirection: 'row',

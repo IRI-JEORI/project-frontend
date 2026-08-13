@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   Share,
@@ -10,46 +10,71 @@ import {
   View,
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
+import {
+  JIWOO_WAKE_GROUP_STORAGE_KEY,
+  WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
+} from '../constants/DemoUser';
+import { createInviteCode } from '../utils/inviteCode';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
-const INVITE_CODE = '8G3F2K';
-
 type Props = NativeStackScreenProps<RootStackParamList, 'AddGroupInvite'>;
 
 export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
   const [copied, setCopied] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
 
+  useEffect(() => {
+    const prepareInviteCode = async () => {
+      const generatedCode = createInviteCode();
+      await AsyncStorage.setItem(
+        WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
+        generatedCode,
+      );
+      setInviteCode(generatedCode);
+    };
+
+    prepareInviteCode().catch(() => undefined);
+  }, []);
+
   const copyInviteCode = () => {
-    Clipboard.setString(INVITE_CODE);
+    if (!inviteCode) {
+      return;
+    }
+    Clipboard.setString(inviteCode);
     setCopied(true);
   };
 
   const shareInviteCode = async () => {
     try {
       await Share.share({
-        message: `눈눈 그룹 초대 코드: ${INVITE_CODE}`,
+        message: `눈눈 그룹 초대 코드: ${inviteCode}`,
       });
     } catch {}
+  };
 
+  const enterGroup = async () => {
     const groupType = route.params?.groupType ?? 'wake';
+    const groupName = route.params?.groupName?.trim() || '아침 야호';
 
-    if (groupType === 'roommate') {
+    try {
+      if (groupType === 'wake') {
+        await AsyncStorage.setItem(JIWOO_WAKE_GROUP_STORAGE_KEY, groupName);
+      }
+    } finally {
       navigation.navigate('WaitingForMembers', {
         groupType,
-        groupName: route.params?.groupName ?? '',
+        groupName,
       });
-      return;
     }
-
-    navigation.navigate('Group');
   };
 
   return (
@@ -119,7 +144,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
             },
           ]}
         >
-          <Text style={styles.inviteCode}>{INVITE_CODE}</Text>
+          <Text style={styles.inviteCode}>{inviteCode}</Text>
         </View>
 
         <View
@@ -189,12 +214,9 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
           accessibilityRole="button"
           accessibilityLabel="그룹 들어가기"
           activeOpacity={0.8}
-          onPress={() =>
-            navigation.navigate('WaitingForMembers', {
-              groupType: route.params?.groupType ?? 'wake',
-              groupName: route.params?.groupName ?? '',
-            })
-          }
+          onPress={() => {
+            enterGroup().catch(() => undefined);
+          }}
           style={[
             styles.enterGroupButton,
             {

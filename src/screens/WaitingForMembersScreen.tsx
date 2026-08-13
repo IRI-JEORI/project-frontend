@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Image,
   Modal,
@@ -15,11 +15,20 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
+import {
+  JIWOO_WAKE_PHOTO_STORAGE_KEY,
+  MINJU_WAKE_PHOTO_STORAGE_KEY,
+  MINJU_WAKE_REQUEST_STORAGE_KEY,
+  WAKE_GROUP_MINJU_JOINED_STORAGE_KEY,
+} from '../constants/DemoUser';
 import WaitingGlow from '../assets/images/waiting-glow.svg';
 import WaitingFace from '../assets/images/waiting-face.svg';
 import MemberStatusGray from '../assets/images/member-status-gray.svg';
+import MemberStatusYellow from '../assets/images/member-status-yellow.svg';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
@@ -27,12 +36,77 @@ const MAX_CONTENT_WIDTH = 430;
 type Props = NativeStackScreenProps<RootStackParamList, 'WaitingForMembers'>;
 
 export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
-  const [menuVisible, setMenuVisible] = useState(false);
+  const isMinjuViewer = route.params?.viewer === 'minju';
+  const [wakeDemoState, setWakeDemoState] = useState({
+    menuVisible: false,
+    hasMinjuJoined: isMinjuViewer,
+    selfPhotoPath: null as string | null,
+    minjuPhotoPath: null as string | null,
+    hasMinjuWakeRequest: false,
+  });
   const { width: viewportWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
   const isWakeGroup = route.params?.groupType === 'wake';
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isWakeGroup) {
+        return undefined;
+      }
+
+      let isActive = true;
+      Promise.all([
+        AsyncStorage.getItem(WAKE_GROUP_MINJU_JOINED_STORAGE_KEY),
+        AsyncStorage.getItem(JIWOO_WAKE_PHOTO_STORAGE_KEY),
+        AsyncStorage.getItem(MINJU_WAKE_PHOTO_STORAGE_KEY),
+        AsyncStorage.getItem(MINJU_WAKE_REQUEST_STORAGE_KEY),
+      ])
+        .then(
+          ([
+            savedJoinedState,
+            savedPhotoPath,
+            savedMinjuPhotoPath,
+            savedWakeRequest,
+          ]) => {
+            if (isActive) {
+              setWakeDemoState(state => ({
+                ...state,
+                hasMinjuJoined:
+                  savedJoinedState === 'true' || state.hasMinjuJoined,
+                selfPhotoPath: savedPhotoPath,
+                minjuPhotoPath: savedMinjuPhotoPath,
+                hasMinjuWakeRequest: savedWakeRequest === 'true',
+              }));
+            }
+          },
+        )
+        .catch(() => undefined);
+
+      return () => {
+        isActive = false;
+      };
+    }, [isWakeGroup]),
+  );
+
+  const wakeMinju = async () => {
+    await AsyncStorage.setItem(MINJU_WAKE_REQUEST_STORAGE_KEY, 'true');
+    setWakeDemoState(state => ({
+      ...state,
+      hasMinjuWakeRequest: true,
+    }));
+  };
+
+  const firstMemberPhotoPath = isMinjuViewer
+    ? wakeDemoState.minjuPhotoPath
+    : wakeDemoState.selfPhotoPath;
+  const secondMemberPhotoPath = isMinjuViewer
+    ? wakeDemoState.selfPhotoPath
+    : wakeDemoState.minjuPhotoPath;
+  const bothMembersAwake = Boolean(
+    wakeDemoState.selfPhotoPath && wakeDemoState.minjuPhotoPath,
+  );
 
   if (isWakeGroup) {
     return (
@@ -47,7 +121,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             accessibilityLabel="이전 화면으로 이동"
             activeOpacity={0.7}
             hitSlop={12}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.popTo('Home')}
             style={[
               styles.headerIconButton,
               {
@@ -74,7 +148,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             accessibilityLabel="그룹 메뉴"
             activeOpacity={0.7}
             hitSlop={12}
-            onPress={() => setMenuVisible(true)}
+            onPress={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: true }))
+            }
             style={[
               styles.headerIconButton,
               {
@@ -92,7 +168,18 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             />
           </TouchableOpacity>
 
-          <View
+          <TouchableOpacity
+            accessibilityRole={!isMinjuViewer ? 'button' : undefined}
+            accessibilityLabel={!isMinjuViewer ? '지우 인증사진 촬영' : '민주'}
+            activeOpacity={!isMinjuViewer ? 0.85 : 1}
+            onPress={
+              !isMinjuViewer
+                ? () =>
+                    navigation.navigate('CameraCapture', {
+                      recipientName: '민주',
+                    })
+                : undefined
+            }
             style={[
               styles.waitingMemberCard,
               {
@@ -104,14 +191,45 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
+            {firstMemberPhotoPath && (
+              <Image
+                accessibilityIgnoresInvertColors
+                resizeMode="cover"
+                source={{ uri: `file://${firstMemberPhotoPath}` }}
+                style={styles.memberPhoto}
+              />
+            )}
+            {isMinjuViewer &&
+              wakeDemoState.hasMinjuWakeRequest &&
+              !firstMemberPhotoPath && (
+                <Image
+                  accessibilityLabel="지우에게 받은 깨우기 알림"
+                  resizeMode="contain"
+                  source={require('../assets/images/wake-alarm.png')}
+                  style={[
+                    styles.wakeAlarm,
+                    {
+                      width: 28 * scale,
+                      height: 28 * scale,
+                      top: 95 * scale,
+                    },
+                  ]}
+                />
+              )}
             <View
               style={[
                 styles.memberIdentity,
                 { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
               ]}
             >
-              <MemberStatusGray width={16 * scale} height={16 * scale} />
-              <Text style={styles.memberName}>지우</Text>
+              {isMinjuViewer ? (
+                <MemberStatusYellow width={16 * scale} height={16 * scale} />
+              ) : (
+                <MemberStatusGray width={16 * scale} height={16 * scale} />
+              )}
+              <Text style={styles.memberName}>
+                {isMinjuViewer ? '민주' : '지우'}
+              </Text>
             </View>
             <View
               style={[
@@ -120,17 +238,66 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               ]}
             >
               <View style={styles.sleepDetailColumn}>
-                <Text style={styles.sleepValue}>07:32</Text>
-                <Text style={styles.sleepLabel}>기상 목표</Text>
+                <Text
+                  style={[
+                    styles.sleepValue,
+                    firstMemberPhotoPath && styles.awakeDetailText,
+                  ]}
+                >
+                  {firstMemberPhotoPath
+                    ? isMinjuViewer
+                      ? '09:33'
+                      : '09:03'
+                    : '07:32'}
+                </Text>
+                <Text
+                  style={[
+                    styles.sleepLabel,
+                    firstMemberPhotoPath && styles.awakeDetailText,
+                  ]}
+                >
+                  {firstMemberPhotoPath ? '기상 시간' : '기상 목표'}
+                </Text>
               </View>
               <View style={styles.sleepDetailColumn}>
-                <Text style={styles.sleepValue}>4시간째</Text>
-                <Text style={styles.sleepLabel}>취침 중</Text>
+                <Text
+                  style={[
+                    styles.sleepValue,
+                    firstMemberPhotoPath && styles.awakeDetailText,
+                  ]}
+                >
+                  {firstMemberPhotoPath
+                    ? isMinjuViewer
+                      ? '01분 째'
+                      : '23분 째'
+                    : '4시간째'}
+                </Text>
+                <Text
+                  style={[
+                    styles.sleepLabel,
+                    firstMemberPhotoPath && styles.awakeDetailText,
+                  ]}
+                >
+                  {firstMemberPhotoPath ? '기상 중' : '취침 중'}
+                </Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          <View
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={
+              wakeDemoState.hasMinjuJoined
+                ? '민주 멤버'
+                : '민주 참여 상태로 전환'
+            }
+            activeOpacity={wakeDemoState.hasMinjuJoined ? 1 : 0.85}
+            onPress={() =>
+              setWakeDemoState(state => ({
+                ...state,
+                hasMinjuJoined: true,
+              }))
+            }
             style={[
               styles.waitingMemberCard,
               {
@@ -142,17 +309,115 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
-            <View
-              style={[
-                styles.cardPageControl,
-                { bottom: 97 * scale, columnGap: 8 * scale },
-              ]}
-            >
-              <View style={[styles.pageDot, styles.pageDotActive]} />
-              <View style={styles.pageDot} />
-              <View style={styles.pageDot} />
-            </View>
-          </View>
+            {wakeDemoState.hasMinjuJoined ? (
+              <>
+                {secondMemberPhotoPath && (
+                  <Image
+                    accessibilityIgnoresInvertColors
+                    accessibilityLabel="지우가 올린 인증사진"
+                    resizeMode="cover"
+                    source={{ uri: `file://${secondMemberPhotoPath}` }}
+                    style={styles.memberPhoto}
+                  />
+                )}
+                {!isMinjuViewer && wakeDemoState.hasMinjuWakeRequest && (
+                  <Image
+                    accessibilityLabel="민주에게 깨우기 알림 전송됨"
+                    resizeMode="contain"
+                    source={require('../assets/images/wake-alarm.png')}
+                    style={[
+                      styles.wakeAlarm,
+                      {
+                        width: 28 * scale,
+                        height: 28 * scale,
+                        top: 95 * scale,
+                      },
+                    ]}
+                  />
+                )}
+                <View
+                  style={[
+                    styles.memberIdentity,
+                    { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
+                  ]}
+                >
+                  {isMinjuViewer ? (
+                    <MemberStatusGray width={16 * scale} height={16 * scale} />
+                  ) : (
+                    <MemberStatusYellow
+                      width={16 * scale}
+                      height={16 * scale}
+                    />
+                  )}
+                  <Text style={styles.memberName}>
+                    {isMinjuViewer ? '지우' : '민주'}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.sleepDetails,
+                    { left: 27 * scale, bottom: 17 * scale },
+                  ]}
+                >
+                  <View style={styles.sleepDetailColumn}>
+                    <Text
+                      style={[
+                        styles.sleepValue,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath
+                        ? isMinjuViewer
+                          ? '09:03'
+                          : '09:33'
+                        : '07:32'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.sleepLabel,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath ? '기상 시간' : '기상 목표'}
+                    </Text>
+                  </View>
+                  <View style={styles.sleepDetailColumn}>
+                    <Text
+                      style={[
+                        styles.sleepValue,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath
+                        ? isMinjuViewer
+                          ? '23분 째'
+                          : '01분 째'
+                        : '4시간째'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.sleepLabel,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath ? '기상 중' : '취침 중'}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <View
+                style={[
+                  styles.cardPageControl,
+                  { bottom: 97 * scale, columnGap: 8 * scale },
+                ]}
+              >
+                <View style={[styles.pageDot, styles.pageDotActive]} />
+                <View style={styles.pageDot} />
+                <View style={styles.pageDot} />
+              </View>
+            )}
+          </TouchableOpacity>
 
           <View
             style={[
@@ -169,7 +434,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               activeOpacity={0.8}
               style={[
                 styles.memberActionButton,
-                styles.selfAwakeButton,
+                firstMemberPhotoPath
+                  ? styles.awakeSelfButton
+                  : styles.selfAwakeButton,
                 {
                   width: 164 * scale,
                   height: 30 * scale,
@@ -177,16 +444,39 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 },
               ]}
             >
-              <Text style={styles.selfAwakeButtonText}>아빠 안 잔다</Text>
+              <Text
+                style={[
+                  styles.selfAwakeButtonText,
+                  firstMemberPhotoPath && styles.awakeSelfButtonText,
+                ]}
+              >
+                {bothMembersAwake
+                  ? isMinjuViewer
+                    ? '30 : 00'
+                    : '05 : 20'
+                  : '아빠 안 잔다'}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
-              accessibilityState={{ disabled: true }}
-              activeOpacity={1}
-              disabled
+              accessibilityState={{
+                disabled: !wakeDemoState.hasMinjuJoined,
+              }}
+              activeOpacity={wakeDemoState.hasMinjuJoined ? 0.8 : 1}
+              disabled={!wakeDemoState.hasMinjuJoined}
+              onPress={
+                !isMinjuViewer
+                  ? () => wakeMinju().catch(() => undefined)
+                  : undefined
+              }
               style={[
                 styles.memberActionButton,
-                styles.waitingWakeButton,
+                (wakeDemoState.hasMinjuWakeRequest && !isMinjuViewer) ||
+                secondMemberPhotoPath
+                  ? styles.wakeRequestedButton
+                  : wakeDemoState.hasMinjuJoined
+                  ? styles.selfAwakeButton
+                  : styles.waitingWakeButton,
                 {
                   width: 164 * scale,
                   height: 30 * scale,
@@ -194,7 +484,25 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 },
               ]}
             >
-              <Text style={styles.waitingWakeButtonText}>깨우기</Text>
+              <Text
+                style={[
+                  styles.waitingWakeButtonText,
+                  wakeDemoState.hasMinjuWakeRequest &&
+                    !isMinjuViewer &&
+                    styles.wakeRequestedButtonText,
+                  secondMemberPhotoPath && styles.wakeRequestedButtonText,
+                ]}
+              >
+                {bothMembersAwake
+                  ? isMinjuViewer
+                    ? '05 : 20'
+                    : '30 : 00'
+                  : isMinjuViewer && secondMemberPhotoPath
+                  ? '06 : 20'
+                  : wakeDemoState.hasMinjuWakeRequest && !isMinjuViewer
+                  ? '28 : 20'
+                  : '깨우기'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -205,15 +513,19 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
 
           <Modal
             animationType="fade"
-            onRequestClose={() => setMenuVisible(false)}
+            onRequestClose={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: false }))
+            }
             statusBarTranslucent
             transparent
-            visible={menuVisible}
+            visible={wakeDemoState.menuVisible}
           >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="그룹 메뉴 닫기"
-              onPress={() => setMenuVisible(false)}
+              onPress={() =>
+                setWakeDemoState(state => ({ ...state, menuVisible: false }))
+              }
               style={styles.menuOverlay}
             >
               <Pressable
@@ -318,7 +630,22 @@ const styles = StyleSheet.create({
   },
   waitingMemberCard: {
     position: 'absolute',
+    overflow: 'hidden',
     backgroundColor: '#DCDCDD',
+  },
+  memberPhoto: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+  },
+  wakeAlarm: {
+    position: 'absolute',
+    alignSelf: 'center',
+    zIndex: 1,
   },
   memberIdentity: {
     position: 'absolute',
@@ -352,6 +679,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 12,
   },
+  awakeDetailText: {
+    color: Colors.secondary,
+  },
   cardPageControl: {
     position: 'absolute',
     alignSelf: 'center',
@@ -368,20 +698,36 @@ const styles = StyleSheet.create({
   selfAwakeButton: {
     backgroundColor: Colors.secondary,
   },
+  awakeSelfButton: {
+    borderWidth: 1,
+    borderColor: Colors.secondary,
+    backgroundColor: Colors.background,
+  },
   selfAwakeButtonText: {
     color: Colors.textWhite,
     fontFamily: 'PretendardMedium',
     fontSize: 12,
     lineHeight: 15,
   },
+  awakeSelfButtonText: {
+    color: Colors.secondary,
+  },
   waitingWakeButton: {
     backgroundColor: '#B8B8B8',
+  },
+  wakeRequestedButton: {
+    borderWidth: 1,
+    borderColor: Colors.secondary,
+    backgroundColor: Colors.background,
   },
   waitingWakeButtonText: {
     color: Colors.textWhite,
     fontFamily: 'PretendardMedium',
     fontSize: 12,
     lineHeight: 15,
+  },
+  wakeRequestedButtonText: {
+    color: Colors.secondary,
   },
   bottomPageControl: {
     position: 'absolute',

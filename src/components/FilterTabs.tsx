@@ -1,6 +1,6 @@
 import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {Colors} from '../constants/Colors';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '../constants/Colors';
 
 const tabs = ['모든 그룹', '깨우기', '룸메이트'];
 
@@ -10,33 +10,44 @@ type FilterTabsProps = {
   scale: number;
 };
 
-export const FilterTabs = ({activeTab, setActiveTab, scale}: FilterTabsProps) => {
+export const FilterTabs = ({
+  activeTab,
+  setActiveTab,
+  scale,
+}: FilterTabsProps) => {
   return (
     <View
       style={[
         styles.container,
-        {marginLeft: 34.5 * scale, columnGap: 6.5 * scale},
-      ]}>
+        { marginLeft: 34.5 * scale, columnGap: 6.5 * scale },
+      ]}
+    >
       {tabs.map((tab, index) => {
         const isActive = activeTab === index;
 
         return (
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityState={{selected: isActive}}
+            accessibilityState={{ selected: isActive }}
             activeOpacity={0.75}
             key={tab}
-            onPress={() => setActiveTab(index)}
+            onPress={() => {
+              if (tab !== '룸메이트') {
+                setActiveTab(index);
+              }
+            }}
             style={[
               styles.tab,
-              {width: 63 * scale, height: 25.421 * scale},
+              { width: 63 * scale, height: 25.421 * scale },
               isActive ? styles.activeTab : styles.inactiveTab,
-            ]}>
+            ]}
+          >
             <Text
               style={[
                 styles.tabText,
                 isActive ? styles.activeTabText : styles.inactiveTabText,
-              ]}>
+              ]}
+            >
               {tab}
             </Text>
           </TouchableOpacity>

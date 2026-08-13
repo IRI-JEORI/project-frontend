@@ -13,21 +13,35 @@ import { WaitingForMembersScreen } from './src/screens/WaitingForMembersScreen';
 import type { GroupType } from './src/types/group';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { RoommateGroupScreen } from './src/screens/RoommateGroupScreen';
+import { InviteCodeScreen } from './src/screens/InviteCodeScreen';
+import { CameraCaptureScreen } from './src/screens/CameraCaptureScreen';
+import { PhotoReviewScreen } from './src/screens/PhotoReviewScreen';
+import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
 
 export type RootStackParamList = {
   Home: undefined;
   Settings: undefined;
   RoommateGroup: undefined;
   AddGroup: undefined;
+  InviteCode: undefined;
+  CameraCapture: { recipientName: string };
+  PhotoReview: {
+    photoPath: string;
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+  };
+  WakeNotification: undefined;
   AddGroupName: { groupType: GroupType } | undefined;
-  AddGroupInvite:
-    | { groupType: GroupType; groupName: string }
-    | undefined;
+  AddGroupInvite: { groupType: GroupType; groupName: string } | undefined;
   Group: undefined;
   WakeUp: { wakerName: string };
   AlreadyWoken: { wakerName: string };
   WaitingForMembers:
-    | { groupType: GroupType; groupName: string }
+    | {
+        groupType: GroupType;
+        groupName: string;
+        viewer?: 'jiwoo' | 'minju';
+      }
     | undefined;
 };
 
@@ -45,6 +59,13 @@ export default function App() {
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="RoommateGroup" component={RoommateGroupScreen} />
           <Stack.Screen name="AddGroup" component={AddGroupScreen} />
+          <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
+          <Stack.Screen name="CameraCapture" component={CameraCaptureScreen} />
+          <Stack.Screen name="PhotoReview" component={PhotoReviewScreen} />
+          <Stack.Screen
+            name="WakeNotification"
+            component={WakeNotificationScreen}
+          />
           <Stack.Screen name="AddGroupName" component={AddGroupNameScreen} />
           <Stack.Screen
             name="AddGroupInvite"
