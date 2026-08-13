@@ -37,9 +37,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
       await Share.share({
         message: `눈눈 그룹 초대 코드: ${INVITE_CODE}`,
       });
-    } catch {
-      // 공유 앱이 없는 데모 환경에서도 다음 화면으로 이동합니다.
-    }
+    } catch {}
 
     const groupType = route.params?.groupType ?? 'wake';
 

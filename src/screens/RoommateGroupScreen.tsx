@@ -16,15 +16,21 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import type {RootStackParamList} from '../../App';
 import {Colors} from '../constants/Colors';
 import RoommateLock from '../assets/images/roommate-lock.svg';
+import RoommateSun from '../assets/images/roommate-sun.svg';
+import RoommateAlert from '../assets/images/roommate-alert.svg';
+import RoommateBellOff from '../assets/images/roommate-bell-off.svg';
+import RoommateCheck from '../assets/images/roommate-check.svg';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RoommateGroup'>;
+type RoommateDemoState = 'default' | 'eunjiSleeping' | 'bothAwake';
 
 export const RoommateGroupScreen = ({navigation}: Props) => {
   const [complaintVisible, setComplaintVisible] = useState(false);
   const [complaint, setComplaint] = useState('');
+  const [demoState, setDemoState] = useState<RoommateDemoState>('default');
   const {width: viewportWidth} = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = contentWidth / DESIGN_WIDTH;
@@ -52,6 +58,18 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
 
         <Text style={[styles.headerTitle, {top: 22 * scale}]}>은지눈눈</Text>
 
+        {demoState === 'eunjiSleeping' ? (
+          <SleepingRoommateView
+            scale={scale}
+            onToggle={() => setDemoState('bothAwake')}
+          />
+        ) : demoState === 'bothAwake' ? (
+          <BothAwakeView
+            scale={scale}
+            onToggle={() => setDemoState('default')}
+          />
+        ) : (
+          <>
         <View
           style={[
             styles.myStatusCard,
@@ -74,7 +92,11 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
           <StatusMetric value="4시간째" label="취침 중" left={196 * scale} dark />
         </View>
 
-        <View
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="은지 취침 상태로 전환"
+          activeOpacity={0.85}
+          onPress={() => setDemoState('eunjiSleeping')}
           style={[
             styles.roommateCard,
             {
@@ -102,7 +124,7 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
           </View>
           <Text style={[styles.cardLabel, {left: 24 * scale, top: 182 * scale}]}>내일 기상 목표</Text>
           <Text style={[styles.cardLabel, {right: 20 * scale, top: 182 * scale}]}>07:10</Text>
-        </View>
+        </TouchableOpacity>
 
         <View style={[styles.scheduleSection, {left: 28 * scale, top: 452.6 * scale, width: 346 * scale}]}>
           <Text style={styles.sectionTitle}>주요 일정</Text>
@@ -124,6 +146,8 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
           ]}>
           <Text style={styles.complaintText}>불만사항 남기기</Text>
         </TouchableOpacity>
+          </>
+        )}
       </View>
 
       <Modal
@@ -218,6 +242,218 @@ export const RoommateGroupScreen = ({navigation}: Props) => {
   );
 };
 
+type BothAwakeViewProps = {
+  scale: number;
+  onToggle: () => void;
+};
+
+const BothAwakeView = ({scale, onToggle}: BothAwakeViewProps) => (
+  <>
+    <AwakeMemberCard
+      name="나"
+      returnTime="-"
+      sleepTime="23:30"
+      wakeTime="11:10"
+      top={94 * scale}
+      scale={scale}
+    />
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel="룸메이트 기본 상태로 전환"
+      activeOpacity={0.85}
+      onPress={onToggle}
+      style={[
+        styles.roommateCard,
+        {
+          left: 28 * scale,
+          top: 320.6 * scale,
+          width: 346 * scale,
+          height: 215 * scale,
+          borderRadius: 14 * scale,
+        },
+      ]}>
+      <AwakeCardContent
+        name="은지"
+        returnTime="-"
+        sleepTime="00:30"
+        wakeTime="07:10"
+        scale={scale}
+      />
+    </TouchableOpacity>
+    <View
+      style={[
+        styles.scheduleSection,
+        {left: 28 * scale, top: 574 * scale, width: 346 * scale},
+      ]}>
+      <Text style={styles.sectionTitle}>주요 일정</Text>
+      <ScheduleRow day="목" date="6" title="전공 시험 (은지)" time="09:00" scale={scale} />
+      <ScheduleRow day="금" date="7" title="개인 일정 (나)" time="종일" scale={scale} />
+      <Text style={styles.scheduleGuide}>
+        세부 일정 공개 여부는 MY 그룹 일정에서 설정할 수 있어요
+      </Text>
+    </View>
+  </>
+);
+
+type AwakeMemberCardProps = {
+  name: string;
+  returnTime: string;
+  sleepTime: string;
+  wakeTime: string;
+  top: number;
+  scale: number;
+};
+
+const AwakeMemberCard = ({name, returnTime, sleepTime, wakeTime, top, scale}: AwakeMemberCardProps) => (
+  <View
+    style={[
+      styles.roommateCard,
+      {
+        left: 28 * scale,
+        top,
+        width: 346 * scale,
+        height: 215 * scale,
+        borderRadius: 14 * scale,
+      },
+    ]}>
+    <AwakeCardContent
+      name={name}
+      returnTime={returnTime}
+      sleepTime={sleepTime}
+      wakeTime={wakeTime}
+      scale={scale}
+    />
+  </View>
+);
+
+type AwakeCardContentProps = {
+  name: string;
+  returnTime: string;
+  sleepTime: string;
+  wakeTime: string;
+  scale: number;
+};
+
+const AwakeCardContent = ({name, returnTime, sleepTime, wakeTime, scale}: AwakeCardContentProps) => (
+  <>
+    <View
+      style={[
+        styles.nameBadge,
+        {right: 10 * scale, top: 10 * scale, width: 40 * scale, height: 18 * scale},
+      ]}>
+      <Text style={styles.nameBadgeText}>{name}</Text>
+    </View>
+    <StatusMetric value={returnTime} label="예상 귀가" left={83 * scale} top={50 * scale} />
+    <StatusMetric value={sleepTime} label="목표 취침" left={193 * scale} top={50 * scale} />
+    <Text style={[styles.cardLabel, {left: 24 * scale, top: 154 * scale}]}>오늘 일정</Text>
+    <View style={[styles.privateSchedule, {right: 20 * scale, top: 154 * scale}]}>
+      <RoommateLock width={14 * scale} height={14 * scale} />
+      <Text style={styles.privateScheduleLabel}>개인 일정</Text>
+    </View>
+    <Text style={[styles.cardLabel, {left: 24 * scale, top: 182 * scale}]}>내일 기상 목표</Text>
+    <Text style={[styles.cardLabel, {right: 20 * scale, top: 182 * scale}]}>{wakeTime}</Text>
+  </>
+);
+
+type SleepingRoommateViewProps = {
+  scale: number;
+  onToggle: () => void;
+};
+
+const SleepingRoommateView = ({scale, onToggle}: SleepingRoommateViewProps) => (
+  <>
+    <View
+      style={[
+        styles.roommateCard,
+        {
+          left: 28 * scale,
+          top: 94 * scale,
+          width: 346 * scale,
+          height: 215 * scale,
+          borderRadius: 14 * scale,
+        },
+      ]}>
+      <View
+        style={[
+          styles.nameBadge,
+          {right: 10 * scale, top: 10 * scale, width: 40 * scale, height: 18 * scale},
+        ]}>
+        <Text style={styles.nameBadgeText}>나</Text>
+      </View>
+      <StatusMetric value="20:00" label="예상 귀가" left={72 * scale} top={50 * scale} />
+      <StatusMetric value="23:00" label="목표 취침" left={204 * scale} top={50 * scale} />
+      <Text style={[styles.cardLabel, {left: 24 * scale, top: 154 * scale}]}>오늘 일정</Text>
+      <View style={[styles.privateSchedule, {right: 20 * scale, top: 154 * scale}]}>
+        <RoommateLock width={14 * scale} height={14 * scale} />
+        <Text style={styles.privateScheduleLabel}>개인 일정</Text>
+      </View>
+      <Text style={[styles.cardLabel, {left: 24 * scale, top: 182 * scale}]}>내일 기상 목표</Text>
+      <Text style={[styles.cardLabel, {right: 20 * scale, top: 182 * scale}]}>07:10</Text>
+    </View>
+
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel="은지 기본 상태로 전환"
+      activeOpacity={0.85}
+      onPress={onToggle}
+      style={[
+        styles.myStatusCard,
+        {
+          left: 28 * scale,
+          top: 321 * scale,
+          width: 346 * scale,
+          height: 100 * scale,
+          borderRadius: 14 * scale,
+        },
+      ]}>
+      <View
+        style={[
+          styles.meBadge,
+          {right: 10 * scale, top: 10 * scale, width: 40 * scale, height: 18 * scale},
+        ]}>
+        <Text style={styles.meBadgeText}>은지</Text>
+      </View>
+      <StatusMetric value="07:00" label="기상 예정" left={69 * scale} dark />
+      <StatusMetric value="7시간째" label="취침 중" left={196 * scale} dark />
+    </TouchableOpacity>
+
+    <Text style={[styles.sleepingGuide, {left: 28 * scale, top: 465 * scale}]}>
+      은지님이 취침 중이에요{'\n'}지켜야 할 항목을 알려드릴게요
+    </Text>
+    <View style={[styles.careList, {left: 28 * scale, top: 513 * scale, width: 346 * scale, rowGap: 6 * scale}]}>
+      <CareItem label="불 끄기" Icon={RoommateSun} checked={false} scale={scale} />
+      <CareItem label="소음 주의하기" Icon={RoommateAlert} checked={false} scale={scale} />
+      <CareItem label="진동 모드로 바꾸기" Icon={RoommateBellOff} checked scale={scale} />
+    </View>
+  </>
+);
+
+type CareItemProps = {
+  label: string;
+  Icon: typeof RoommateSun;
+  checked: boolean;
+  scale: number;
+};
+
+const CareItem = ({label, Icon, checked, scale}: CareItemProps) => (
+  <View style={[styles.careItem, {height: 38 * scale, borderRadius: 8 * scale}]}>
+    <Icon width={20 * scale} height={20 * scale} />
+    <Text style={[styles.careItemText, {marginLeft: 28 * scale}]}>{label}</Text>
+    <View
+      style={[
+        styles.careCheck,
+        checked ? styles.careCheckActive : styles.careCheckInactive,
+        {
+          width: 24 * scale,
+          height: 24 * scale,
+          borderRadius: 12 * scale,
+        },
+      ]}>
+      <RoommateCheck width={15 * scale} height={11 * scale} opacity={checked ? 0.7 : 0.4} />
+    </View>
+  </View>
+);
+
 type StatusMetricProps = {
   value: string;
   label: string;
@@ -262,9 +498,9 @@ const styles = StyleSheet.create({
   headerTitle: {position: 'absolute', alignSelf: 'center', color: Colors.textBlack, fontFamily: 'PretendardSemiBold', fontSize: 16, lineHeight: 19},
   myStatusCard: {position: 'absolute', backgroundColor: Colors.secondary, shadowColor: Colors.textBlack, shadowOffset: {width: 2, height: 2}, shadowOpacity: 0.08, shadowRadius: 26.5, elevation: 5},
   roommateCard: {position: 'absolute', backgroundColor: Colors.background, shadowColor: Colors.textBlack, shadowOffset: {width: 2, height: 2}, shadowOpacity: 0.08, shadowRadius: 26.5, elevation: 5},
-  meBadge: {position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: '#897870'},
+  meBadge: {position: 'absolute', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#897870', borderRadius: 14, backgroundColor: '#897870'},
   meBadgeText: {color: Colors.secondary, fontFamily: 'PretendardBold', fontSize: 12, lineHeight: 15},
-  nameBadge: {position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: Colors.background},
+  nameBadge: {position: 'absolute', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.gray, borderRadius: 14, backgroundColor: Colors.gray},
   nameBadgeText: {color: Colors.secondary, fontFamily: 'PretendardBold', fontSize: 12, lineHeight: 15},
   metric: {position: 'absolute', alignItems: 'center'},
   metricValue: {color: Colors.secondary, fontFamily: 'PretendardBold', fontSize: 24, lineHeight: 29},
@@ -284,6 +520,13 @@ const styles = StyleSheet.create({
   scheduleGuide: {marginTop: 7, color: Colors.textGray, fontFamily: 'PretendardMedium', fontSize: 10, lineHeight: 12, textAlign: 'right'},
   complaintButton: {position: 'absolute', alignSelf: 'center', alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.gray},
   complaintText: {color: Colors.textBlack, fontFamily: 'PretendardSemiBold', fontSize: 18, lineHeight: 22},
+  sleepingGuide: {position: 'absolute', color: Colors.textBlack, fontFamily: 'PretendardSemiBold', fontSize: 16, lineHeight: 19},
+  careList: {position: 'absolute'},
+  careItem: {width: '100%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, backgroundColor: Colors.gray, overflow: 'hidden'},
+  careItemText: {color: Colors.textBlack, fontFamily: 'PretendardSemiBold', fontSize: 14, lineHeight: 17},
+  careCheck: {position: 'absolute', right: 6, alignItems: 'center', justifyContent: 'center'},
+  careCheckActive: {backgroundColor: '#2C2C2C'},
+  careCheckInactive: {borderWidth: 1, borderColor: Colors.textGray, backgroundColor: 'rgba(255,255,255,0.35)'},
   sheetOverlay: {flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.2)'},
   complaintSheet: {width: '100%', backgroundColor: Colors.background, shadowColor: Colors.textBlack, shadowOffset: {width: 0, height: -8}, shadowOpacity: 0.12, shadowRadius: 24, elevation: 20},
   sheetGrabber: {position: 'absolute', alignSelf: 'center', borderRadius: 3, backgroundColor: '#C7C7C7'},
