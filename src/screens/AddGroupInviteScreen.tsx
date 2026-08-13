@@ -104,7 +104,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
           />
         </TouchableOpacity>
 
-        {[48.75, 151.39, 255.28].map(left => (
+        {[40, 207.28].map(left => (
           <View
             key={left}
             style={[
@@ -112,7 +112,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
               {
                 left: left * scale,
                 top: 55 * scale,
-                width: 98.222 * scale,
+                width: 153.718 * scale,
               },
             ]}
           />
@@ -121,7 +121,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
         <Text
           style={[styles.stepText, { left: 38.5 * scale, top: 93 * scale }]}
         >
-          3 / 3
+          2 / 2
         </Text>
         <Text style={[styles.title, { left: 38.5 * scale, top: 115 * scale }]}>
           초대 코드를 공유해주세요

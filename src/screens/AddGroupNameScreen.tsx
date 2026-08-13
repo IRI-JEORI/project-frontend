@@ -57,27 +57,20 @@ export const AddGroupNameScreen = ({ navigation, route }: Props) => {
           style={[
             styles.progressLine,
             styles.progressLineActive,
-            { left: 48.75 * scale, top: 55 * scale, width: 98.222 * scale },
+            { left: 40 * scale, top: 55 * scale, width: 153.718 * scale },
           ]}
         />
         <View
           style={[
             styles.progressLine,
-            styles.progressLineActive,
-            { left: 151.39 * scale, top: 55 * scale, width: 98.222 * scale },
-          ]}
-        />
-        <View
-          style={[
-            styles.progressLine,
-            { left: 255.28 * scale, top: 55 * scale, width: 98.222 * scale },
+            { left: 207.28 * scale, top: 55 * scale, width: 153.718 * scale },
           ]}
         />
 
         <Text
           style={[styles.stepText, { left: 38.5 * scale, top: 93 * scale }]}
         >
-          2 / 3
+          1 / 2
         </Text>
         <Text style={[styles.title, { left: 38.5 * scale, top: 115 * scale }]}>
           그룹 이름을 알려주세요

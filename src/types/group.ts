@@ -1,1 +1,1 @@
-export type GroupType = 'wake' | 'roommate';
+export type GroupType = 'wake';

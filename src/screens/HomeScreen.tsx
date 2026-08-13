@@ -176,12 +176,14 @@ export const HomeScreen = ({ navigation }: Props) => {
             },
           ]}
         >
-          <GroupCard
-            type="normal"
-            title={isJiwooInitialHome ? '지우' : '민주'}
-            scale={scale}
-            backColor="#C7ECEC"
-          />
+          {activeTab === 0 && (
+            <GroupCard
+              type="normal"
+              title={isJiwooInitialHome ? '지우' : '민주'}
+              scale={scale}
+              backColor="#C7ECEC"
+            />
+          )}
           {isJiwooInitialHome && jiwooWakeGroupName && (
             <GroupCard
               type="normal"
@@ -211,12 +213,14 @@ export const HomeScreen = ({ navigation }: Props) => {
               }
             />
           )}
-          <GroupCard
-            type="add"
-            title="그룹 추가하기"
-            scale={scale}
-            onPress={() => setAddGroupMenuVisible(true)}
-          />
+          {activeTab === 0 && (
+            <GroupCard
+              type="add"
+              title="그룹 추가하기"
+              scale={scale}
+              onPress={() => setAddGroupMenuVisible(true)}
+            />
+          )}
         </View>
       </View>
 
@@ -250,7 +254,7 @@ export const HomeScreen = ({ navigation }: Props) => {
               activeOpacity={0.7}
               onPress={() => {
                 setAddGroupMenuVisible(false);
-                navigation.navigate('AddGroup');
+                navigation.navigate('AddGroupName', { groupType: 'wake' });
               }}
               style={styles.addGroupMenuItem}
             >

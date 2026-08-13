@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HomeScreen } from './src/screens/HomeScreen';
-import { AddGroupScreen } from './src/screens/AddGroupScreen';
 import { AddGroupNameScreen } from './src/screens/AddGroupNameScreen';
 import { AddGroupInviteScreen } from './src/screens/AddGroupInviteScreen';
 import { GroupScreen } from './src/screens/GroupScreen';
@@ -12,7 +11,6 @@ import { AlreadyWokenScreen } from './src/screens/AlreadyWokenScreen';
 import { WaitingForMembersScreen } from './src/screens/WaitingForMembersScreen';
 import type { GroupType } from './src/types/group';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { RoommateGroupScreen } from './src/screens/RoommateGroupScreen';
 import { InviteCodeScreen } from './src/screens/InviteCodeScreen';
 import { CameraCaptureScreen } from './src/screens/CameraCaptureScreen';
 import { PhotoReviewScreen } from './src/screens/PhotoReviewScreen';
@@ -21,8 +19,6 @@ import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
 export type RootStackParamList = {
   Home: undefined;
   Settings: undefined;
-  RoommateGroup: undefined;
-  AddGroup: undefined;
   InviteCode: undefined;
   CameraCapture: { recipientName: string };
   PhotoReview: {
@@ -57,8 +53,6 @@ export default function App() {
         >
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="RoommateGroup" component={RoommateGroupScreen} />
-          <Stack.Screen name="AddGroup" component={AddGroupScreen} />
           <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
           <Stack.Screen name="CameraCapture" component={CameraCaptureScreen} />
           <Stack.Screen name="PhotoReview" component={PhotoReviewScreen} />

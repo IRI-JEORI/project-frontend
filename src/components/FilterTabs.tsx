@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../constants/Colors';
 
-const tabs = ['모든 그룹', '깨우기', '룸메이트'];
+const tabs = ['모든 그룹', '깨우기'];
 
 type FilterTabsProps = {
   activeTab: number;
@@ -31,11 +31,7 @@ export const FilterTabs = ({
             accessibilityState={{ selected: isActive }}
             activeOpacity={0.75}
             key={tab}
-            onPress={() => {
-              if (tab !== '룸메이트') {
-                setActiveTab(index);
-              }
-            }}
+            onPress={() => setActiveTab(index)}
             style={[
               styles.tab,
               { width: 63 * scale, height: 25.421 * scale },
