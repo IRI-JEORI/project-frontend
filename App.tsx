@@ -5,9 +5,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AddGroupNameScreen } from './src/screens/AddGroupNameScreen';
 import { AddGroupInviteScreen } from './src/screens/AddGroupInviteScreen';
-import { GroupScreen } from './src/screens/GroupScreen';
-import { WakeUpScreen } from './src/screens/WakeUpScreen';
-import { AlreadyWokenScreen } from './src/screens/AlreadyWokenScreen';
 import { WaitingForMembersScreen } from './src/screens/WaitingForMembersScreen';
 import type { GroupType } from './src/types/group';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -29,9 +26,6 @@ export type RootStackParamList = {
   WakeNotification: undefined;
   AddGroupName: { groupType: GroupType } | undefined;
   AddGroupInvite: { groupType: GroupType; groupName: string } | undefined;
-  Group: undefined;
-  WakeUp: { wakerName: string };
-  AlreadyWoken: { wakerName: string };
   WaitingForMembers:
     | {
         groupType: GroupType;
@@ -65,9 +59,6 @@ export default function App() {
             name="AddGroupInvite"
             component={AddGroupInviteScreen}
           />
-          <Stack.Screen name="Group" component={GroupScreen} />
-          <Stack.Screen name="WakeUp" component={WakeUpScreen} />
-          <Stack.Screen name="AlreadyWoken" component={AlreadyWokenScreen} />
           <Stack.Screen
             name="WaitingForMembers"
             component={WaitingForMembersScreen}
