@@ -13,7 +13,11 @@ const MOOD_COLORS = [
 const CIRCLE_SIZE = 50;
 const CIRCLE_GAP = 18;
 
-const MoodSelector = () => {
+export interface MoodSelectorProps {
+  onSelect?: (index: number) => void;
+}
+
+const MoodSelector = ({ onSelect }: MoodSelectorProps) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   return (
@@ -25,7 +29,10 @@ const MoodSelector = () => {
         return (
           <View key={color} style={styles.column}>
             <TouchableOpacity
-              onPress={() => setSelectedIndex(index)}
+              onPress={() => {
+                setSelectedIndex(index);
+                onSelect?.(index);
+              }}
               style={[
                 styles.circle,
                 { backgroundColor: color },

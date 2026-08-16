@@ -1,6 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/tokens';
+import { RootStackParamList } from '../../navigation/types';
 import MoodSelector from './components/MoodSelector';
 
 const TOP_SPACING = 145;
@@ -8,12 +11,15 @@ const HORIZONTAL_MARGIN = 34;
 const SELECTOR_TOP_SPACING = 38;
 
 const MoodCheckScreen = () => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'MoodCheck'>>();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>눈눈님, 잘 주무셨나요?</Text>
       <Text style={styles.subtitle}>가장 일치하는 기분을 골라주세요</Text>
       <View style={styles.selectorWrapper}>
-        <MoodSelector />
+        <MoodSelector onSelect={() => navigation.navigate('Home')} />
       </View>
     </View>
   );

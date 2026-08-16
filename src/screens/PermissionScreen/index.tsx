@@ -1,5 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import Button from '../../components/Button';
 import {
   cameraIconSvg,
@@ -7,6 +9,7 @@ import {
   mailIconSvg,
 } from '../../assets/icons/permissionIcons';
 import { colors } from '../../theme/tokens';
+import { RootStackParamList } from '../../navigation/types';
 import PermissionItem from './components/PermissionItem';
 
 const TITLE_TOP_SPACING = 160;
@@ -17,6 +20,9 @@ const BUTTON_HORIZONTAL_MARGIN = 28;
 const BUTTON_BOTTOM_SPACING = 52;
 
 const PermissionScreen = () => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Permission'>>();
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -46,7 +52,7 @@ const PermissionScreen = () => {
       </View>
       <View style={styles.spacer} />
       <View style={styles.buttonWrapper}>
-        <Button label="확인" />
+        <Button label="확인" onPress={() => navigation.navigate('MoodCheck')} />
       </View>
     </View>
   );

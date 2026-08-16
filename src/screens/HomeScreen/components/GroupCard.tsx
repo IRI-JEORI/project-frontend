@@ -8,6 +8,7 @@ export interface GroupCardProps {
   label: string;
   accentColor: string;
   showPlus?: boolean;
+  onPress?: () => void;
 }
 
 const ACCENT_WIDTH = 110;
@@ -20,9 +21,9 @@ const CARD_TOP = 10;
 
 const ARTWORK_HEIGHT = CARD_TOP + CARD_HEIGHT;
 
-const GroupCard = ({ label, accentColor, showPlus }: GroupCardProps) => {
+const GroupCard = ({ label, accentColor, showPlus, onPress }: GroupCardProps) => {
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.artwork}>
         <View
           style={[

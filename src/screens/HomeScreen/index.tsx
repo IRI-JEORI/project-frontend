@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/tokens';
+import { RootStackParamList } from '../../navigation/types';
 import FilterTabs from './components/FilterTabs';
+import GroupAddMenu from './components/GroupAddMenu';
 import GroupCard from './components/GroupCard';
 import Header from './components/Header';
 import PromoBanner from './components/PromoBanner';
@@ -11,6 +15,10 @@ const HORIZONTAL_MARGIN = 32;
 const BANNER_WIDTH = 346;
 
 const HomeScreen = () => {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
+  const [addMenuVisible, setAddMenuVisible] = useState(false);
+
   return (
     <View style={styles.container}>
       <View style={styles.padded}>
@@ -24,9 +32,23 @@ const HomeScreen = () => {
         <FilterTabs />
       </View>
       <View style={[styles.groupRow, styles.padded]}>
-        <GroupCard label="눈눈" accentColor={colors.mint} />
-        <GroupCard label="그룹 추가하기" accentColor={colors.brown} showPlus />
+        <GroupCard
+          label="눈눈"
+          accentColor={colors.mint}
+          onPress={() => navigation.navigate('PersonalGroup')}
+        />
+        <GroupCard
+          label="그룹 추가하기"
+          accentColor={colors.brown}
+          showPlus
+          onPress={() => setAddMenuVisible(true)}
+        />
       </View>
+      <GroupAddMenu
+        visible={addMenuVisible}
+        onClose={() => setAddMenuVisible(false)}
+        onPressEnterCode={() => navigation.navigate('InviteCode')}
+      />
     </View>
   );
 };

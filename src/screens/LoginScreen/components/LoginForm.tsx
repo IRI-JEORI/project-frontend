@@ -4,12 +4,16 @@ import Button from '../../../components/Button';
 import TextField from '../../../components/TextField';
 import { colors, spacing } from '../../../theme/tokens';
 
-const LoginForm = () => {
+export interface LoginFormProps {
+  onLoginPress?: () => void;
+}
+
+const LoginForm = ({ onLoginPress }: LoginFormProps) => {
   return (
     <View style={styles.card}>
       <TextField label="Email" placeholder="Value" />
       <TextField label="비밀번호" placeholder="Value" secureTextEntry />
-      <Button label="로그인" />
+      <Button label="로그인" onPress={onLoginPress} />
       <TouchableOpacity>
         <Text style={styles.forgotPassword}>비밀번호를 잊어버렸나요?</Text>
       </TouchableOpacity>

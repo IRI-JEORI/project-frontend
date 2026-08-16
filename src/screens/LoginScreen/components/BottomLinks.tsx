@@ -2,12 +2,16 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../../theme/tokens';
 
-const BottomLinks = () => {
+export interface BottomLinksProps {
+  onRegisterPress?: () => void;
+}
+
+const BottomLinks = ({ onRegisterPress }: BottomLinksProps) => {
   return (
     <View style={styles.container}>
       <Text style={styles.orText}>또는</Text>
       <View style={styles.linkRow}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={onRegisterPress}>
           <Text style={styles.link}>회원가입</Text>
         </TouchableOpacity>
         <Text style={styles.divider}>|</Text>

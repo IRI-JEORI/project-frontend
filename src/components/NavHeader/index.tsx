@@ -1,25 +1,31 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Icon from '../../../components/Icon';
-import { chevronLeftSvg, plusCircleSvg } from '../../../assets/icons/navIcons';
-import { colors } from '../../../theme/tokens';
+import Icon from '../Icon';
+import { chevronLeftSvg, menuIconSvg, plusCircleSvg } from '../../assets/icons/navIcons';
+import { colors } from '../../theme/tokens';
 
 export interface NavHeaderProps {
   title: string;
-  showAddButton?: boolean;
-  onPressAdd?: () => void;
+  rightIcon?: 'add' | 'menu';
+  onPressRight?: () => void;
+  onPressBack?: () => void;
 }
 
-const NavHeader = ({ title, showAddButton, onPressAdd }: NavHeaderProps) => {
+const RIGHT_ICONS = {
+  add: plusCircleSvg,
+  menu: menuIconSvg,
+};
+
+const NavHeader = ({ title, rightIcon, onPressRight, onPressBack }: NavHeaderProps) => {
   return (
     <View style={styles.row}>
-      <TouchableOpacity style={styles.side}>
+      <TouchableOpacity style={styles.side} onPress={onPressBack}>
         <Icon xml={chevronLeftSvg} size={24} color={colors.black} />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>
-      {showAddButton ? (
-        <TouchableOpacity style={styles.side} onPress={onPressAdd}>
-          <Icon xml={plusCircleSvg} size={24} color={colors.black} />
+      {rightIcon ? (
+        <TouchableOpacity style={styles.side} onPress={onPressRight}>
+          <Icon xml={RIGHT_ICONS[rightIcon]} size={rightIcon === 'menu' ? 20 : 24} color={colors.black} />
         </TouchableOpacity>
       ) : (
         <View style={styles.side} />
@@ -38,6 +44,8 @@ const styles = StyleSheet.create({
   side: {
     width: 24,
     height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 16,

@@ -1,8 +1,13 @@
 import React from 'react';
-import PersonalGroupScreen from './src/screens/PersonalGroupScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import RootNavigator from './src/navigation/RootNavigator';
 
 const App = () => {
-  return <PersonalGroupScreen />;
+  return (
+    <NavigationContainer>
+      <RootNavigator />
+    </NavigationContainer>
+  );
 };
 
 export default App;

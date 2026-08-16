@@ -4,14 +4,18 @@ import Button from '../../../components/Button';
 import TextField from '../../../components/TextField';
 import { colors, spacing } from '../../../theme/tokens';
 
-const RegisterForm = () => {
+export interface RegisterFormProps {
+  onRegisterPress?: () => void;
+}
+
+const RegisterForm = ({ onRegisterPress }: RegisterFormProps) => {
   return (
     <View style={styles.card}>
       <TextField label="닉네임" placeholder="Value" />
       <TextField label="Email" placeholder="Value" />
       <TextField label="비밀번호" placeholder="Value" secureTextEntry />
       <TextField label="비밀번호 확인" placeholder="Value" secureTextEntry />
-      <Button label="등록" />
+      <Button label="등록" onPress={onRegisterPress} />
     </View>
   );
 };

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import Button from '../../components/Button';
+import NavHeader from '../../components/NavHeader';
+import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/tokens';
 import CountdownCard from './components/CountdownCard';
-import NavHeader from './components/NavHeader';
 import RecommendationHeadline from './components/RecommendationHeadline';
 import ReturnTimeSheet from './components/ReturnTimeSheet';
 import ScheduleGrid from './components/ScheduleGrid';
@@ -16,13 +19,16 @@ const TAB_LABELS = ['오늘', '내 고정 시간표'];
 const PersonalGroupScreen = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'PersonalGroup'>>();
 
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <NavHeader
           title={TAB_LABELS[selectedTab]}
-          showAddButton={selectedTab === 1}
+          rightIcon={selectedTab === 1 ? 'add' : undefined}
+          onPressBack={() => navigation.goBack()}
         />
         <View style={styles.tabBarWrapper}>
           <TabBar selected={selectedTab} onSelect={setSelectedTab} />
