@@ -55,7 +55,7 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
       navigation.navigate('PhotoReview', {
         photoPath: photo.filePath,
         recipientName: route.params.recipientName,
-        photographer: route.params.recipientName === '지우' ? 'minju' : 'jiwoo',
+        photographer: route.params.photographer,
       });
     } finally {
       setIsTakingPhoto(false);

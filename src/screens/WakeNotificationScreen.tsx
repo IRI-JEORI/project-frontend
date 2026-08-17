@@ -28,7 +28,7 @@ export const WakeNotificationScreen = ({ navigation }: Props) => {
       <View style={[styles.container, { width: contentWidth }]}>
         <Text style={[styles.wakeTime, { top: 250 * scale }]}>07:32</Text>
         <Text style={[styles.wakerMessage, { top: 332 * scale }]}>
-          지우님이 깨웠어요
+          눈눈님이 깨웠어요
         </Text>
         <Text style={[styles.description, { top: 383 * scale }]}>
           일어났다면 인증사진을 찍어주세요{`\n`}사진은 8시간 후 사라져요
@@ -39,7 +39,10 @@ export const WakeNotificationScreen = ({ navigation }: Props) => {
           accessibilityLabel="인증사진 찍기"
           activeOpacity={0.8}
           onPress={() =>
-            navigation.replace('CameraCapture', { recipientName: '지우' })
+            navigation.replace('CameraCapture', {
+              recipientName: '눈눈',
+              photographer: 'minju',
+            })
           }
           style={[
             styles.cameraButton,

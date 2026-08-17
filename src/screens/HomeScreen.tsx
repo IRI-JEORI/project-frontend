@@ -22,17 +22,15 @@ import {
   MINJU_WAKE_GROUP_STORAGE_KEY,
   type DemoUser,
 } from '../constants/DemoUser';
-import { FilterTabs } from '../components/FilterTabs';
 import { GroupCard } from '../components/GroupCard';
-import NotificationBell from '../assets/images/notification-bell.svg';
+import ProfileOutline from '../assets/images/profile-outline.svg';
 
-const DESIGN_WIDTH = 390;
+const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export const HomeScreen = ({ navigation }: Props) => {
-  const [activeTab, setActiveTab] = useState(0);
   const [addGroupMenuVisible, setAddGroupMenuVisible] = useState(false);
   const [demoUser, setDemoUser] = useState<DemoUser>('jiwoo');
   const [jiwooWakeGroupName, setJiwooWakeGroupName] = useState<string | null>(
@@ -77,119 +75,63 @@ export const HomeScreen = ({ navigation }: Props) => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
-        <View
+        <Image
+          source={require('../assets/images/nunnun-logo.png')}
           style={[
-            styles.brandRow,
+            styles.logo,
             {
+              left: 32 * scale,
               top: 29 * scale,
-              paddingHorizontal: 32 * scale,
+              width: 49 * scale,
+              height: 39 * scale,
             },
           ]}
-        >
-          <Image
-            source={require('../assets/images/nunnun-logo.png')}
-            style={{ width: 49 * scale, height: 39 * scale }}
-            resizeMode="contain"
-          />
-          <View style={[styles.headerActions, { columnGap: 18 * scale }]}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="알림"
-              activeOpacity={0.7}
-              hitSlop={12}
-            >
-              <NotificationBell width={20 * scale} height={20 * scale} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel="설정"
-              activeOpacity={0.7}
-              hitSlop={12}
-              onPress={() => navigation.navigate('Settings')}
-            >
-              <Image
-                source={require('../assets/images/settings.png')}
-                style={{ width: 24 * scale, height: 24 * scale }}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+          resizeMode="contain"
+        />
 
-        <View
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="프로필 및 설정"
+          activeOpacity={0.7}
+          hitSlop={12}
+          onPress={() => navigation.navigate('Settings')}
           style={[
-            styles.notificationCard,
+            styles.profileButton,
             {
-              left: 28 * scale,
-              top: 85 * scale,
-              width: 346 * scale,
-              height: 69 * scale,
-              borderRadius: 8 * scale,
-              paddingHorizontal: 12 * scale,
-              paddingTop: 14 * scale,
+              right: 35 * scale,
+              top: 39 * scale,
+              width: 18 * scale,
+              height: 18 * scale,
             },
           ]}
         >
-          <Text style={styles.notificationEyebrow}>
-            NUNNUN을 잘 활용하려면?
-          </Text>
-          <Text style={styles.notificationMessage}>
-            시간표를 추가하면 수면 시간을 추천받을 수 있어요
-          </Text>
-          <View
-            style={[
-              styles.notificationDots,
-              { right: 14 * scale, top: 8 * scale },
-            ]}
-          >
-            <View
-              style={[styles.notificationDot, styles.notificationDotActive]}
-            />
-            <View style={styles.notificationDot} />
-            <View style={styles.notificationDot} />
-          </View>
-        </View>
+          <ProfileOutline width={18 * scale} height={18 * scale} />
+        </TouchableOpacity>
 
         <Text
-          style={[styles.headerTitle, { left: 34.5 * scale, top: 190 * scale }]}
+          style={[styles.headerTitle, { left: 36 * scale, top: 99 * scale }]}
         >
-          {isJiwooInitialHome ? '지우님의 그룹' : '민주님의 그룹'}
+          {isJiwooInitialHome ? '눈눈님의 그룹' : '지우님의 그룹'}
         </Text>
-
-        <View style={[styles.tabsPosition, { top: 227 * scale }]}>
-          <FilterTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            scale={scale}
-          />
-        </View>
 
         <View
           style={[
             styles.cardsGrid,
             {
-              left: 33.97 * scale,
-              top: 323 * scale,
+              left: 32 * scale,
+              top: 232 * scale,
               width: 332 * scale,
               columnGap: 24 * scale,
               rowGap: 45 * scale,
             },
           ]}
         >
-          {activeTab === 0 && (
-            <GroupCard
-              type="normal"
-              title={isJiwooInitialHome ? '지우' : '민주'}
-              scale={scale}
-              backColor="#C7ECEC"
-            />
-          )}
           {isJiwooInitialHome && jiwooWakeGroupName && (
             <GroupCard
               type="normal"
               title={jiwooWakeGroupName}
               scale={scale}
-              backColor="#C7ECEC"
+              backColor="#292828"
               onPress={() =>
                 navigation.navigate('WaitingForMembers', {
                   groupType: 'wake',
@@ -203,7 +145,7 @@ export const HomeScreen = ({ navigation }: Props) => {
               type="normal"
               title={minjuWakeGroupName}
               scale={scale}
-              backColor="#C7ECEC"
+              backColor="#292828"
               onPress={() =>
                 navigation.navigate('WaitingForMembers', {
                   groupType: 'wake',
@@ -213,14 +155,12 @@ export const HomeScreen = ({ navigation }: Props) => {
               }
             />
           )}
-          {activeTab === 0 && (
-            <GroupCard
-              type="add"
-              title="그룹 추가하기"
-              scale={scale}
-              onPress={() => setAddGroupMenuVisible(true)}
-            />
-          )}
+          <GroupCard
+            type="add"
+            title="그룹 추가하기"
+            scale={scale}
+            onPress={() => setAddGroupMenuVisible(true)}
+          />
         </View>
       </View>
 
@@ -290,13 +230,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     overflow: 'hidden',
   },
-  brandRow: {
+  logo: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
+  },
+  profileButton: {
+    position: 'absolute',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   headerTitle: {
     position: 'absolute',
@@ -304,53 +244,6 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  notificationCard: {
-    position: 'absolute',
-    backgroundColor: Colors.background,
-    shadowColor: Colors.textBlack,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 13,
-    elevation: 4,
-  },
-  notificationEyebrow: {
-    color: Colors.textGray,
-    fontFamily: 'PretendardSemiBold',
-    fontSize: 12,
-    lineHeight: 15,
-  },
-  notificationMessage: {
-    marginTop: 4,
-    color: Colors.textBlack,
-    fontFamily: 'PretendardSemiBold',
-    fontSize: 14,
-    lineHeight: 17,
-  },
-  notificationDots: {
-    position: 'absolute',
-    flexDirection: 'row',
-    columnGap: 4,
-  },
-  notificationDot: {
-    width: 4.4,
-    height: 4.4,
-    borderRadius: 3,
-    backgroundColor: '#333333',
-    opacity: 0.3,
-  },
-  notificationDotActive: {
-    opacity: 1,
-    backgroundColor: Colors.textBlack,
-  },
-  tabsPosition: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
   },
   cardsGrid: {
     position: 'absolute',

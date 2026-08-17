@@ -17,12 +17,15 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Clipboard from '@react-native-clipboard/clipboard';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
+  JIWOO_WAKE_REQUEST_STORAGE_KEY,
   MINJU_WAKE_PHOTO_STORAGE_KEY,
   MINJU_WAKE_REQUEST_STORAGE_KEY,
+  WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
   WAKE_GROUP_MINJU_JOINED_STORAGE_KEY,
 } from '../constants/DemoUser';
 import MemberStatusGray from '../assets/images/member-status-gray.svg';
@@ -41,6 +44,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     selfPhotoPath: null as string | null,
     minjuPhotoPath: null as string | null,
     hasMinjuWakeRequest: false,
+    wakeConfirmVisible: false,
   });
   const { width: viewportWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -90,6 +94,24 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     }));
   };
 
+  const wakeJiwoo = async () => {
+    await AsyncStorage.setItem(JIWOO_WAKE_REQUEST_STORAGE_KEY, 'true');
+    setWakeDemoState(state => ({
+      ...state,
+      wakeConfirmVisible: false,
+    }));
+  };
+
+  const copyInviteCode = async () => {
+    const inviteCode = await AsyncStorage.getItem(
+      WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
+    );
+
+    if (inviteCode) {
+      Clipboard.setString(inviteCode);
+    }
+  };
+
   const firstMemberPhotoPath = isMinjuViewer
     ? wakeDemoState.minjuPhotoPath
     : wakeDemoState.selfPhotoPath;
@@ -99,6 +121,567 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
   const bothMembersAwake = Boolean(
     wakeDemoState.selfPhotoPath && wakeDemoState.minjuPhotoPath,
   );
+
+  if (!isMinjuViewer && !wakeDemoState.hasMinjuJoined) {
+    const emptySlots = [
+      { left: 211, top: 145, buttonTop: 373 },
+      { left: 23, top: 435, buttonTop: 663 },
+      { left: 212, top: 435, buttonTop: 663 },
+    ];
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={[styles.container, { width: contentWidth }]}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="홈으로 이동"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() => navigation.popTo('Home')}
+            style={[
+              styles.headerIconButton,
+              {
+                left: 28 * scale,
+                top: 9 * scale,
+                width: 24 * scale,
+                height: 24 * scale,
+              },
+            ]}
+          >
+            <Image
+              source={require('../assets/images/chevron-left.png')}
+              resizeMode="contain"
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          <Text style={[styles.groupTitle, { top: 20 * scale }]}>
+            {route.params?.groupName || '아침 야호'}
+          </Text>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹 메뉴"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: true }))
+            }
+            style={[
+              styles.headerIconButton,
+              {
+                right: 27 * scale,
+                top: 11 * scale,
+                width: 20 * scale,
+                height: 20 * scale,
+              },
+            ]}
+          >
+            <Image
+              source={require('../assets/images/menu.png')}
+              resizeMode="contain"
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          <View
+            style={[
+              styles.inviteMemberCard,
+              styles.inviteSelfCard,
+              {
+                left: 21 * scale,
+                top: 145 * scale,
+                width: 172 * scale,
+                height: 219 * scale,
+                borderRadius: 8 * scale,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.inviteMemberMeta,
+                { left: 11 * scale, top: 10 * scale },
+              ]}
+            >
+              <MemberStatusGray width={17 * scale} height={16 * scale} />
+              <Text style={styles.inviteMetaText}>눈눈</Text>
+              <View style={styles.inviteMetaDot} />
+              <Text style={styles.inviteMetaText}>8시간 남음</Text>
+            </View>
+            <View
+              style={[
+                styles.inviteSleepDetails,
+                { left: 15 * scale, bottom: 17 * scale },
+              ]}
+            >
+              <View style={styles.sleepDetailColumn}>
+                <Text style={styles.inviteSleepValue}>09:03</Text>
+                <Text style={styles.inviteSleepLabel}>기상 시간</Text>
+              </View>
+              <View style={styles.sleepDetailColumn}>
+                <Text style={styles.inviteSleepValue}>1시간</Text>
+                <Text style={styles.inviteSleepLabel}>목표까지</Text>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="지금 인증할게요"
+            activeOpacity={0.8}
+            onPress={() =>
+              navigation.navigate('CameraCapture', {
+                recipientName: '지우',
+                photographer: 'jiwoo',
+              })
+            }
+            style={[
+              styles.inviteActionButton,
+              styles.inviteActionButtonActive,
+              {
+                left: 21 * scale,
+                top: 373 * scale,
+                width: 171 * scale,
+                height: 44 * scale,
+                borderRadius: 8 * scale,
+              },
+            ]}
+          >
+            <Text style={styles.inviteActionTextActive}>지금 인증할게요</Text>
+          </TouchableOpacity>
+
+          {emptySlots.map((slot, index) => (
+            <React.Fragment key={`${slot.left}-${slot.top}`}>
+              <View
+                style={[
+                  styles.inviteMemberCard,
+                  styles.inviteEmptyCard,
+                  {
+                    left: slot.left * scale,
+                    top: slot.top * scale,
+                    width: 170 * scale,
+                    height: 219 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              />
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`친구 ${index + 1} 초대하기`}
+                activeOpacity={0.7}
+                onPress={() => copyInviteCode().catch(() => undefined)}
+                style={[
+                  styles.inviteActionButton,
+                  styles.inviteActionButtonInactive,
+                  {
+                    left: (slot.left - 1) * scale,
+                    top: slot.buttonTop * scale,
+                    width: 171 * scale,
+                    height: 44 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              >
+                <Text style={styles.inviteActionTextInactive}>
+                  친구 초대하기
+                </Text>
+              </TouchableOpacity>
+            </React.Fragment>
+          ))}
+
+          <Modal
+            animationType="fade"
+            onRequestClose={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: false }))
+            }
+            statusBarTranslucent
+            transparent
+            visible={wakeDemoState.menuVisible}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="그룹 메뉴 닫기"
+              onPress={() =>
+                setWakeDemoState(state => ({ ...state, menuVisible: false }))
+              }
+              style={styles.menuOverlay}
+            >
+              <Pressable
+                onPress={event => event.stopPropagation()}
+                style={[
+                  styles.menuPanel,
+                  {
+                    right: Math.max(
+                      (viewportWidth - contentWidth) / 2 + 28 * scale,
+                      20,
+                    ),
+                    top: insets.top + 52 * scale,
+                    width: 250 * scale,
+                    height: 140 * scale,
+                    borderRadius: 30 * scale,
+                  },
+                ]}
+              >
+                {['방 나가기', '초대 코드 복사하기', '방 이름 바꾸기'].map(
+                  item => (
+                    <TouchableOpacity
+                      key={item}
+                      accessibilityRole="button"
+                      activeOpacity={0.7}
+                      onPress={
+                        item === '초대 코드 복사하기'
+                          ? () => copyInviteCode().catch(() => undefined)
+                          : undefined
+                      }
+                      style={styles.menuItem}
+                    >
+                      <Text style={styles.menuItemText}>{item}</Text>
+                    </TouchableOpacity>
+                  ),
+                )}
+              </Pressable>
+            </Pressable>
+          </Modal>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (
+    isMinjuViewer &&
+    wakeDemoState.hasMinjuJoined &&
+    !wakeDemoState.selfPhotoPath &&
+    !wakeDemoState.minjuPhotoPath
+  ) {
+    const members = [
+      { left: 21, name: '눈눈', remaining: '8시간 남음' },
+      { left: 211, name: '지우', remaining: '0시간 남음' },
+    ];
+    const emptySlots = [23, 212];
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={[styles.container, { width: contentWidth }]}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="홈으로 이동"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() => navigation.popTo('Home')}
+            style={[
+              styles.headerIconButton,
+              {
+                left: 28 * scale,
+                top: 9 * scale,
+                width: 24 * scale,
+                height: 24 * scale,
+              },
+            ]}
+          >
+            <Image
+              source={require('../assets/images/chevron-left.png')}
+              resizeMode="contain"
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          <Text style={[styles.groupTitle, { top: 20 * scale }]}>
+            {route.params?.groupName || '아침야호'}
+          </Text>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹 메뉴"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: true }))
+            }
+            style={[
+              styles.headerIconButton,
+              {
+                right: 27 * scale,
+                top: 11 * scale,
+                width: 20 * scale,
+                height: 20 * scale,
+              },
+            ]}
+          >
+            <Image
+              source={require('../assets/images/menu.png')}
+              resizeMode="contain"
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          {members.map(member => (
+            <View
+              key={member.name}
+              style={[
+                styles.inviteMemberCard,
+                styles.inviteSelfCard,
+                {
+                  left: member.left * scale,
+                  top: 145 * scale,
+                  width: (member.left === 21 ? 172 : 170) * scale,
+                  height: 219 * scale,
+                  borderRadius: 8 * scale,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.inviteMemberMeta,
+                  { left: 11 * scale, top: 10 * scale },
+                ]}
+              >
+                <MemberStatusGray width={17 * scale} height={16 * scale} />
+                <Text style={styles.inviteMetaText}>{member.name}</Text>
+                <View style={styles.inviteMetaDot} />
+                <Text style={styles.inviteMetaText}>{member.remaining}</Text>
+              </View>
+              <View
+                style={[
+                  styles.inviteSleepDetails,
+                  { left: 15 * scale, bottom: 17 * scale },
+                ]}
+              >
+                <View style={styles.sleepDetailColumn}>
+                  <Text style={styles.inviteSleepValue}>09:03</Text>
+                  <Text style={styles.inviteSleepLabel}>기상 시간</Text>
+                </View>
+                <View style={styles.sleepDetailColumn}>
+                  <Text style={styles.inviteSleepValue}>1시간</Text>
+                  <Text style={styles.inviteSleepLabel}>목표까지</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="눈눈 깨우기"
+            activeOpacity={0.8}
+            onPress={() =>
+              setWakeDemoState(state => ({
+                ...state,
+                wakeConfirmVisible: true,
+              }))
+            }
+            style={[
+              styles.inviteActionButton,
+              styles.wakeActionButton,
+              {
+                left: 21 * scale,
+                top: 373 * scale,
+                width: 171 * scale,
+                height: 44 * scale,
+                borderRadius: 8 * scale,
+              },
+            ]}
+          >
+            <Text style={styles.inviteActionTextActive}>깨우기</Text>
+          </TouchableOpacity>
+
+          <Modal
+            animationType="fade"
+            onRequestClose={() =>
+              setWakeDemoState(state => ({
+                ...state,
+                wakeConfirmVisible: false,
+              }))
+            }
+            statusBarTranslucent
+            transparent
+            visible={wakeDemoState.wakeConfirmVisible}
+          >
+            <View style={styles.wakeConfirmOverlay}>
+              <View
+                style={[
+                  styles.wakeConfirmPanel,
+                  {
+                    width: 320 * scale,
+                    height: 315 * scale,
+                    borderRadius: 16 * scale,
+                  },
+                ]}
+              >
+                <Text
+                  accessibilityLabel="주의"
+                  style={[styles.wakeConfirmIcon, { fontSize: 72 * scale }]}
+                >
+                  ⚠️
+                </Text>
+                <Text style={styles.wakeConfirmTitle}>눈눈님을 깨울까요?</Text>
+                <Text style={styles.wakeConfirmDescription}>
+                  코드를 입력하면 그룹에 참여할 수 있어요
+                </Text>
+                <View style={styles.wakeConfirmActions}>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="안 깨울래요"
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      setWakeDemoState(state => ({
+                        ...state,
+                        wakeConfirmVisible: false,
+                      }))
+                    }
+                    style={[
+                      styles.wakeConfirmButton,
+                      styles.wakeConfirmCancelButton,
+                    ]}
+                  >
+                    <Text style={styles.wakeConfirmCancelText}>
+                      안 깨울래요
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel="깨울게요"
+                    activeOpacity={0.8}
+                    onPress={() => wakeJiwoo().catch(() => undefined)}
+                    style={[
+                      styles.wakeConfirmButton,
+                      styles.wakeConfirmAcceptButton,
+                    ]}
+                  >
+                    <Text style={styles.wakeConfirmAcceptText}>깨울게요</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="지금 인증할게요"
+            activeOpacity={0.8}
+            onPress={() =>
+              navigation.navigate('CameraCapture', {
+                recipientName: '눈눈',
+                photographer: 'minju',
+              })
+            }
+            style={[
+              styles.inviteActionButton,
+              styles.inviteActionButtonActive,
+              {
+                left: 210 * scale,
+                top: 373 * scale,
+                width: 171 * scale,
+                height: 44 * scale,
+                borderRadius: 8 * scale,
+              },
+            ]}
+          >
+            <Text style={styles.inviteActionTextActive}>지금 인증할게요</Text>
+          </TouchableOpacity>
+
+          {emptySlots.map((left, index) => (
+            <React.Fragment key={left}>
+              <View
+                style={[
+                  styles.inviteMemberCard,
+                  styles.inviteEmptyCard,
+                  {
+                    left: left * scale,
+                    top: 435 * scale,
+                    width: 170 * scale,
+                    height: 219 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              />
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={`친구 ${index + 1} 초대하기`}
+                activeOpacity={0.7}
+                onPress={() => copyInviteCode().catch(() => undefined)}
+                style={[
+                  styles.inviteActionButton,
+                  styles.inviteActionButtonInactive,
+                  {
+                    left: (left - 1) * scale,
+                    top: 663 * scale,
+                    width: 171 * scale,
+                    height: 44 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              >
+                <Text style={styles.inviteActionTextInactive}>
+                  친구 초대하기
+                </Text>
+              </TouchableOpacity>
+            </React.Fragment>
+          ))}
+
+          <Modal
+            animationType="fade"
+            onRequestClose={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: false }))
+            }
+            statusBarTranslucent
+            transparent
+            visible={wakeDemoState.menuVisible}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="그룹 메뉴 닫기"
+              onPress={() =>
+                setWakeDemoState(state => ({ ...state, menuVisible: false }))
+              }
+              style={styles.menuOverlay}
+            >
+              <Pressable
+                onPress={event => event.stopPropagation()}
+                style={[
+                  styles.menuPanel,
+                  {
+                    right: Math.max(
+                      (viewportWidth - contentWidth) / 2 + 28 * scale,
+                      20,
+                    ),
+                    top: insets.top + 52 * scale,
+                    width: 250 * scale,
+                    height: 140 * scale,
+                    borderRadius: 30 * scale,
+                  },
+                ]}
+              >
+                {['방 나가기', '초대 코드 복사하기', '방 이름 바꾸기'].map(
+                  item => (
+                    <TouchableOpacity
+                      key={item}
+                      accessibilityRole="button"
+                      activeOpacity={0.7}
+                      onPress={
+                        item === '초대 코드 복사하기'
+                          ? () => copyInviteCode().catch(() => undefined)
+                          : undefined
+                      }
+                      style={styles.menuItem}
+                    >
+                      <Text style={styles.menuItemText}>{item}</Text>
+                    </TouchableOpacity>
+                  ),
+                )}
+              </Pressable>
+            </Pressable>
+          </Modal>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -158,13 +741,14 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
 
         <TouchableOpacity
           accessibilityRole={!isMinjuViewer ? 'button' : undefined}
-          accessibilityLabel={!isMinjuViewer ? '지우 인증사진 촬영' : '민주'}
+          accessibilityLabel={!isMinjuViewer ? '눈눈 인증사진 촬영' : '지우'}
           activeOpacity={!isMinjuViewer ? 0.85 : 1}
           onPress={
             !isMinjuViewer
               ? () =>
                   navigation.navigate('CameraCapture', {
-                    recipientName: '민주',
+                    recipientName: '지우',
+                    photographer: 'jiwoo',
                   })
               : undefined
           }
@@ -191,7 +775,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             wakeDemoState.hasMinjuWakeRequest &&
             !firstMemberPhotoPath && (
               <Image
-                accessibilityLabel="지우에게 받은 깨우기 알림"
+                accessibilityLabel="눈눈에게 받은 깨우기 알림"
                 resizeMode="contain"
                 source={require('../assets/images/wake-alarm.png')}
                 style={[
@@ -216,7 +800,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               <MemberStatusGray width={16 * scale} height={16 * scale} />
             )}
             <Text style={styles.memberName}>
-              {isMinjuViewer ? '민주' : '지우'}
+              {isMinjuViewer ? '지우' : '눈눈'}
             </Text>
           </View>
           <View
@@ -275,7 +859,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={
-            wakeDemoState.hasMinjuJoined ? '민주 멤버' : '민주 참여 상태로 전환'
+            wakeDemoState.hasMinjuJoined
+              ? `${isMinjuViewer ? '눈눈' : '지우'} 멤버`
+              : `${isMinjuViewer ? '눈눈' : '지우'} 참여 상태로 전환`
           }
           activeOpacity={wakeDemoState.hasMinjuJoined ? 1 : 0.85}
           onPress={() =>
@@ -300,7 +886,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               {secondMemberPhotoPath && (
                 <Image
                   accessibilityIgnoresInvertColors
-                  accessibilityLabel="지우가 올린 인증사진"
+                  accessibilityLabel={`${
+                    isMinjuViewer ? '눈눈' : '지우'
+                  }가 올린 인증사진`}
                   resizeMode="cover"
                   source={{ uri: `file://${secondMemberPhotoPath}` }}
                   style={styles.memberPhoto}
@@ -308,7 +896,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               )}
               {!isMinjuViewer && wakeDemoState.hasMinjuWakeRequest && (
                 <Image
-                  accessibilityLabel="민주에게 깨우기 알림 전송됨"
+                  accessibilityLabel="지우에게 깨우기 알림 전송됨"
                   resizeMode="contain"
                   source={require('../assets/images/wake-alarm.png')}
                   style={[
@@ -333,7 +921,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   <MemberStatusYellow width={16 * scale} height={16 * scale} />
                 )}
                 <Text style={styles.memberName}>
-                  {isMinjuViewer ? '지우' : '민주'}
+                  {isMinjuViewer ? '눈눈' : '지우'}
                 </Text>
               </View>
               <View
@@ -517,6 +1105,11 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                     key={item}
                     accessibilityRole="button"
                     activeOpacity={0.7}
+                    onPress={
+                      item === '초대 코드 복사하기'
+                        ? () => copyInviteCode().catch(() => undefined)
+                        : undefined
+                    }
                     style={styles.menuItem}
                   >
                     <Text style={styles.menuItemText}>{item}</Text>
@@ -556,6 +1149,143 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: Colors.textBlack,
     fontFamily: 'PretendardSemiBold',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  inviteMemberCard: {
+    position: 'absolute',
+    overflow: 'hidden',
+  },
+  inviteSelfCard: {
+    backgroundColor: Colors.gray,
+  },
+  inviteEmptyCard: {
+    borderWidth: 1,
+    borderColor: 'rgba(234, 234, 234, 0.9)',
+    backgroundColor: Colors.background,
+  },
+  inviteMemberMeta: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 3,
+  },
+  inviteMetaText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 10,
+    lineHeight: 12,
+  },
+  inviteMetaDot: {
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: Colors.textGray,
+  },
+  inviteSleepDetails: {
+    position: 'absolute',
+    flexDirection: 'row',
+    columnGap: 37,
+  },
+  inviteSleepValue: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardBold',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  inviteSleepLabel: {
+    marginTop: 1,
+    color: Colors.textGray,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 10,
+    lineHeight: 12,
+  },
+  inviteActionButton: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteActionButtonActive: {
+    backgroundColor: '#202224',
+  },
+  wakeActionButton: {
+    backgroundColor: '#FF4B4B',
+  },
+  wakeConfirmOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
+  },
+  wakeConfirmPanel: {
+    alignItems: 'center',
+    paddingTop: 39,
+    backgroundColor: Colors.background,
+  },
+  wakeConfirmIcon: {
+    lineHeight: 86,
+  },
+  wakeConfirmTitle: {
+    marginTop: 22,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardBold',
+    fontSize: 22,
+    lineHeight: 27,
+  },
+  wakeConfirmDescription: {
+    marginTop: 6,
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  wakeConfirmActions: {
+    position: 'absolute',
+    right: 14,
+    bottom: 39,
+    left: 14,
+    flexDirection: 'row',
+    columnGap: 16,
+  },
+  wakeConfirmButton: {
+    flex: 1,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  wakeConfirmCancelButton: {
+    backgroundColor: Colors.gray,
+  },
+  wakeConfirmAcceptButton: {
+    backgroundColor: '#FF4B4B',
+  },
+  wakeConfirmCancelText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  wakeConfirmAcceptText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  inviteActionButtonInactive: {
+    borderWidth: 1,
+    borderColor: Colors.gray,
+    backgroundColor: Colors.background,
+  },
+  inviteActionTextActive: {
+    color: '#F6F6F6',
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  inviteActionTextInactive: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
   },

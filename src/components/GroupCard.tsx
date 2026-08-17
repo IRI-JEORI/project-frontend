@@ -40,7 +40,7 @@ export const GroupCard = ({
             height: 124.856 * scale,
             borderRadius: 14 * scale,
             backgroundColor:
-              backColor ?? (isAddGroup ? Colors.secondary : Colors.primary),
+              backColor ?? (isAddGroup ? '#070707' : Colors.primary),
           },
         ]}
       />

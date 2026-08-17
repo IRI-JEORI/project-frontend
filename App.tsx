@@ -17,7 +17,10 @@ export type RootStackParamList = {
   Home: undefined;
   Settings: undefined;
   InviteCode: undefined;
-  CameraCapture: { recipientName: string };
+  CameraCapture: {
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+  };
   PhotoReview: {
     photoPath: string;
     recipientName: string;

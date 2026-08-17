@@ -16,7 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
+  JIWOO_WAKE_PHOTO_STORAGE_KEY,
+  JIWOO_WAKE_REQUEST_STORAGE_KEY,
   JIWOO_WAKE_GROUP_STORAGE_KEY,
+  MINJU_WAKE_PHOTO_STORAGE_KEY,
+  MINJU_WAKE_REQUEST_STORAGE_KEY,
+  WAKE_GROUP_MINJU_JOINED_STORAGE_KEY,
   WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
 } from '../constants/DemoUser';
 import { createInviteCode } from '../utils/inviteCode';
@@ -67,7 +72,14 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
 
     try {
       if (groupType === 'wake') {
-        await AsyncStorage.setItem(JIWOO_WAKE_GROUP_STORAGE_KEY, groupName);
+        await Promise.all([
+          AsyncStorage.setItem(JIWOO_WAKE_GROUP_STORAGE_KEY, groupName),
+          AsyncStorage.setItem(WAKE_GROUP_MINJU_JOINED_STORAGE_KEY, 'false'),
+          AsyncStorage.removeItem(JIWOO_WAKE_PHOTO_STORAGE_KEY),
+          AsyncStorage.removeItem(JIWOO_WAKE_REQUEST_STORAGE_KEY),
+          AsyncStorage.removeItem(MINJU_WAKE_PHOTO_STORAGE_KEY),
+          AsyncStorage.removeItem(MINJU_WAKE_REQUEST_STORAGE_KEY),
+        ]);
       }
     } finally {
       navigation.navigate('WaitingForMembers', {
