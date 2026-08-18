@@ -23,6 +23,7 @@ import { Colors } from '../constants/Colors';
 import {
   AI_FRIEND_ENABLED_STORAGE_KEYS,
   AI_FRIEND_PROMPT_STORAGE_KEY,
+  DEMO_GROUP_CAPACITY_STORAGE_KEY,
   DEMO_SCHEDULE_STATUS_STORAGE_KEYS,
   JIWOO_WAKE_GROUP_STORAGE_KEY,
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
@@ -63,6 +64,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     aiFriendPromptVisible: false,
     aiFriendEnabled: false,
     inviteFriendBannerVisible: false,
+    groupCapacityFull: false,
+    capacityFullVisible: false,
     expandedPhoto: null as null | { path: string; memberName: string },
   });
   const { width: viewportWidth } = useWindowDimensions();
@@ -94,6 +97,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         AsyncStorage.getItem(
           AI_FRIEND_ENABLED_STORAGE_KEYS[isMinjuViewer ? 'minju' : 'jiwoo'],
         ),
+        AsyncStorage.getItem(DEMO_GROUP_CAPACITY_STORAGE_KEY),
       ])
         .then(
           ([
@@ -108,6 +112,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             savedWakeSuccess,
             aiFriendPromptUser,
             savedAiFriendEnabled,
+            savedGroupCapacity,
           ]) => {
             if (isActive) {
               setWakeDemoState(state => ({
@@ -128,6 +133,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 aiFriendPromptVisible:
                   aiFriendPromptUser === (isMinjuViewer ? 'minju' : 'jiwoo'),
                 aiFriendEnabled: savedAiFriendEnabled === 'true',
+                groupCapacityFull: savedGroupCapacity === 'full',
               }));
             }
           },
@@ -371,6 +377,316 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               </View>
             </View>
           </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (wakeDemoState.groupCapacityFull) {
+    const fullMembers = [
+      {
+        key: 'member-1',
+        left: 21,
+        top: 145,
+        name: '눈눈',
+        remaining: '8시간 남음',
+        photo: require('../assets/images/full-group-member-1.png'),
+        buttonText: '깨우기',
+        buttonColor: '#FF4B4B',
+      },
+      {
+        key: 'member-2',
+        left: 211,
+        top: 145,
+        name: '지우',
+        remaining: '0시간 남음',
+        photo: null,
+        buttonText: '지금 인증할게요',
+        buttonColor: '#202224',
+      },
+      {
+        key: 'member-3',
+        left: 21,
+        top: 435,
+        name: '눈눈',
+        remaining: '8시간 남음',
+        photo: require('../assets/images/full-group-member-3.png'),
+        buttonText: '기상 완료',
+        buttonColor: '#202224',
+      },
+      {
+        key: 'member-4',
+        left: 211,
+        top: 435,
+        name: '지우',
+        remaining: '0시간 남음',
+        photo: require('../assets/images/full-group-member-2.png'),
+        buttonText: '깨우기',
+        buttonColor: '#FF4B4B',
+      },
+    ];
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={[styles.container, { width: contentWidth }]}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="홈으로 이동"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() => navigation.popTo('Home')}
+            style={[
+              styles.headerIconButton,
+              {
+                left: 28 * scale,
+                top: 9 * scale,
+                width: 24 * scale,
+                height: 24 * scale,
+              },
+            ]}
+          >
+            <Image
+              resizeMode="contain"
+              source={require('../assets/images/chevron-left.png')}
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+          <Text style={[styles.groupTitle, { top: 20 * scale }]}>
+            {route.params?.groupName || '아침 야호'}
+          </Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹 메뉴"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: true }))
+            }
+            style={[
+              styles.headerIconButton,
+              {
+                right: 27 * scale,
+                top: 11 * scale,
+                width: 20 * scale,
+                height: 20 * scale,
+              },
+            ]}
+          >
+            <Image
+              resizeMode="contain"
+              source={require('../assets/images/menu.png')}
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          {fullMembers.map(member => (
+            <React.Fragment key={member.key}>
+              <View
+                style={[
+                  styles.fullCapacityMemberCard,
+                  {
+                    left: member.left * scale,
+                    top: member.top * scale,
+                    width: (member.left === 21 ? 172 : 170) * scale,
+                    height: 219 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              >
+                {member.photo && (
+                  <Image
+                    accessibilityIgnoresInvertColors
+                    accessibilityLabel={`${member.name} 인증사진`}
+                    resizeMode="cover"
+                    source={member.photo}
+                    style={styles.memberPhoto}
+                  />
+                )}
+                <View
+                  style={[
+                    styles.memberIdentity,
+                    { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
+                  ]}
+                >
+                  <MemberStatusWhite
+                    width={16.78 * scale}
+                    height={16 * scale}
+                  />
+                  <Text style={[styles.memberName, styles.memberNameOnPhoto]}>
+                    {member.name}
+                  </Text>
+                  <View
+                    style={[styles.memberMetaDot, styles.memberMetaDotOnPhoto]}
+                  />
+                  <Text style={[styles.memberName, styles.memberNameOnPhoto]}>
+                    {member.remaining}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.fullCapacitySleepDetails,
+                    { bottom: 17 * scale },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.fullCapacityFirstDetailColumn,
+                      { width: 86 * scale },
+                    ]}
+                  >
+                    <Text style={styles.fullCapacityDetailValue}>09:03</Text>
+                    <Text style={styles.fullCapacityDetailLabel}>
+                      기상 시간
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.fullCapacitySecondDetailColumn,
+                      { width: 86 * scale },
+                    ]}
+                  >
+                    <Text style={styles.fullCapacityDetailValue}>
+                      {member.name === '눈눈' ? '5시간째' : '1시간'}
+                    </Text>
+                    <Text style={styles.fullCapacityDetailLabel}>
+                      {member.name === '눈눈' ? '기상 중' : '목표까지'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={member.buttonText}
+                activeOpacity={0.8}
+                style={[
+                  styles.fullCapacityActionButton,
+                  {
+                    left: member.left * scale,
+                    top: (member.top + 228) * scale,
+                    width: 171 * scale,
+                    height: 44 * scale,
+                    borderRadius: 8 * scale,
+                    backgroundColor: member.buttonColor,
+                  },
+                ]}
+              >
+                <Text style={styles.fullCapacityActionText}>
+                  {member.buttonText}
+                </Text>
+              </TouchableOpacity>
+            </React.Fragment>
+          ))}
+
+          <View
+            pointerEvents="none"
+            style={[
+              styles.fullCapacityPageControl,
+              { bottom: 22 * scale, columnGap: 8 * scale },
+            ]}
+          >
+            <View
+              style={[
+                styles.fullCapacityPageDot,
+                styles.fullCapacityPageDotActive,
+                {
+                  width: 8 * scale,
+                  height: 8 * scale,
+                  borderRadius: 4 * scale,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.fullCapacityPageDot,
+                {
+                  width: 8 * scale,
+                  height: 8 * scale,
+                  borderRadius: 4 * scale,
+                },
+              ]}
+            />
+          </View>
+
+          <Modal
+            animationType="fade"
+            onRequestClose={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: false }))
+            }
+            statusBarTranslucent
+            transparent
+            visible={wakeDemoState.menuVisible}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="그룹 메뉴 닫기"
+              onPress={() =>
+                setWakeDemoState(state => ({ ...state, menuVisible: false }))
+              }
+              style={styles.menuOverlay}
+            >
+              <Pressable
+                onPress={event => event.stopPropagation()}
+                style={[
+                  styles.menuPanel,
+                  {
+                    right: Math.max(
+                      (viewportWidth - contentWidth) / 2 + 28 * scale,
+                      20,
+                    ),
+                    top: insets.top + 52 * scale,
+                    width: 250 * scale,
+                    height: 140 * scale,
+                    borderRadius: 30 * scale,
+                  },
+                ]}
+              >
+                {['방 나가기', '초대 코드 복사하기', '방 이름 바꾸기'].map(
+                  item => (
+                    <TouchableOpacity
+                      key={item}
+                      accessibilityRole="button"
+                      activeOpacity={0.7}
+                      onPress={
+                        item === '방 나가기'
+                          ? openLeaveConfirm
+                          : item === '초대 코드 복사하기'
+                          ? () =>
+                              setWakeDemoState(state => ({
+                                ...state,
+                                menuVisible: false,
+                                capacityFullVisible: true,
+                              }))
+                          : undefined
+                      }
+                      style={styles.menuItem}
+                    >
+                      <Text style={styles.menuItemText}>{item}</Text>
+                    </TouchableOpacity>
+                  ),
+                )}
+              </Pressable>
+            </Pressable>
+          </Modal>
+          <CapacityFullModal
+            onClose={() =>
+              setWakeDemoState(state => ({
+                ...state,
+                capacityFullVisible: false,
+              }))
+            }
+            scale={scale}
+            visible={wakeDemoState.capacityFullVisible}
+          />
+          <LeaveGroupConfirmModal
+            onCancel={closeLeaveConfirm}
+            onConfirm={() => leaveGroup().catch(() => undefined)}
+            scale={scale}
+            visible={wakeDemoState.leaveConfirmVisible}
+          />
         </View>
       </SafeAreaView>
     );
@@ -1446,6 +1762,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
           }}
           style={[
             styles.waitingMemberCard,
+            !wakeDemoState.hasMinjuJoined &&
+              !wakeDemoState.aiFriendEnabled &&
+              styles.inviteEmptyCard,
             wakeDemoState.aiFriendEnabled && styles.aiFriendCard,
             isScheduleRestricted && styles.scheduleRestrictedCard,
             {
@@ -1706,18 +2025,21 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             ]}
           >
             <Text
-              style={[
-                styles.waitingWakeButtonText,
-                wakeDemoState.aiFriendEnabled && styles.aiFriendButtonText,
-                !wakeDemoState.hasMinjuJoined &&
-                  styles.inviteActionTextInactive,
-                wakeDemoState.hasMinjuWakeRequest &&
-                  !isMinjuViewer &&
-                  styles.wakeRequestedButtonText,
-                secondMemberPhotoPath && styles.wakeRequestedButtonText,
-                isWakeCompleted && styles.wakeCompletedButtonText,
-                isScheduleRestricted && styles.wakeCompletedButtonText,
-              ]}
+              style={
+                !wakeDemoState.hasMinjuJoined && !wakeDemoState.aiFriendEnabled
+                  ? styles.inviteActionTextInactive
+                  : [
+                      styles.waitingWakeButtonText,
+                      wakeDemoState.aiFriendEnabled &&
+                        styles.aiFriendButtonText,
+                      wakeDemoState.hasMinjuWakeRequest &&
+                        !isMinjuViewer &&
+                        styles.wakeRequestedButtonText,
+                      secondMemberPhotoPath && styles.wakeRequestedButtonText,
+                      isWakeCompleted && styles.wakeCompletedButtonText,
+                      isScheduleRestricted && styles.wakeCompletedButtonText,
+                    ]
+              }
             >
               {wakeDemoState.aiFriendEnabled
                 ? 'AI 친구'
@@ -1977,6 +2299,68 @@ type LeaveGroupConfirmModalProps = {
   onCancel: () => void;
   onConfirm: () => void;
 };
+
+const CapacityFullModal = ({
+  visible,
+  scale,
+  onClose,
+}: Omit<LeaveGroupConfirmModalProps, 'onCancel' | 'onConfirm'> & {
+  onClose: () => void;
+}) => (
+  <Modal
+    animationType="fade"
+    onRequestClose={onClose}
+    statusBarTranslucent
+    transparent
+    visible={visible}
+  >
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="정원 가득 참 안내 닫기"
+      onPress={onClose}
+      style={styles.wakeConfirmOverlay}
+    >
+      <Pressable
+        onPress={event => event.stopPropagation()}
+        style={[
+          styles.capacityFullPanel,
+          {
+            width: 320 * scale,
+            height: 315 * scale,
+            borderRadius: 16 * scale,
+          },
+        ]}
+      >
+        <Image
+          accessibilityLabel="정원 가득 참 경고"
+          resizeMode="contain"
+          source={require('../assets/images/wake-caution.png')}
+          style={{ width: 104 * scale, height: 104 * scale }}
+        />
+        <Text style={styles.capacityFullTitle}>정원이 가득 찼어요</Text>
+        <Text style={styles.capacityFullDescription}>
+          최대 8명까지 초대 가능해요
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="인원 확장하기"
+          activeOpacity={0.8}
+          onPress={onClose}
+          style={[
+            styles.capacityFullButton,
+            {
+              width: 245.75 * scale,
+              height: 44 * scale,
+              borderRadius: 8 * scale,
+            },
+          ]}
+        >
+          <Text style={styles.capacityFullButtonText}>인원 확장하기</Text>
+        </TouchableOpacity>
+      </Pressable>
+    </Pressable>
+  </Modal>
+);
 
 const LeaveGroupConfirmModal = ({
   visible,
@@ -2495,6 +2879,99 @@ const styles = StyleSheet.create({
     position: 'absolute',
     overflow: 'hidden',
     backgroundColor: Colors.gray,
+  },
+  fullCapacityMemberCard: {
+    position: 'absolute',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(234, 234, 234, 0.9)',
+    backgroundColor: '#C4C4C4',
+  },
+  fullCapacityDetailValue: {
+    color: '#F6F6F6',
+    fontFamily: 'PretendardBold',
+    fontSize: 14,
+    lineHeight: 17,
+    textAlign: 'center',
+  },
+  fullCapacityDetailLabel: {
+    color: '#F6F6F6',
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: 'center',
+  },
+  fullCapacitySleepDetails: {
+    position: 'absolute',
+    right: 0,
+    left: 0,
+    height: 30,
+  },
+  fullCapacityFirstDetailColumn: {
+    position: 'absolute',
+    left: 0,
+    alignItems: 'center',
+  },
+  fullCapacitySecondDetailColumn: {
+    position: 'absolute',
+    right: 0,
+    alignItems: 'center',
+  },
+  fullCapacityActionButton: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullCapacityActionText: {
+    color: '#F6F6F6',
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  fullCapacityPageControl: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+  },
+  fullCapacityPageDot: {
+    backgroundColor: '#B8B8B8',
+  },
+  fullCapacityPageDotActive: {
+    backgroundColor: Colors.textBlack,
+  },
+  capacityFullPanel: {
+    alignItems: 'center',
+    paddingTop: 21,
+    backgroundColor: Colors.background,
+  },
+  capacityFullTitle: {
+    marginTop: 15,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+    textAlign: 'center',
+  },
+  capacityFullDescription: {
+    marginTop: 6,
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  capacityFullButton: {
+    position: 'absolute',
+    bottom: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF4B4B',
+  },
+  capacityFullButtonText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
   },
   helpNeededCard: {
     backgroundColor: '#FF4B4B',

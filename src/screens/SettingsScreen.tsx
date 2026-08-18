@@ -15,11 +15,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
+  DEMO_GROUP_CAPACITY_NAMES,
+  DEMO_GROUP_CAPACITY_STORAGE_KEY,
   DEMO_SCHEDULE_STATUS_NAMES,
   DEMO_SCHEDULE_STATUS_STORAGE_KEYS,
   DEMO_USER_NAMES,
   DEMO_USER_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
+  type DemoGroupCapacity,
   type DemoScheduleStatus,
   type DemoUser,
 } from '../constants/DemoUser';
@@ -42,6 +45,8 @@ export const SettingsScreen = ({ navigation }: Props) => {
   const [scheduleStatuses, setScheduleStatuses] = useState<
     Record<DemoUser, DemoScheduleStatus>
   >({ jiwoo: 'available', minju: 'available' });
+  const [groupCapacity, setGroupCapacity] =
+    useState<DemoGroupCapacity>('available');
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = contentWidth / DESIGN_WIDTH;
@@ -49,10 +54,12 @@ export const SettingsScreen = ({ navigation }: Props) => {
   useEffect(() => {
     const loadDemoUser = async () => {
       const savedUser = await AsyncStorage.getItem(DEMO_USER_STORAGE_KEY);
-      const [jiwooScheduleStatus, minjuScheduleStatus] = await Promise.all([
-        AsyncStorage.getItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS.jiwoo),
-        AsyncStorage.getItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS.minju),
-      ]);
+      const [jiwooScheduleStatus, minjuScheduleStatus, savedGroupCapacity] =
+        await Promise.all([
+          AsyncStorage.getItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS.jiwoo),
+          AsyncStorage.getItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS.minju),
+          AsyncStorage.getItem(DEMO_GROUP_CAPACITY_STORAGE_KEY),
+        ]);
       if (savedUser === 'jiwoo' || savedUser === 'minju') {
         setDemoUser(savedUser);
         setNickname(DEMO_USER_NAMES[savedUser]);
@@ -61,6 +68,7 @@ export const SettingsScreen = ({ navigation }: Props) => {
         jiwoo: jiwooScheduleStatus === 'inClass' ? 'inClass' : 'available',
         minju: minjuScheduleStatus === 'inClass' ? 'inClass' : 'available',
       });
+      setGroupCapacity(savedGroupCapacity === 'full' ? 'full' : 'available');
     };
 
     loadDemoUser().catch(() => undefined);
@@ -87,6 +95,11 @@ export const SettingsScreen = ({ navigation }: Props) => {
   ) => {
     setScheduleStatuses(current => ({ ...current, [user]: status }));
     await AsyncStorage.setItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS[user], status);
+  };
+
+  const selectGroupCapacity = async (capacity: DemoGroupCapacity) => {
+    setGroupCapacity(capacity);
+    await AsyncStorage.setItem(DEMO_GROUP_CAPACITY_STORAGE_KEY, capacity);
   };
 
   return (
@@ -311,7 +324,7 @@ export const SettingsScreen = ({ navigation }: Props) => {
             style={[
               styles.demoUserSheet,
               {
-                height: 430 * scale,
+                height: 555 * scale,
                 borderTopLeftRadius: 36 * scale,
                 borderTopRightRadius: 36 * scale,
                 paddingHorizontal: 28 * scale,
@@ -417,6 +430,44 @@ export const SettingsScreen = ({ navigation }: Props) => {
                   })}
                 </View>
               ))}
+            </View>
+            <Text style={[styles.demoStatusLabel, { marginTop: 20 * scale }]}>
+              그룹 정원 상태
+            </Text>
+            <View style={[styles.demoUserOptions, { marginTop: 10 * scale }]}>
+              {(['available', 'full'] as const).map(capacity => {
+                const selected = groupCapacity === capacity;
+                return (
+                  <TouchableOpacity
+                    key={capacity}
+                    accessibilityRole="radio"
+                    accessibilityLabel={DEMO_GROUP_CAPACITY_NAMES[capacity]}
+                    accessibilityState={{ selected }}
+                    activeOpacity={0.8}
+                    onPress={() =>
+                      selectGroupCapacity(capacity).catch(() => undefined)
+                    }
+                    style={[
+                      styles.demoUserOption,
+                      {
+                        width: 166 * scale,
+                        height: 44 * scale,
+                        borderRadius: 8 * scale,
+                      },
+                      selected && styles.demoUserOptionSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.demoUserOptionText,
+                        selected && styles.demoUserOptionTextSelected,
+                      ]}
+                    >
+                      {DEMO_GROUP_CAPACITY_NAMES[capacity]}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         )}

@@ -1,4 +1,5 @@
 export const DEMO_USER_STORAGE_KEY = '@nunnun/demo-user';
+export const DEMO_GROUP_CAPACITY_STORAGE_KEY = '@nunnun/demo-group-capacity';
 export const DEMO_SCHEDULE_STATUS_STORAGE_KEYS = {
   jiwoo: '@nunnun/demo-schedule-status/jiwoo',
   minju: '@nunnun/demo-schedule-status/minju',
@@ -24,6 +25,12 @@ export const AI_FRIEND_ENABLED_STORAGE_KEYS = {
 
 export type DemoUser = 'jiwoo' | 'minju';
 export type DemoScheduleStatus = 'inClass' | 'available';
+export type DemoGroupCapacity = 'available' | 'full';
+
+export const DEMO_GROUP_CAPACITY_NAMES: Record<DemoGroupCapacity, string> = {
+  available: '정원 여유 있음',
+  full: '정원 가득 참',
+};
 
 export const DEMO_USER_NAMES: Record<DemoUser, string> = {
   jiwoo: '눈눈',
