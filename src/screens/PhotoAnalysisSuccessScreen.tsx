@@ -17,8 +17,10 @@ import {
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
   JIWOO_WAKE_EXHAUSTED_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
+  JIWOO_WAKE_SUCCESS_STORAGE_KEY,
   MINJU_WAKE_PHOTO_STORAGE_KEY,
   MINJU_WAKE_REQUEST_STORAGE_KEY,
+  MINJU_WAKE_SUCCESS_STORAGE_KEY,
 } from '../constants/DemoUser';
 import PoseResultRingTrack from '../assets/images/pose-result-ring-track.svg';
 import PoseResultRingProgress from '../assets/images/pose-result-ring-progress.svg';
@@ -57,10 +59,19 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
       route.params.photographer === 'minju'
         ? MINJU_WAKE_REQUEST_STORAGE_KEY
         : JIWOO_WAKE_REQUEST_STORAGE_KEY;
+    const wakeSuccessStorageKey =
+      route.params.photographer === 'minju'
+        ? JIWOO_WAKE_SUCCESS_STORAGE_KEY
+        : MINJU_WAKE_SUCCESS_STORAGE_KEY;
+    const hadWakeRequest =
+      (await AsyncStorage.getItem(wakeRequestStorageKey)) === 'true';
 
     await Promise.all([
       AsyncStorage.setItem(photoStorageKey, route.params.photoPath),
       AsyncStorage.removeItem(wakeRequestStorageKey),
+      hadWakeRequest
+        ? AsyncStorage.setItem(wakeSuccessStorageKey, 'true')
+        : Promise.resolve(),
       AsyncStorage.removeItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
     ]);
 

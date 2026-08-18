@@ -15,9 +15,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
+  DEMO_SCHEDULE_STATUS_NAMES,
+  DEMO_SCHEDULE_STATUS_STORAGE_KEYS,
   DEMO_USER_NAMES,
   DEMO_USER_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
+  type DemoScheduleStatus,
   type DemoUser,
 } from '../constants/DemoUser';
 import SettingsProfile from '../assets/images/settings-profile.svg';
@@ -36,6 +39,9 @@ export const SettingsScreen = ({ navigation }: Props) => {
   const [showNicknameSheet, setShowNicknameSheet] = useState(false);
   const [demoUser, setDemoUser] = useState<DemoUser>('jiwoo');
   const [showDemoUserSheet, setShowDemoUserSheet] = useState(false);
+  const [scheduleStatuses, setScheduleStatuses] = useState<
+    Record<DemoUser, DemoScheduleStatus>
+  >({ jiwoo: 'available', minju: 'available' });
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = contentWidth / DESIGN_WIDTH;
@@ -43,10 +49,18 @@ export const SettingsScreen = ({ navigation }: Props) => {
   useEffect(() => {
     const loadDemoUser = async () => {
       const savedUser = await AsyncStorage.getItem(DEMO_USER_STORAGE_KEY);
+      const [jiwooScheduleStatus, minjuScheduleStatus] = await Promise.all([
+        AsyncStorage.getItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS.jiwoo),
+        AsyncStorage.getItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS.minju),
+      ]);
       if (savedUser === 'jiwoo' || savedUser === 'minju') {
         setDemoUser(savedUser);
         setNickname(DEMO_USER_NAMES[savedUser]);
       }
+      setScheduleStatuses({
+        jiwoo: jiwooScheduleStatus === 'inClass' ? 'inClass' : 'available',
+        minju: minjuScheduleStatus === 'inClass' ? 'inClass' : 'available',
+      });
     };
 
     loadDemoUser().catch(() => undefined);
@@ -55,7 +69,6 @@ export const SettingsScreen = ({ navigation }: Props) => {
   const selectDemoUser = async (user: DemoUser) => {
     setDemoUser(user);
     setNickname(DEMO_USER_NAMES[user]);
-    setShowDemoUserSheet(false);
     await AsyncStorage.setItem(DEMO_USER_STORAGE_KEY, user);
 
     if (user === 'jiwoo') {
@@ -66,6 +79,14 @@ export const SettingsScreen = ({ navigation }: Props) => {
         navigation.replace('WakeNotification');
       }
     }
+  };
+
+  const selectScheduleStatus = async (
+    user: DemoUser,
+    status: DemoScheduleStatus,
+  ) => {
+    setScheduleStatuses(current => ({ ...current, [user]: status }));
+    await AsyncStorage.setItem(DEMO_SCHEDULE_STATUS_STORAGE_KEYS[user], status);
   };
 
   return (
@@ -290,7 +311,7 @@ export const SettingsScreen = ({ navigation }: Props) => {
             style={[
               styles.demoUserSheet,
               {
-                height: 245 * scale,
+                height: 430 * scale,
                 borderTopLeftRadius: 36 * scale,
                 borderTopRightRadius: 36 * scale,
                 paddingHorizontal: 28 * scale,
@@ -309,9 +330,11 @@ export const SettingsScreen = ({ navigation }: Props) => {
                 },
               ]}
             />
-            <Text style={styles.demoSheetTitle}>데모 사용자를 선택하세요</Text>
+            <Text style={styles.demoSheetTitle}>
+              사용자와 상태를 선택하세요
+            </Text>
             <Text style={styles.demoSheetDescription}>
-              이 기기에서 진행할 사용자 플로우를 정해요
+              접속 사용자와 각 사용자의 수업 여부를 따로 정해요
             </Text>
             <View style={[styles.demoUserOptions, { marginTop: 24 * scale }]}>
               {(['jiwoo', 'minju'] as const).map(user => {
@@ -347,6 +370,53 @@ export const SettingsScreen = ({ navigation }: Props) => {
                   </TouchableOpacity>
                 );
               })}
+            </View>
+            <Text style={[styles.demoStatusLabel, { marginTop: 22 * scale }]}>
+              사용자별 수업 상태
+            </Text>
+            <View style={[styles.scheduleRows, { marginTop: 10 * scale }]}>
+              {(['jiwoo', 'minju'] as const).map(user => (
+                <View key={user} style={styles.scheduleRow}>
+                  <Text style={styles.scheduleUserName}>
+                    {DEMO_USER_NAMES[user]}
+                  </Text>
+                  {(['inClass', 'available'] as const).map(status => {
+                    const selected = scheduleStatuses[user] === status;
+                    return (
+                      <TouchableOpacity
+                        key={status}
+                        accessibilityRole="radio"
+                        accessibilityLabel={`${DEMO_USER_NAMES[user]} ${DEMO_SCHEDULE_STATUS_NAMES[status]}`}
+                        accessibilityState={{ selected }}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          selectScheduleStatus(user, status).catch(
+                            () => undefined,
+                          );
+                        }}
+                        style={[
+                          styles.scheduleStatusOption,
+                          {
+                            width: 105 * scale,
+                            height: 42 * scale,
+                            borderRadius: 8 * scale,
+                          },
+                          selected && styles.demoUserOptionSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.scheduleStatusOptionText,
+                            selected && styles.demoUserOptionTextSelected,
+                          ]}
+                        >
+                          {DEMO_SCHEDULE_STATUS_NAMES[status]}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ))}
             </View>
           </View>
         )}
@@ -536,6 +606,38 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: Colors.textGray,
     fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  demoStatusLabel: {
+    color: Colors.textBlack,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  scheduleRows: {
+    rowGap: 10,
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  scheduleUserName: {
+    width: 62,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 15,
+    lineHeight: 18,
+  },
+  scheduleStatusOption: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.gray,
+  },
+  scheduleStatusOptionText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,
   },

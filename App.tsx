@@ -15,6 +15,8 @@ import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
 import { PhotoAnalysisScreen } from './src/screens/PhotoAnalysisScreen';
 import { PhotoAnalysisSuccessScreen } from './src/screens/PhotoAnalysisSuccessScreen';
 import { PhotoAnalysisFailureScreen } from './src/screens/PhotoAnalysisFailureScreen';
+import { RewardListScreen } from './src/screens/RewardListScreen';
+import { SelfWakeVerificationScreen } from './src/screens/SelfWakeVerificationScreen';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -48,6 +50,11 @@ export type RootStackParamList = {
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
     attempt: number;
+  };
+  RewardList: undefined;
+  SelfWakeVerification: {
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
   };
   AddGroupName: { groupType: GroupType } | undefined;
   AddGroupInvite: { groupType: GroupType; groupName: string } | undefined;
@@ -87,6 +94,11 @@ export default function App() {
           <Stack.Screen
             name="PhotoAnalysisFailure"
             component={PhotoAnalysisFailureScreen}
+          />
+          <Stack.Screen name="RewardList" component={RewardListScreen} />
+          <Stack.Screen
+            name="SelfWakeVerification"
+            component={SelfWakeVerificationScreen}
           />
           <Stack.Screen name="AddGroupName" component={AddGroupNameScreen} />
           <Stack.Screen

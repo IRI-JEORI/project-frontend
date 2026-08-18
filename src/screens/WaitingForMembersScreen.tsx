@@ -21,11 +21,18 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
+  AI_FRIEND_ENABLED_STORAGE_KEYS,
+  AI_FRIEND_PROMPT_STORAGE_KEY,
+  DEMO_SCHEDULE_STATUS_STORAGE_KEYS,
+  JIWOO_WAKE_GROUP_STORAGE_KEY,
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
   JIWOO_WAKE_EXHAUSTED_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
+  JIWOO_WAKE_SUCCESS_STORAGE_KEY,
   MINJU_WAKE_PHOTO_STORAGE_KEY,
+  MINJU_WAKE_GROUP_STORAGE_KEY,
   MINJU_WAKE_REQUEST_STORAGE_KEY,
+  MINJU_WAKE_SUCCESS_STORAGE_KEY,
   WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
   WAKE_GROUP_MINJU_JOINED_STORAGE_KEY,
 } from '../constants/DemoUser';
@@ -47,7 +54,16 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     hasMinjuWakeRequest: false,
     hasJiwooWakeRequest: false,
     hasJiwooWakeExhausted: false,
+    scheduleStatus: 'available' as 'inClass' | 'available',
+    selfScheduleStatus: 'available' as 'inClass' | 'available',
     wakeConfirmVisible: false,
+    wakeLockedVisible: false,
+    wakeSuccessVisible: false,
+    leaveConfirmVisible: false,
+    aiFriendPromptVisible: false,
+    aiFriendEnabled: false,
+    inviteFriendBannerVisible: false,
+    expandedPhoto: null as null | { path: string; memberName: string },
   });
   const { width: viewportWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -63,6 +79,21 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         AsyncStorage.getItem(MINJU_WAKE_REQUEST_STORAGE_KEY),
         AsyncStorage.getItem(JIWOO_WAKE_REQUEST_STORAGE_KEY),
         AsyncStorage.getItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
+        AsyncStorage.getItem(
+          DEMO_SCHEDULE_STATUS_STORAGE_KEYS[isMinjuViewer ? 'jiwoo' : 'minju'],
+        ),
+        AsyncStorage.getItem(
+          DEMO_SCHEDULE_STATUS_STORAGE_KEYS[isMinjuViewer ? 'minju' : 'jiwoo'],
+        ),
+        AsyncStorage.getItem(
+          isMinjuViewer
+            ? MINJU_WAKE_SUCCESS_STORAGE_KEY
+            : JIWOO_WAKE_SUCCESS_STORAGE_KEY,
+        ),
+        AsyncStorage.getItem(AI_FRIEND_PROMPT_STORAGE_KEY),
+        AsyncStorage.getItem(
+          AI_FRIEND_ENABLED_STORAGE_KEYS[isMinjuViewer ? 'minju' : 'jiwoo'],
+        ),
       ])
         .then(
           ([
@@ -72,17 +103,31 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             savedWakeRequest,
             savedJiwooWakeRequest,
             savedJiwooWakeExhausted,
+            savedScheduleStatus,
+            savedSelfScheduleStatus,
+            savedWakeSuccess,
+            aiFriendPromptUser,
+            savedAiFriendEnabled,
           ]) => {
             if (isActive) {
               setWakeDemoState(state => ({
                 ...state,
-                hasMinjuJoined:
-                  savedJoinedState === 'true' || state.hasMinjuJoined,
+                hasMinjuJoined: savedJoinedState === 'true',
                 selfPhotoPath: savedPhotoPath,
                 minjuPhotoPath: savedMinjuPhotoPath,
                 hasMinjuWakeRequest: savedWakeRequest === 'true',
                 hasJiwooWakeRequest: savedJiwooWakeRequest === 'true',
                 hasJiwooWakeExhausted: savedJiwooWakeExhausted === 'true',
+                scheduleStatus:
+                  savedScheduleStatus === 'inClass' ? 'inClass' : 'available',
+                selfScheduleStatus:
+                  savedSelfScheduleStatus === 'inClass'
+                    ? 'inClass'
+                    : 'available',
+                wakeSuccessVisible: savedWakeSuccess === 'true',
+                aiFriendPromptVisible:
+                  aiFriendPromptUser === (isMinjuViewer ? 'minju' : 'jiwoo'),
+                aiFriendEnabled: savedAiFriendEnabled === 'true',
               }));
             }
           },
@@ -92,7 +137,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
       return () => {
         isActive = false;
       };
-    }, []),
+    }, [isMinjuViewer]),
   );
 
   const wakeMinju = async () => {
@@ -122,6 +167,79 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     }
   };
 
+  const clearWakeSuccess = async () => {
+    await AsyncStorage.removeItem(
+      isMinjuViewer
+        ? MINJU_WAKE_SUCCESS_STORAGE_KEY
+        : JIWOO_WAKE_SUCCESS_STORAGE_KEY,
+    );
+    setWakeDemoState(state => ({
+      ...state,
+      wakeSuccessVisible: false,
+    }));
+  };
+
+  const openRewardList = async () => {
+    await clearWakeSuccess();
+    navigation.navigate('RewardList');
+  };
+
+  const openLeaveConfirm = () => {
+    setWakeDemoState(state => ({
+      ...state,
+      menuVisible: false,
+      leaveConfirmVisible: true,
+    }));
+  };
+
+  const closeLeaveConfirm = () => {
+    setWakeDemoState(state => ({ ...state, leaveConfirmVisible: false }));
+  };
+
+  const leaveGroup = async () => {
+    if (isMinjuViewer) {
+      await Promise.all([
+        AsyncStorage.removeItem(MINJU_WAKE_GROUP_STORAGE_KEY),
+        AsyncStorage.removeItem(MINJU_WAKE_PHOTO_STORAGE_KEY),
+        AsyncStorage.removeItem(MINJU_WAKE_REQUEST_STORAGE_KEY),
+        AsyncStorage.removeItem(MINJU_WAKE_SUCCESS_STORAGE_KEY),
+        AsyncStorage.setItem(WAKE_GROUP_MINJU_JOINED_STORAGE_KEY, 'false'),
+        AsyncStorage.setItem(AI_FRIEND_PROMPT_STORAGE_KEY, 'jiwoo'),
+      ]);
+    } else {
+      await Promise.all([
+        AsyncStorage.removeItem(JIWOO_WAKE_GROUP_STORAGE_KEY),
+        AsyncStorage.removeItem(JIWOO_WAKE_PHOTO_STORAGE_KEY),
+        AsyncStorage.removeItem(JIWOO_WAKE_REQUEST_STORAGE_KEY),
+        AsyncStorage.removeItem(JIWOO_WAKE_SUCCESS_STORAGE_KEY),
+        AsyncStorage.removeItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
+        AsyncStorage.removeItem(WAKE_GROUP_INVITE_CODE_STORAGE_KEY),
+        AsyncStorage.setItem(WAKE_GROUP_MINJU_JOINED_STORAGE_KEY, 'false'),
+        AsyncStorage.setItem(AI_FRIEND_PROMPT_STORAGE_KEY, 'minju'),
+      ]);
+    }
+
+    closeLeaveConfirm();
+    navigation.popTo('Home');
+  };
+
+  const dismissAiFriendPrompt = async (enabled: boolean) => {
+    const viewer = isMinjuViewer ? 'minju' : 'jiwoo';
+    await Promise.all([
+      AsyncStorage.removeItem(AI_FRIEND_PROMPT_STORAGE_KEY),
+      AsyncStorage.setItem(
+        AI_FRIEND_ENABLED_STORAGE_KEYS[viewer],
+        enabled ? 'true' : 'false',
+      ),
+    ]);
+    setWakeDemoState(state => ({
+      ...state,
+      aiFriendPromptVisible: false,
+      aiFriendEnabled: enabled,
+      inviteFriendBannerVisible: !enabled,
+    }));
+  };
+
   const firstMemberPhotoPath = isMinjuViewer
     ? wakeDemoState.minjuPhotoPath
     : wakeDemoState.selfPhotoPath;
@@ -142,10 +260,127 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
       !secondMemberPhotoPath &&
       !wakeDemoState.hasJiwooWakeExhausted,
   );
+  const isScheduleRestricted =
+    wakeDemoState.hasMinjuJoined && wakeDemoState.scheduleStatus === 'inClass';
+
+  if (wakeDemoState.expandedPhoto) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={[styles.container, { width: contentWidth }]}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹 화면으로 돌아가기"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() =>
+              setWakeDemoState(state => ({ ...state, expandedPhoto: null }))
+            }
+            style={[
+              styles.headerIconButton,
+              {
+                left: 28 * scale,
+                top: 9 * scale,
+                width: 24 * scale,
+                height: 24 * scale,
+              },
+            ]}
+          >
+            <Image
+              resizeMode="contain"
+              source={require('../assets/images/chevron-left.png')}
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          <Text style={[styles.groupTitle, { top: 20 * scale }]}>
+            {route.params?.groupName || '아침야호'}
+          </Text>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹 메뉴"
+            activeOpacity={0.7}
+            hitSlop={12}
+            onPress={() =>
+              setWakeDemoState(state => ({ ...state, menuVisible: true }))
+            }
+            style={[
+              styles.headerIconButton,
+              {
+                right: 27 * scale,
+                top: 11 * scale,
+                width: 20 * scale,
+                height: 20 * scale,
+              },
+            ]}
+          >
+            <Image
+              resizeMode="contain"
+              source={require('../assets/images/menu.png')}
+              style={styles.fullImage}
+            />
+          </TouchableOpacity>
+
+          <View
+            style={[
+              styles.expandedPhotoCard,
+              {
+                left: 24 * scale,
+                top: 129 * scale,
+                width: 354 * scale,
+                height: 451 * scale,
+                borderRadius: 16 * scale,
+              },
+            ]}
+          >
+            <Image
+              accessibilityIgnoresInvertColors
+              accessibilityLabel={`${wakeDemoState.expandedPhoto.memberName} 인증사진 확대`}
+              resizeMode="cover"
+              source={{ uri: `file://${wakeDemoState.expandedPhoto.path}` }}
+              style={styles.memberPhoto}
+            />
+            <View
+              style={[
+                styles.expandedMemberIdentity,
+                { left: 11 * scale, top: 12 * scale },
+              ]}
+            >
+              <MemberStatusWhite width={35 * scale} height={33 * scale} />
+              <Text style={styles.expandedMemberMeta}>
+                {wakeDemoState.expandedPhoto.memberName} · 8시간 남음
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.expandedPhotoDetails,
+                { left: 25 * scale, right: 25 * scale, bottom: 33 * scale },
+              ]}
+            >
+              <View>
+                <Text style={styles.expandedPhotoValue}>09:03</Text>
+                <Text style={styles.expandedPhotoLabel}>기상 시간</Text>
+              </View>
+              <View>
+                <Text style={styles.expandedPhotoValue}>5시간째</Text>
+                <Text style={styles.expandedPhotoLabel}>기상 중</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!isMinjuViewer && !wakeDemoState.hasMinjuJoined) {
     const emptySlots = [
-      { left: 211, top: 145, buttonTop: 373 },
+      ...(wakeDemoState.aiFriendEnabled
+        ? []
+        : [{ left: 211, top: 145, buttonTop: 373 }]),
       { left: 23, top: 435, buttonTop: 663 },
       { left: 212, top: 435, buttonTop: 663 },
     ];
@@ -222,16 +457,48 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
+            {wakeDemoState.selfPhotoPath && (
+              <Image
+                accessibilityIgnoresInvertColors
+                accessibilityLabel="눈눈 인증사진"
+                resizeMode="cover"
+                source={{ uri: `file://${wakeDemoState.selfPhotoPath}` }}
+                style={styles.memberPhoto}
+              />
+            )}
             <View
               style={[
                 styles.inviteMemberMeta,
                 { left: 11 * scale, top: 10 * scale },
               ]}
             >
-              <MemberStatusLightGray width={17 * scale} height={16 * scale} />
-              <Text style={styles.inviteMetaText}>눈눈</Text>
-              <View style={styles.inviteMetaDot} />
-              <Text style={styles.inviteMetaText}>8시간 남음</Text>
+              {wakeDemoState.selfPhotoPath ? (
+                <MemberStatusWhite width={17 * scale} height={16 * scale} />
+              ) : (
+                <MemberStatusLightGray width={17 * scale} height={16 * scale} />
+              )}
+              <Text
+                style={[
+                  styles.inviteMetaText,
+                  wakeDemoState.selfPhotoPath && styles.memberNameOnPhoto,
+                ]}
+              >
+                눈눈
+              </Text>
+              <View
+                style={[
+                  styles.inviteMetaDot,
+                  wakeDemoState.selfPhotoPath && styles.memberMetaDotOnPhoto,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.inviteMetaText,
+                  wakeDemoState.selfPhotoPath && styles.memberNameOnPhoto,
+                ]}
+              >
+                8시간 남음
+              </Text>
             </View>
             <View
               style={[
@@ -240,12 +507,40 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               ]}
             >
               <View style={styles.sleepDetailColumn}>
-                <Text style={styles.inviteSleepValue}>09:03</Text>
-                <Text style={styles.inviteSleepLabel}>기상 시간</Text>
+                <Text
+                  style={[
+                    styles.inviteSleepValue,
+                    wakeDemoState.selfPhotoPath && styles.memberNameOnPhoto,
+                  ]}
+                >
+                  09:03
+                </Text>
+                <Text
+                  style={[
+                    styles.inviteSleepLabel,
+                    wakeDemoState.selfPhotoPath && styles.memberNameOnPhoto,
+                  ]}
+                >
+                  기상 시간
+                </Text>
               </View>
               <View style={styles.sleepDetailColumn}>
-                <Text style={styles.inviteSleepValue}>1시간</Text>
-                <Text style={styles.inviteSleepLabel}>목표까지</Text>
+                <Text
+                  style={[
+                    styles.inviteSleepValue,
+                    wakeDemoState.selfPhotoPath && styles.memberNameOnPhoto,
+                  ]}
+                >
+                  5시간째
+                </Text>
+                <Text
+                  style={[
+                    styles.inviteSleepLabel,
+                    wakeDemoState.selfPhotoPath && styles.memberNameOnPhoto,
+                  ]}
+                >
+                  기상 중
+                </Text>
               </View>
             </View>
           </View>
@@ -255,7 +550,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             accessibilityLabel="지금 인증할게요"
             activeOpacity={0.8}
             onPress={() =>
-              navigation.navigate('CameraCapture', {
+              navigation.navigate('SelfWakeVerification', {
                 recipientName: '지우',
                 photographer: 'jiwoo',
               })
@@ -274,6 +569,38 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
           >
             <Text style={styles.inviteActionTextActive}>지금 인증할게요</Text>
           </TouchableOpacity>
+
+          {wakeDemoState.aiFriendEnabled && (
+            <>
+              <View
+                accessibilityLabel="AI 친구"
+                style={[
+                  styles.aiFriendCard,
+                  {
+                    left: 211 * scale,
+                    top: 145 * scale,
+                    width: 172 * scale,
+                    height: 219 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              />
+              <View
+                style={[
+                  styles.aiFriendButton,
+                  {
+                    left: 211 * scale,
+                    top: 373 * scale,
+                    width: 171 * scale,
+                    height: 44 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              >
+                <Text style={styles.aiFriendButtonText}>AI 친구</Text>
+              </View>
+            </>
+          )}
 
           {emptySlots.map((slot, index) => (
             <React.Fragment key={`${slot.left}-${slot.top}`}>
@@ -354,7 +681,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                       accessibilityRole="button"
                       activeOpacity={0.7}
                       onPress={
-                        item === '초대 코드 복사하기'
+                        item === '방 나가기'
+                          ? openLeaveConfirm
+                          : item === '초대 코드 복사하기'
                           ? () => copyInviteCode().catch(() => undefined)
                           : undefined
                       }
@@ -367,6 +696,22 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               </Pressable>
             </Pressable>
           </Modal>
+          <LeaveGroupConfirmModal
+            onCancel={closeLeaveConfirm}
+            onConfirm={() => leaveGroup().catch(() => undefined)}
+            scale={scale}
+            visible={wakeDemoState.leaveConfirmVisible}
+          />
+          <AiFriendConfirmModal
+            onCancel={() => dismissAiFriendPrompt(false).catch(() => undefined)}
+            onConfirm={() => dismissAiFriendPrompt(true).catch(() => undefined)}
+            scale={scale}
+            visible={wakeDemoState.aiFriendPromptVisible}
+          />
+          <InviteFriendBanner
+            scale={scale}
+            visible={wakeDemoState.inviteFriendBannerVisible}
+          />
         </View>
       </SafeAreaView>
     );
@@ -443,58 +788,122 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             />
           </TouchableOpacity>
 
-          {members.map(member => (
-            <View
-              key={member.name}
-              style={[
-                styles.inviteMemberCard,
-                styles.inviteSelfCard,
-                {
-                  left: member.left * scale,
-                  top: 145 * scale,
-                  width: (member.left === 21 ? 172 : 170) * scale,
-                  height: 219 * scale,
-                  borderRadius: 8 * scale,
-                },
-              ]}
-            >
+          {members.map(member => {
+            const isRestrictedMember =
+              member.name === '눈눈' && isScheduleRestricted;
+
+            return (
               <View
+                key={member.name}
                 style={[
-                  styles.inviteMemberMeta,
-                  { left: 11 * scale, top: 10 * scale },
+                  styles.inviteMemberCard,
+                  styles.inviteSelfCard,
+                  isRestrictedMember && styles.scheduleRestrictedCard,
+                  {
+                    left: member.left * scale,
+                    top: 145 * scale,
+                    width: (member.left === 21 ? 172 : 170) * scale,
+                    height: 219 * scale,
+                    borderRadius: 8 * scale,
+                  },
                 ]}
               >
-                <MemberStatusLightGray width={17 * scale} height={16 * scale} />
-                <Text style={styles.inviteMetaText}>{member.name}</Text>
-                <View style={styles.inviteMetaDot} />
-                <Text style={styles.inviteMetaText}>{member.remaining}</Text>
-              </View>
-              <View
-                style={[
-                  styles.inviteSleepDetails,
-                  { left: 15 * scale, bottom: 17 * scale },
-                ]}
-              >
-                <View style={styles.sleepDetailColumn}>
-                  <Text style={styles.inviteSleepValue}>09:03</Text>
-                  <Text style={styles.inviteSleepLabel}>기상 시간</Text>
+                <View
+                  style={[
+                    styles.inviteMemberMeta,
+                    { left: 11 * scale, top: 10 * scale },
+                  ]}
+                >
+                  {isRestrictedMember ? (
+                    <MemberStatusWhite width={17 * scale} height={16 * scale} />
+                  ) : (
+                    <MemberStatusLightGray
+                      width={17 * scale}
+                      height={16 * scale}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.inviteMetaText,
+                      isRestrictedMember && styles.memberNameOnPhoto,
+                    ]}
+                  >
+                    {member.name}
+                  </Text>
+                  <View
+                    style={[
+                      styles.inviteMetaDot,
+                      isRestrictedMember && styles.memberMetaDotOnPhoto,
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.inviteMetaText,
+                      isRestrictedMember && styles.memberNameOnPhoto,
+                    ]}
+                  >
+                    {member.remaining}
+                  </Text>
                 </View>
-                <View style={styles.sleepDetailColumn}>
-                  <Text style={styles.inviteSleepValue}>1시간</Text>
-                  <Text style={styles.inviteSleepLabel}>목표까지</Text>
-                </View>
+                {isRestrictedMember ? (
+                  <>
+                    <Image
+                      accessibilityLabel="수업 중"
+                      resizeMode="contain"
+                      source={require('../assets/images/class-in-progress-pen.png')}
+                      style={[
+                        styles.schedulePen,
+                        {
+                          left: 45 * scale,
+                          top: 70 * scale,
+                          width: 80 * scale,
+                          height: 80 * scale,
+                        },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.scheduleRestrictedText,
+                        { top: 150 * scale },
+                      ]}
+                    >
+                      수업 중이에요
+                    </Text>
+                  </>
+                ) : (
+                  <View
+                    style={[
+                      styles.inviteSleepDetails,
+                      { left: 15 * scale, bottom: 17 * scale },
+                    ]}
+                  >
+                    <View style={styles.sleepDetailColumn}>
+                      <Text style={styles.inviteSleepValue}>09:03</Text>
+                      <Text style={styles.inviteSleepLabel}>기상 시간</Text>
+                    </View>
+                    <View style={styles.sleepDetailColumn}>
+                      <Text style={styles.inviteSleepValue}>1시간</Text>
+                      <Text style={styles.inviteSleepLabel}>목표까지</Text>
+                    </View>
+                  </View>
+                )}
               </View>
-            </View>
-          ))}
+            );
+          })}
 
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="눈눈 깨우기"
             accessibilityState={{
-              disabled: wakeDemoState.hasJiwooWakeRequest,
+              disabled:
+                wakeDemoState.hasJiwooWakeRequest || isScheduleRestricted,
             }}
-            activeOpacity={wakeDemoState.hasJiwooWakeRequest ? 1 : 0.8}
-            disabled={wakeDemoState.hasJiwooWakeRequest}
+            activeOpacity={
+              wakeDemoState.hasJiwooWakeRequest || isScheduleRestricted
+                ? 1
+                : 0.8
+            }
+            disabled={wakeDemoState.hasJiwooWakeRequest || isScheduleRestricted}
             onPress={() =>
               setWakeDemoState(state => ({
                 ...state,
@@ -503,7 +912,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             }
             style={[
               styles.inviteActionButton,
-              wakeDemoState.hasJiwooWakeRequest
+              isScheduleRestricted
+                ? styles.wakeCompletedButton
+                : wakeDemoState.hasJiwooWakeRequest
                 ? styles.wakeActionRequestedButton
                 : styles.wakeActionButton,
               {
@@ -522,7 +933,11 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   : styles.inviteActionTextActive
               }
             >
-              {wakeDemoState.hasJiwooWakeRequest ? '28:20' : '깨우기'}
+              {isScheduleRestricted
+                ? '10시 이후 깨우기 가능'
+                : wakeDemoState.hasJiwooWakeRequest
+                ? '28:20'
+                : '깨우기'}
             </Text>
           </TouchableOpacity>
 
@@ -604,7 +1019,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             accessibilityLabel="지금 인증할게요"
             activeOpacity={0.8}
             onPress={() =>
-              navigation.navigate('CameraCapture', {
+              navigation.navigate('SelfWakeVerification', {
                 recipientName: '눈눈',
                 photographer: 'minju',
               })
@@ -703,7 +1118,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                       accessibilityRole="button"
                       activeOpacity={0.7}
                       onPress={
-                        item === '초대 코드 복사하기'
+                        item === '방 나가기'
+                          ? openLeaveConfirm
+                          : item === '초대 코드 복사하기'
                           ? () => copyInviteCode().catch(() => undefined)
                           : undefined
                       }
@@ -716,6 +1133,22 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               </Pressable>
             </Pressable>
           </Modal>
+          <LeaveGroupConfirmModal
+            onCancel={closeLeaveConfirm}
+            onConfirm={() => leaveGroup().catch(() => undefined)}
+            scale={scale}
+            visible={wakeDemoState.leaveConfirmVisible}
+          />
+          <AiFriendConfirmModal
+            onCancel={() => dismissAiFriendPrompt(false).catch(() => undefined)}
+            onConfirm={() => dismissAiFriendPrompt(true).catch(() => undefined)}
+            scale={scale}
+            visible={wakeDemoState.aiFriendPromptVisible}
+          />
+          <InviteFriendBanner
+            scale={scale}
+            visible={wakeDemoState.inviteFriendBannerVisible}
+          />
         </View>
       </SafeAreaView>
     );
@@ -778,17 +1211,31 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          accessibilityRole={
-            !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted
-              ? 'button'
-              : undefined
+          accessibilityRole="button"
+          accessibilityLabel={
+            firstMemberPhotoPath
+              ? `${isMinjuViewer ? '지우' : '눈눈'} 인증사진 확대`
+              : !isMinjuViewer
+              ? '눈눈 인증사진 촬영'
+              : '지우'
           }
-          accessibilityLabel={!isMinjuViewer ? '눈눈 인증사진 촬영' : '지우'}
           activeOpacity={
-            !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted ? 0.85 : 1
+            firstMemberPhotoPath ||
+            (!isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted)
+              ? 0.85
+              : 1
           }
           onPress={
-            !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted
+            firstMemberPhotoPath
+              ? () =>
+                  setWakeDemoState(state => ({
+                    ...state,
+                    expandedPhoto: {
+                      path: firstMemberPhotoPath,
+                      memberName: isMinjuViewer ? '지우' : '눈눈',
+                    },
+                  }))
+              : !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted
               ? () =>
                   navigation.navigate('CameraCapture', {
                     recipientName: '지우',
@@ -975,15 +1422,32 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               ? `${isMinjuViewer ? '눈눈' : '지우'} 멤버`
               : `${isMinjuViewer ? '눈눈' : '지우'} 참여 상태로 전환`
           }
-          activeOpacity={wakeDemoState.hasMinjuJoined ? 1 : 0.85}
-          onPress={() =>
+          activeOpacity={secondMemberPhotoPath ? 0.85 : 1}
+          onPress={() => {
+            if (wakeDemoState.aiFriendEnabled) {
+              return;
+            }
+
+            if (secondMemberPhotoPath && !isScheduleRestricted) {
+              setWakeDemoState(state => ({
+                ...state,
+                expandedPhoto: {
+                  path: secondMemberPhotoPath,
+                  memberName: isMinjuViewer ? '눈눈' : '지우',
+                },
+              }));
+              return;
+            }
+
             setWakeDemoState(state => ({
               ...state,
               hasMinjuJoined: true,
-            }))
-          }
+            }));
+          }}
           style={[
             styles.waitingMemberCard,
+            wakeDemoState.aiFriendEnabled && styles.aiFriendCard,
+            isScheduleRestricted && styles.scheduleRestrictedCard,
             {
               left: 211 * scale,
               top: 145 * scale,
@@ -995,7 +1459,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         >
           {wakeDemoState.hasMinjuJoined ? (
             <>
-              {secondMemberPhotoPath && (
+              {secondMemberPhotoPath && !isScheduleRestricted && (
                 <Image
                   accessibilityIgnoresInvertColors
                   accessibilityLabel={`${
@@ -1006,20 +1470,48 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   style={styles.memberPhoto}
                 />
               )}
-              {!isMinjuViewer && wakeDemoState.hasMinjuWakeRequest && (
-                <Image
-                  accessibilityLabel="지우에게 깨우기 알림 전송됨"
-                  resizeMode="contain"
-                  source={require('../assets/images/wake-alarm.png')}
-                  style={[
-                    styles.wakeAlarm,
-                    {
-                      width: 28 * scale,
-                      height: 28 * scale,
-                      top: 95 * scale,
-                    },
-                  ]}
-                />
+              {!isMinjuViewer &&
+                wakeDemoState.hasMinjuWakeRequest &&
+                !isScheduleRestricted && (
+                  <Image
+                    accessibilityLabel="지우에게 깨우기 알림 전송됨"
+                    resizeMode="contain"
+                    source={require('../assets/images/wake-alarm.png')}
+                    style={[
+                      styles.wakeAlarm,
+                      {
+                        width: 28 * scale,
+                        height: 28 * scale,
+                        top: 95 * scale,
+                      },
+                    ]}
+                  />
+                )}
+              {isScheduleRestricted && (
+                <>
+                  <Image
+                    accessibilityLabel="수업 중"
+                    resizeMode="contain"
+                    source={require('../assets/images/class-in-progress-pen.png')}
+                    style={[
+                      styles.schedulePen,
+                      {
+                        left: 45 * scale,
+                        top: 70 * scale,
+                        width: 80 * scale,
+                        height: 80 * scale,
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.scheduleRestrictedText,
+                      { top: 150 * scale },
+                    ]}
+                  >
+                    수업 중이에요
+                  </Text>
+                </>
               )}
               <View
                 style={[
@@ -1027,7 +1519,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
                 ]}
               >
-                {secondMemberPhotoPath ? (
+                {secondMemberPhotoPath || isScheduleRestricted ? (
                   <MemberStatusWhite
                     width={16.78 * scale}
                     height={16 * scale}
@@ -1038,63 +1530,82 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                     height={16 * scale}
                   />
                 )}
-                <Text style={styles.memberName}>
+                <Text
+                  style={[
+                    styles.memberName,
+                    isScheduleRestricted && styles.memberNameOnPhoto,
+                  ]}
+                >
                   {isMinjuViewer ? '눈눈' : '지우'}
                 </Text>
-                <View style={styles.memberMetaDot} />
-                <Text style={styles.memberName}>0시간 남음</Text>
+                <View
+                  style={[
+                    styles.memberMetaDot,
+                    isScheduleRestricted && styles.memberMetaDotOnPhoto,
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.memberName,
+                    isScheduleRestricted && styles.memberNameOnPhoto,
+                  ]}
+                >
+                  0시간 남음
+                </Text>
               </View>
-              <View
-                style={[
-                  styles.sleepDetails,
-                  { left: 27 * scale, bottom: 17 * scale },
-                ]}
-              >
-                <View style={styles.sleepDetailColumn}>
-                  <Text
-                    style={[
-                      styles.sleepValue,
-                      secondMemberPhotoPath && styles.awakeDetailText,
-                    ]}
-                  >
-                    {secondMemberPhotoPath
-                      ? isMinjuViewer
-                        ? '09:03'
-                        : '09:33'
-                      : '07:32'}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.sleepLabel,
-                      secondMemberPhotoPath && styles.awakeDetailText,
-                    ]}
-                  >
-                    {secondMemberPhotoPath ? '기상 시간' : '기상 목표'}
-                  </Text>
+              {!isScheduleRestricted && (
+                <View
+                  style={[
+                    styles.sleepDetails,
+                    { left: 27 * scale, bottom: 17 * scale },
+                  ]}
+                >
+                  <View style={styles.sleepDetailColumn}>
+                    <Text
+                      style={[
+                        styles.sleepValue,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath
+                        ? isMinjuViewer
+                          ? '09:03'
+                          : '09:33'
+                        : '07:32'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.sleepLabel,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath ? '기상 시간' : '기상 목표'}
+                    </Text>
+                  </View>
+                  <View style={styles.sleepDetailColumn}>
+                    <Text
+                      style={[
+                        styles.sleepValue,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath
+                        ? isMinjuViewer
+                          ? '23분 째'
+                          : '01분 째'
+                        : '4시간째'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.sleepLabel,
+                        secondMemberPhotoPath && styles.awakeDetailText,
+                      ]}
+                    >
+                      {secondMemberPhotoPath ? '기상 중' : '취침 중'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.sleepDetailColumn}>
-                  <Text
-                    style={[
-                      styles.sleepValue,
-                      secondMemberPhotoPath && styles.awakeDetailText,
-                    ]}
-                  >
-                    {secondMemberPhotoPath
-                      ? isMinjuViewer
-                        ? '23분 째'
-                        : '01분 째'
-                      : '4시간째'}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.sleepLabel,
-                      secondMemberPhotoPath && styles.awakeDetailText,
-                    ]}
-                  >
-                    {secondMemberPhotoPath ? '기상 중' : '취침 중'}
-                  </Text>
-                </View>
-              </View>
+              )}
             </>
           ) : null}
         </TouchableOpacity>
@@ -1111,30 +1622,17 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         >
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={
-              isJiwooBaseState ? '지금 인증할게요' : undefined
-            }
+            accessibilityLabel="지금 인증할게요"
             activeOpacity={0.8}
-            onPress={
-              isJiwooBaseState
-                ? () =>
-                    navigation.navigate('CameraCapture', {
-                      recipientName: '지우',
-                      photographer: 'jiwoo',
-                    })
-                : undefined
+            onPress={() =>
+              navigation.navigate('SelfWakeVerification', {
+                recipientName: isMinjuViewer ? '눈눈' : '지우',
+                photographer: isMinjuViewer ? 'minju' : 'jiwoo',
+              })
             }
             style={[
               styles.memberActionButton,
-              wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
-                ? styles.photoLockedButton
-                : isJiwooBaseState
-                ? styles.inviteActionButtonActive
-                : firstMemberPhotoPath && !isMinjuViewer
-                ? styles.photoLockedButton
-                : firstMemberPhotoPath
-                ? styles.awakeSelfButton
-                : styles.selfAwakeButton,
+              styles.wakeActionButton,
               {
                 width: 171 * scale,
                 height: 44 * scale,
@@ -1142,45 +1640,55 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
-            <Text
-              style={[
-                styles.selfAwakeButtonText,
-                firstMemberPhotoPath &&
-                  (isMinjuViewer
-                    ? styles.awakeSelfButtonText
-                    : styles.photoLockedButtonText),
-              ]}
-            >
-              {wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
-                ? '깨우기'
-                : isJiwooBaseState
-                ? '지금 인증할게요'
-                : firstMemberPhotoPath && !isMinjuViewer
-                ? '잠겼어요'
-                : bothMembersAwake
-                ? isMinjuViewer
-                  ? '30 : 00'
-                  : '05 : 20'
-                : '아빠 안 잔다'}
-            </Text>
+            <Text style={styles.selfAwakeButtonText}>지금 인증할게요</Text>
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
+            accessibilityLabel={
+              !wakeDemoState.hasMinjuJoined && !wakeDemoState.aiFriendEnabled
+                ? '친구 초대하기'
+                : undefined
+            }
             accessibilityState={{
-              disabled: !wakeDemoState.hasMinjuJoined || isWakeCompleted,
+              disabled:
+                wakeDemoState.aiFriendEnabled ||
+                (wakeDemoState.hasMinjuJoined &&
+                  (isWakeCompleted || isScheduleRestricted)),
             }}
             activeOpacity={
-              wakeDemoState.hasMinjuJoined && !isWakeCompleted ? 0.8 : 1
+              !wakeDemoState.aiFriendEnabled &&
+              (!wakeDemoState.hasMinjuJoined ||
+                (!isWakeCompleted && !isScheduleRestricted))
+                ? 0.8
+                : 1
             }
-            disabled={!wakeDemoState.hasMinjuJoined || isWakeCompleted}
+            disabled={
+              wakeDemoState.aiFriendEnabled ||
+              (wakeDemoState.hasMinjuJoined &&
+                (isWakeCompleted || isScheduleRestricted))
+            }
             onPress={
-              !isMinjuViewer && !isWakeCompleted
+              !wakeDemoState.hasMinjuJoined
+                ? () => copyInviteCode().catch(() => undefined)
+                : secondMemberPhotoPath
+                ? () =>
+                    setWakeDemoState(state => ({
+                      ...state,
+                      wakeLockedVisible: true,
+                    }))
+                : !isMinjuViewer && !isWakeCompleted && !isScheduleRestricted
                 ? () => wakeMinju().catch(() => undefined)
                 : undefined
             }
             style={[
               styles.memberActionButton,
-              isWakeCompleted
+              wakeDemoState.aiFriendEnabled
+                ? styles.aiFriendButtonFill
+                : !wakeDemoState.hasMinjuJoined
+                ? styles.inviteActionButtonInactive
+                : isWakeCompleted
+                ? styles.wakeCompletedButton
+                : isScheduleRestricted
                 ? styles.wakeCompletedButton
                 : isJiwooBaseState
                 ? styles.wakeActionButton
@@ -1200,27 +1708,155 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             <Text
               style={[
                 styles.waitingWakeButtonText,
+                wakeDemoState.aiFriendEnabled && styles.aiFriendButtonText,
+                !wakeDemoState.hasMinjuJoined &&
+                  styles.inviteActionTextInactive,
                 wakeDemoState.hasMinjuWakeRequest &&
                   !isMinjuViewer &&
                   styles.wakeRequestedButtonText,
                 secondMemberPhotoPath && styles.wakeRequestedButtonText,
                 isWakeCompleted && styles.wakeCompletedButtonText,
+                isScheduleRestricted && styles.wakeCompletedButtonText,
               ]}
             >
-              {isWakeCompleted
+              {wakeDemoState.aiFriendEnabled
+                ? 'AI 친구'
+                : !wakeDemoState.hasMinjuJoined
+                ? '친구 초대하기'
+                : isScheduleRestricted
+                ? '10시 이후 깨우기 가능'
+                : isWakeCompleted
                 ? '기상 완료'
+                : secondMemberPhotoPath
+                ? '06 : 20'
                 : bothMembersAwake
                 ? isMinjuViewer
                   ? '05 : 20'
                   : '30 : 00'
-                : isMinjuViewer && secondMemberPhotoPath
-                ? '06 : 20'
                 : wakeDemoState.hasMinjuWakeRequest && !isMinjuViewer
                 ? '28 : 20'
                 : '깨우기'}
             </Text>
           </TouchableOpacity>
         </View>
+
+        <Modal
+          animationType="fade"
+          onRequestClose={() => clearWakeSuccess().catch(() => undefined)}
+          statusBarTranslucent
+          transparent
+          visible={wakeDemoState.wakeSuccessVisible}
+        >
+          <View style={styles.wakeConfirmOverlay}>
+            <View
+              style={[
+                styles.wakeSuccessPanel,
+                {
+                  width: 320 * scale,
+                  height: 315 * scale,
+                  borderRadius: 24 * scale,
+                },
+              ]}
+            >
+              <Image
+                accessibilityLabel="깨우기 성공"
+                resizeMode="contain"
+                source={require('../assets/images/wake-success-clock.png')}
+                style={{ width: 104 * scale, height: 104 * scale }}
+              />
+              <Text style={styles.wakeSuccessTitle}>눈눈님 깨우기 성공!</Text>
+              <Text style={styles.wakeSuccessDescription}>
+                오늘의 리워드를 보내볼까요?
+              </Text>
+              <View style={styles.wakeSuccessActions}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="리워드 나중에 보내기"
+                  activeOpacity={0.8}
+                  onPress={() => clearWakeSuccess().catch(() => undefined)}
+                  style={[
+                    styles.wakeSuccessButton,
+                    styles.wakeSuccessLaterButton,
+                  ]}
+                >
+                  <Text style={styles.wakeSuccessLaterText}>나중에</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel="리워드 보내기"
+                  activeOpacity={0.8}
+                  onPress={() => openRewardList().catch(() => undefined)}
+                  style={[
+                    styles.wakeSuccessButton,
+                    styles.wakeSuccessSendButton,
+                  ]}
+                >
+                  <Text style={styles.wakeSuccessSendText}>보내기</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
+          animationType="fade"
+          onRequestClose={() =>
+            setWakeDemoState(state => ({
+              ...state,
+              wakeLockedVisible: false,
+            }))
+          }
+          statusBarTranslucent
+          transparent
+          visible={wakeDemoState.wakeLockedVisible}
+        >
+          <View style={styles.wakeConfirmOverlay}>
+            <View
+              style={[
+                styles.wakeLockedPanel,
+                {
+                  width: 320 * scale,
+                  height: 315 * scale,
+                  borderRadius: 16 * scale,
+                },
+              ]}
+            >
+              <Image
+                accessibilityLabel="깨우기 대기 안내"
+                resizeMode="contain"
+                source={require('../assets/images/wake-caution.png')}
+                style={{ width: 104 * scale, height: 104 * scale }}
+              />
+              <Text style={styles.wakeLockedTitle}>
+                23분 30초 후 깨울 수 있어요
+              </Text>
+              <Text style={styles.wakeLockedDescription}>
+                코드를 입력하면 그룹에 참여할 수 있어요
+              </Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="깨우기 대기 안내 확인"
+                activeOpacity={0.8}
+                onPress={() =>
+                  setWakeDemoState(state => ({
+                    ...state,
+                    wakeLockedVisible: false,
+                  }))
+                }
+                style={[
+                  styles.wakeLockedConfirmButton,
+                  {
+                    width: 246 * scale,
+                    height: 44 * scale,
+                    borderRadius: 8 * scale,
+                  },
+                ]}
+              >
+                <Text style={styles.wakeLockedConfirmText}>확인</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {[23, 212].map((left, index) => (
           <React.Fragment key={left}>
@@ -1299,7 +1935,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                     accessibilityRole="button"
                     activeOpacity={0.7}
                     onPress={
-                      item === '초대 코드 복사하기'
+                      item === '방 나가기'
+                        ? openLeaveConfirm
+                        : item === '초대 코드 복사하기'
                         ? () => copyInviteCode().catch(() => undefined)
                         : undefined
                     }
@@ -1312,8 +1950,175 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             </Pressable>
           </Pressable>
         </Modal>
+        <LeaveGroupConfirmModal
+          onCancel={closeLeaveConfirm}
+          onConfirm={() => leaveGroup().catch(() => undefined)}
+          scale={scale}
+          visible={wakeDemoState.leaveConfirmVisible}
+        />
+        <AiFriendConfirmModal
+          onCancel={() => dismissAiFriendPrompt(false).catch(() => undefined)}
+          onConfirm={() => dismissAiFriendPrompt(true).catch(() => undefined)}
+          scale={scale}
+          visible={wakeDemoState.aiFriendPromptVisible}
+        />
+        <InviteFriendBanner
+          scale={scale}
+          visible={wakeDemoState.inviteFriendBannerVisible}
+        />
       </View>
     </SafeAreaView>
+  );
+};
+
+type LeaveGroupConfirmModalProps = {
+  visible: boolean;
+  scale: number;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+const LeaveGroupConfirmModal = ({
+  visible,
+  scale,
+  onCancel,
+  onConfirm,
+}: LeaveGroupConfirmModalProps) => (
+  <Modal
+    animationType="fade"
+    onRequestClose={onCancel}
+    statusBarTranslucent
+    transparent
+    visible={visible}
+  >
+    <View style={styles.wakeConfirmOverlay}>
+      <View
+        style={[
+          styles.leaveConfirmPanel,
+          {
+            width: 320 * scale,
+            height: 315 * scale,
+            borderRadius: 16 * scale,
+          },
+        ]}
+      >
+        <Image
+          accessibilityLabel="그룹 나가기 경고"
+          resizeMode="contain"
+          source={require('../assets/images/wake-caution.png')}
+          style={{ width: 104 * scale, height: 104 * scale }}
+        />
+        <Text style={styles.leaveConfirmTitle}>방에서 나갈까요?</Text>
+        <View style={styles.leaveConfirmActions}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹에 남기"
+            activeOpacity={0.8}
+            onPress={onCancel}
+            style={[styles.leaveConfirmButton, styles.leaveConfirmCancelButton]}
+          >
+            <Text style={styles.leaveConfirmCancelText}>아니요</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="그룹에서 나가기"
+            activeOpacity={0.8}
+            onPress={onConfirm}
+            style={[styles.leaveConfirmButton, styles.leaveConfirmAcceptButton]}
+          >
+            <Text style={styles.leaveConfirmAcceptText}>예</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
+
+const AiFriendConfirmModal = ({
+  visible,
+  scale,
+  onCancel,
+  onConfirm,
+}: LeaveGroupConfirmModalProps) => (
+  <Modal
+    animationType="fade"
+    onRequestClose={onCancel}
+    statusBarTranslucent
+    transparent
+    visible={visible}
+  >
+    <View style={styles.wakeConfirmOverlay}>
+      <View
+        style={[
+          styles.aiFriendConfirmPanel,
+          {
+            width: 320 * scale,
+            height: 315 * scale,
+            borderRadius: 16 * scale,
+          },
+        ]}
+      >
+        <Image
+          accessibilityLabel="AI 친구 활성화 안내"
+          resizeMode="contain"
+          source={require('../assets/images/wake-caution.png')}
+          style={{ width: 104 * scale, height: 104 * scale }}
+        />
+        <Text style={styles.leaveConfirmTitle}>AI 친구를 활성화할까요?</Text>
+        <Text style={styles.aiFriendConfirmDescription}>
+          남은 인원이 1명이에요
+        </Text>
+        <View style={styles.aiFriendConfirmActions}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="AI 친구 활성화하지 않기"
+            activeOpacity={0.8}
+            onPress={onCancel}
+            style={[styles.leaveConfirmButton, styles.leaveConfirmCancelButton]}
+          >
+            <Text style={styles.leaveConfirmCancelText}>아니요</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="AI 친구 활성화"
+            activeOpacity={0.8}
+            onPress={onConfirm}
+            style={[styles.leaveConfirmButton, styles.leaveConfirmAcceptButton]}
+          >
+            <Text style={styles.leaveConfirmAcceptText}>네</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+);
+
+const InviteFriendBanner = ({
+  visible,
+  scale,
+}: {
+  visible: boolean;
+  scale: number;
+}) => {
+  if (!visible) {
+    return null;
+  }
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.inviteFriendBanner,
+        {
+          top: 59 * scale,
+          width: 346 * scale,
+          height: 58 * scale,
+          borderRadius: 16 * scale,
+        },
+      ]}
+    >
+      <Text style={styles.inviteFriendBannerText}>친구를 초대해보세요</Text>
+    </View>
   );
 };
 
@@ -1423,6 +2228,183 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
   },
+  wakeSuccessPanel: {
+    alignItems: 'center',
+    paddingTop: 27,
+    backgroundColor: Colors.background,
+    overflow: 'hidden',
+  },
+  wakeSuccessTitle: {
+    marginTop: 15,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+    textAlign: 'center',
+  },
+  wakeSuccessDescription: {
+    marginTop: 6,
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  wakeSuccessActions: {
+    position: 'absolute',
+    right: 16,
+    bottom: 37,
+    left: 16,
+    flexDirection: 'row',
+    columnGap: 16,
+  },
+  wakeSuccessButton: {
+    flex: 1,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  wakeSuccessLaterButton: {
+    backgroundColor: Colors.gray,
+  },
+  wakeSuccessSendButton: {
+    backgroundColor: '#FF4B4B',
+  },
+  wakeSuccessLaterText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  wakeSuccessSendText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  leaveConfirmPanel: {
+    alignItems: 'center',
+    paddingTop: 46,
+    overflow: 'hidden',
+    backgroundColor: Colors.background,
+  },
+  leaveConfirmTitle: {
+    marginTop: 15,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+    textAlign: 'center',
+  },
+  leaveConfirmActions: {
+    position: 'absolute',
+    right: 15,
+    bottom: 42.5,
+    left: 15,
+    flexDirection: 'row',
+    columnGap: 16,
+  },
+  leaveConfirmButton: {
+    flex: 1,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  leaveConfirmCancelButton: {
+    backgroundColor: Colors.gray,
+  },
+  leaveConfirmAcceptButton: {
+    backgroundColor: '#FF4B4B',
+  },
+  leaveConfirmCancelText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  leaveConfirmAcceptText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  aiFriendConfirmPanel: {
+    alignItems: 'center',
+    paddingTop: 26,
+    overflow: 'hidden',
+    backgroundColor: Colors.background,
+  },
+  aiFriendConfirmDescription: {
+    marginTop: 6,
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  aiFriendConfirmActions: {
+    position: 'absolute',
+    right: 15,
+    bottom: 39,
+    left: 15,
+    flexDirection: 'row',
+    columnGap: 16,
+  },
+  inviteFriendBanner: {
+    position: 'absolute',
+    zIndex: 20,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  inviteFriendBannerText: {
+    color: Colors.textBlack,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  wakeLockedPanel: {
+    alignItems: 'center',
+    paddingTop: 21,
+    backgroundColor: Colors.background,
+  },
+  wakeLockedTitle: {
+    marginTop: 15,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+    textAlign: 'center',
+  },
+  wakeLockedDescription: {
+    marginTop: 6,
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  wakeLockedConfirmButton: {
+    position: 'absolute',
+    bottom: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF4B4B',
+  },
+  wakeLockedConfirmText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
   wakeConfirmIcon: {
     marginTop: 26,
   },
@@ -1490,6 +2472,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 19,
   },
+  aiFriendCard: {
+    position: 'absolute',
+    backgroundColor: '#202224',
+  },
+  aiFriendButton: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#202224',
+  },
+  aiFriendButtonFill: {
+    backgroundColor: '#202224',
+  },
+  aiFriendButtonText: {
+    color: '#F6F6F6',
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
   waitingMemberCard: {
     position: 'absolute',
     overflow: 'hidden',
@@ -1497,6 +2498,20 @@ const styles = StyleSheet.create({
   },
   helpNeededCard: {
     backgroundColor: '#FF4B4B',
+  },
+  scheduleRestrictedCard: {
+    backgroundColor: '#202224',
+  },
+  schedulePen: {
+    position: 'absolute',
+  },
+  scheduleRestrictedText: {
+    position: 'absolute',
+    alignSelf: 'center',
+    color: Colors.textWhite,
+    fontFamily: 'PretendardBold',
+    fontSize: 14,
+    lineHeight: 17,
   },
   helpFire: {
     position: 'absolute',
@@ -1517,6 +2532,41 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
+  },
+  expandedPhotoCard: {
+    position: 'absolute',
+    overflow: 'hidden',
+    backgroundColor: Colors.gray,
+  },
+  expandedMemberIdentity: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 6,
+  },
+  expandedMemberMeta: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  expandedPhotoDetails: {
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  expandedPhotoValue: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+  },
+  expandedPhotoLabel: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 16,
+    lineHeight: 19,
   },
   wakeAlarm: {
     position: 'absolute',
