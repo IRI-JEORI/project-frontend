@@ -12,6 +12,9 @@ import { InviteCodeScreen } from './src/screens/InviteCodeScreen';
 import { CameraCaptureScreen } from './src/screens/CameraCaptureScreen';
 import { PhotoReviewScreen } from './src/screens/PhotoReviewScreen';
 import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
+import { PhotoAnalysisScreen } from './src/screens/PhotoAnalysisScreen';
+import { PhotoAnalysisSuccessScreen } from './src/screens/PhotoAnalysisSuccessScreen';
+import { PhotoAnalysisFailureScreen } from './src/screens/PhotoAnalysisFailureScreen';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -20,13 +23,32 @@ export type RootStackParamList = {
   CameraCapture: {
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
+    attempt?: number;
   };
   PhotoReview: {
     photoPath: string;
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
+    attempt?: number;
   };
   WakeNotification: undefined;
+  PhotoAnalysis: {
+    photoPath: string;
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    attempt?: number;
+  };
+  PhotoAnalysisSuccess: {
+    photoPath: string;
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    attempt?: number;
+  };
+  PhotoAnalysisFailure: {
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    attempt: number;
+  };
   AddGroupName: { groupType: GroupType } | undefined;
   AddGroupInvite: { groupType: GroupType; groupName: string } | undefined;
   WaitingForMembers:
@@ -56,6 +78,15 @@ export default function App() {
           <Stack.Screen
             name="WakeNotification"
             component={WakeNotificationScreen}
+          />
+          <Stack.Screen name="PhotoAnalysis" component={PhotoAnalysisScreen} />
+          <Stack.Screen
+            name="PhotoAnalysisSuccess"
+            component={PhotoAnalysisSuccessScreen}
+          />
+          <Stack.Screen
+            name="PhotoAnalysisFailure"
+            component={PhotoAnalysisFailureScreen}
           />
           <Stack.Screen name="AddGroupName" component={AddGroupNameScreen} />
           <Stack.Screen

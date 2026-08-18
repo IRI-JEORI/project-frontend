@@ -56,6 +56,7 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
         photoPath: photo.filePath,
         recipientName: route.params.recipientName,
         photographer: route.params.photographer,
+        attempt: route.params.attempt ?? 1,
       });
     } finally {
       setIsTakingPhoto(false);

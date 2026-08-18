@@ -22,14 +22,15 @@ import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
+  JIWOO_WAKE_EXHAUSTED_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
   MINJU_WAKE_PHOTO_STORAGE_KEY,
   MINJU_WAKE_REQUEST_STORAGE_KEY,
   WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
   WAKE_GROUP_MINJU_JOINED_STORAGE_KEY,
 } from '../constants/DemoUser';
-import MemberStatusGray from '../assets/images/member-status-gray.svg';
-import MemberStatusYellow from '../assets/images/member-status-yellow.svg';
+import MemberStatusLightGray from '../assets/images/member-status-light-gray.svg';
+import MemberStatusWhite from '../assets/images/member-status-white.svg';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
@@ -44,6 +45,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     selfPhotoPath: null as string | null,
     minjuPhotoPath: null as string | null,
     hasMinjuWakeRequest: false,
+    hasJiwooWakeRequest: false,
+    hasJiwooWakeExhausted: false,
     wakeConfirmVisible: false,
   });
   const { width: viewportWidth } = useWindowDimensions();
@@ -58,6 +61,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         AsyncStorage.getItem(JIWOO_WAKE_PHOTO_STORAGE_KEY),
         AsyncStorage.getItem(MINJU_WAKE_PHOTO_STORAGE_KEY),
         AsyncStorage.getItem(MINJU_WAKE_REQUEST_STORAGE_KEY),
+        AsyncStorage.getItem(JIWOO_WAKE_REQUEST_STORAGE_KEY),
+        AsyncStorage.getItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
       ])
         .then(
           ([
@@ -65,6 +70,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             savedPhotoPath,
             savedMinjuPhotoPath,
             savedWakeRequest,
+            savedJiwooWakeRequest,
+            savedJiwooWakeExhausted,
           ]) => {
             if (isActive) {
               setWakeDemoState(state => ({
@@ -74,6 +81,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 selfPhotoPath: savedPhotoPath,
                 minjuPhotoPath: savedMinjuPhotoPath,
                 hasMinjuWakeRequest: savedWakeRequest === 'true',
+                hasJiwooWakeRequest: savedJiwooWakeRequest === 'true',
+                hasJiwooWakeExhausted: savedJiwooWakeExhausted === 'true',
               }));
             }
           },
@@ -98,6 +107,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     await AsyncStorage.setItem(JIWOO_WAKE_REQUEST_STORAGE_KEY, 'true');
     setWakeDemoState(state => ({
       ...state,
+      hasJiwooWakeRequest: true,
       wakeConfirmVisible: false,
     }));
   };
@@ -120,6 +130,17 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     : wakeDemoState.minjuPhotoPath;
   const bothMembersAwake = Boolean(
     wakeDemoState.selfPhotoPath && wakeDemoState.minjuPhotoPath,
+  );
+  const isWakeCompleted = Boolean(
+    (firstMemberPhotoPath || wakeDemoState.hasJiwooWakeExhausted) &&
+      !isMinjuViewer &&
+      !secondMemberPhotoPath,
+  );
+  const isJiwooBaseState = Boolean(
+    !isMinjuViewer &&
+      !firstMemberPhotoPath &&
+      !secondMemberPhotoPath &&
+      !wakeDemoState.hasJiwooWakeExhausted,
   );
 
   if (!isMinjuViewer && !wakeDemoState.hasMinjuJoined) {
@@ -207,7 +228,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                 { left: 11 * scale, top: 10 * scale },
               ]}
             >
-              <MemberStatusGray width={17 * scale} height={16 * scale} />
+              <MemberStatusLightGray width={17 * scale} height={16 * scale} />
               <Text style={styles.inviteMetaText}>눈눈</Text>
               <View style={styles.inviteMetaDot} />
               <Text style={styles.inviteMetaText}>8시간 남음</Text>
@@ -443,7 +464,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   { left: 11 * scale, top: 10 * scale },
                 ]}
               >
-                <MemberStatusGray width={17 * scale} height={16 * scale} />
+                <MemberStatusLightGray width={17 * scale} height={16 * scale} />
                 <Text style={styles.inviteMetaText}>{member.name}</Text>
                 <View style={styles.inviteMetaDot} />
                 <Text style={styles.inviteMetaText}>{member.remaining}</Text>
@@ -469,7 +490,11 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="눈눈 깨우기"
-            activeOpacity={0.8}
+            accessibilityState={{
+              disabled: wakeDemoState.hasJiwooWakeRequest,
+            }}
+            activeOpacity={wakeDemoState.hasJiwooWakeRequest ? 1 : 0.8}
+            disabled={wakeDemoState.hasJiwooWakeRequest}
             onPress={() =>
               setWakeDemoState(state => ({
                 ...state,
@@ -478,7 +503,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             }
             style={[
               styles.inviteActionButton,
-              styles.wakeActionButton,
+              wakeDemoState.hasJiwooWakeRequest
+                ? styles.wakeActionRequestedButton
+                : styles.wakeActionButton,
               {
                 left: 21 * scale,
                 top: 373 * scale,
@@ -488,7 +515,15 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
-            <Text style={styles.inviteActionTextActive}>깨우기</Text>
+            <Text
+              style={
+                wakeDemoState.hasJiwooWakeRequest
+                  ? styles.wakeActionRequestedText
+                  : styles.inviteActionTextActive
+              }
+            >
+              {wakeDemoState.hasJiwooWakeRequest ? '28:20' : '깨우기'}
+            </Text>
           </TouchableOpacity>
 
           <Modal
@@ -514,12 +549,15 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   },
                 ]}
               >
-                <Text
+                <Image
                   accessibilityLabel="주의"
-                  style={[styles.wakeConfirmIcon, { fontSize: 72 * scale }]}
-                >
-                  ⚠️
-                </Text>
+                  resizeMode="contain"
+                  source={require('../assets/images/wake-caution.png')}
+                  style={[
+                    styles.wakeConfirmIcon,
+                    { width: 104 * scale, height: 104 * scale },
+                  ]}
+                />
                 <Text style={styles.wakeConfirmTitle}>눈눈님을 깨울까요?</Text>
                 <Text style={styles.wakeConfirmDescription}>
                   코드를 입력하면 그룹에 참여할 수 있어요
@@ -740,11 +778,17 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          accessibilityRole={!isMinjuViewer ? 'button' : undefined}
+          accessibilityRole={
+            !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted
+              ? 'button'
+              : undefined
+          }
           accessibilityLabel={!isMinjuViewer ? '눈눈 인증사진 촬영' : '지우'}
-          activeOpacity={!isMinjuViewer ? 0.85 : 1}
+          activeOpacity={
+            !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted ? 0.85 : 1
+          }
           onPress={
-            !isMinjuViewer
+            !isMinjuViewer && !wakeDemoState.hasJiwooWakeExhausted
               ? () =>
                   navigation.navigate('CameraCapture', {
                     recipientName: '지우',
@@ -754,10 +798,13 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
           }
           style={[
             styles.waitingMemberCard,
+            wakeDemoState.hasJiwooWakeExhausted &&
+              !isMinjuViewer &&
+              styles.helpNeededCard,
             {
-              left: 25 * scale,
-              top: 177 * scale,
-              width: 164 * scale,
+              left: 21 * scale,
+              top: 145 * scale,
+              width: 172 * scale,
               height: 219 * scale,
               borderRadius: 8 * scale,
             },
@@ -770,6 +817,27 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               source={{ uri: `file://${firstMemberPhotoPath}` }}
               style={styles.memberPhoto}
             />
+          )}
+          {wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer && (
+            <>
+              <Image
+                accessibilityLabel="도움이 필요해요"
+                resizeMode="contain"
+                source={require('../assets/images/wake-help-fire.png')}
+                style={[
+                  styles.helpFire,
+                  {
+                    left: 35 * scale,
+                    top: 48 * scale,
+                    width: 80 * scale,
+                    height: 80 * scale,
+                  },
+                ]}
+              />
+              <Text style={[styles.helpNeededText, { top: 128 * scale }]}>
+                도움이 필요해요!
+              </Text>
+            </>
           )}
           {isMinjuViewer &&
             wakeDemoState.hasMinjuWakeRequest &&
@@ -794,13 +862,39 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
             ]}
           >
-            {isMinjuViewer ? (
-              <MemberStatusYellow width={16 * scale} height={16 * scale} />
+            {(wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer) ||
+            firstMemberPhotoPath ? (
+              <MemberStatusWhite width={16.78 * scale} height={16 * scale} />
             ) : (
-              <MemberStatusGray width={16 * scale} height={16 * scale} />
+              <MemberStatusLightGray
+                width={16.78 * scale}
+                height={16 * scale}
+              />
             )}
-            <Text style={styles.memberName}>
+            <Text
+              style={[
+                styles.memberName,
+                (firstMemberPhotoPath || wakeDemoState.hasJiwooWakeExhausted) &&
+                  styles.memberNameOnPhoto,
+              ]}
+            >
               {isMinjuViewer ? '지우' : '눈눈'}
+            </Text>
+            <View
+              style={[
+                styles.memberMetaDot,
+                (firstMemberPhotoPath || wakeDemoState.hasJiwooWakeExhausted) &&
+                  styles.memberMetaDotOnPhoto,
+              ]}
+            />
+            <Text
+              style={[
+                styles.memberName,
+                (firstMemberPhotoPath || wakeDemoState.hasJiwooWakeExhausted) &&
+                  styles.memberNameOnPhoto,
+              ]}
+            >
+              8시간 남음
             </Text>
           </View>
           <View
@@ -813,10 +907,14 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               <Text
                 style={[
                   styles.sleepValue,
-                  firstMemberPhotoPath && styles.awakeDetailText,
+                  (firstMemberPhotoPath ||
+                    wakeDemoState.hasJiwooWakeExhausted) &&
+                    styles.awakeDetailText,
                 ]}
               >
-                {firstMemberPhotoPath
+                {wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
+                  ? '09:03'
+                  : firstMemberPhotoPath
                   ? isMinjuViewer
                     ? '09:33'
                     : '09:03'
@@ -825,32 +923,46 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               <Text
                 style={[
                   styles.sleepLabel,
-                  firstMemberPhotoPath && styles.awakeDetailText,
+                  (firstMemberPhotoPath ||
+                    wakeDemoState.hasJiwooWakeExhausted) &&
+                    styles.awakeDetailText,
                 ]}
               >
-                {firstMemberPhotoPath ? '기상 시간' : '기상 목표'}
+                {firstMemberPhotoPath || wakeDemoState.hasJiwooWakeExhausted
+                  ? '기상 시간'
+                  : '기상 목표'}
               </Text>
             </View>
             <View style={styles.sleepDetailColumn}>
               <Text
                 style={[
                   styles.sleepValue,
-                  firstMemberPhotoPath && styles.awakeDetailText,
+                  (firstMemberPhotoPath ||
+                    wakeDemoState.hasJiwooWakeExhausted) &&
+                    styles.awakeDetailText,
                 ]}
               >
-                {firstMemberPhotoPath
+                {wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
+                  ? '3시간 경과'
+                  : firstMemberPhotoPath
                   ? isMinjuViewer
                     ? '01분 째'
-                    : '23분 째'
+                    : '5시간째'
                   : '4시간째'}
               </Text>
               <Text
                 style={[
                   styles.sleepLabel,
-                  firstMemberPhotoPath && styles.awakeDetailText,
+                  (firstMemberPhotoPath ||
+                    wakeDemoState.hasJiwooWakeExhausted) &&
+                    styles.awakeDetailText,
                 ]}
               >
-                {firstMemberPhotoPath ? '기상 중' : '취침 중'}
+                {wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
+                  ? '목표로부터'
+                  : firstMemberPhotoPath
+                  ? '기상 중'
+                  : '취침 중'}
               </Text>
             </View>
           </View>
@@ -874,8 +986,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             styles.waitingMemberCard,
             {
               left: 211 * scale,
-              top: 177 * scale,
-              width: 164 * scale,
+              top: 145 * scale,
+              width: 170 * scale,
               height: 219 * scale,
               borderRadius: 8 * scale,
             },
@@ -915,14 +1027,22 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
                 ]}
               >
-                {isMinjuViewer ? (
-                  <MemberStatusGray width={16 * scale} height={16 * scale} />
+                {secondMemberPhotoPath ? (
+                  <MemberStatusWhite
+                    width={16.78 * scale}
+                    height={16 * scale}
+                  />
                 ) : (
-                  <MemberStatusYellow width={16 * scale} height={16 * scale} />
+                  <MemberStatusLightGray
+                    width={16.78 * scale}
+                    height={16 * scale}
+                  />
                 )}
                 <Text style={styles.memberName}>
                   {isMinjuViewer ? '눈눈' : '지우'}
                 </Text>
+                <View style={styles.memberMetaDot} />
+                <Text style={styles.memberName}>0시간 남음</Text>
               </View>
               <View
                 style={[
@@ -983,34 +1103,61 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
           style={[
             styles.memberActionRow,
             {
-              left: 26 * scale,
-              top: 410 * scale,
-              columnGap: 21 * scale,
+              left: 21 * scale,
+              top: 373 * scale,
+              columnGap: 18 * scale,
             },
           ]}
         >
           <TouchableOpacity
             accessibilityRole="button"
+            accessibilityLabel={
+              isJiwooBaseState ? '지금 인증할게요' : undefined
+            }
             activeOpacity={0.8}
+            onPress={
+              isJiwooBaseState
+                ? () =>
+                    navigation.navigate('CameraCapture', {
+                      recipientName: '지우',
+                      photographer: 'jiwoo',
+                    })
+                : undefined
+            }
             style={[
               styles.memberActionButton,
-              firstMemberPhotoPath
+              wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
+                ? styles.photoLockedButton
+                : isJiwooBaseState
+                ? styles.inviteActionButtonActive
+                : firstMemberPhotoPath && !isMinjuViewer
+                ? styles.photoLockedButton
+                : firstMemberPhotoPath
                 ? styles.awakeSelfButton
                 : styles.selfAwakeButton,
               {
-                width: 164 * scale,
-                height: 30 * scale,
-                borderRadius: 7 * scale,
+                width: 171 * scale,
+                height: 44 * scale,
+                borderRadius: 8 * scale,
               },
             ]}
           >
             <Text
               style={[
                 styles.selfAwakeButtonText,
-                firstMemberPhotoPath && styles.awakeSelfButtonText,
+                firstMemberPhotoPath &&
+                  (isMinjuViewer
+                    ? styles.awakeSelfButtonText
+                    : styles.photoLockedButtonText),
               ]}
             >
-              {bothMembersAwake
+              {wakeDemoState.hasJiwooWakeExhausted && !isMinjuViewer
+                ? '깨우기'
+                : isJiwooBaseState
+                ? '지금 인증할게요'
+                : firstMemberPhotoPath && !isMinjuViewer
+                ? '잠겼어요'
+                : bothMembersAwake
                 ? isMinjuViewer
                   ? '30 : 00'
                   : '05 : 20'
@@ -1020,27 +1167,33 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityState={{
-              disabled: !wakeDemoState.hasMinjuJoined,
+              disabled: !wakeDemoState.hasMinjuJoined || isWakeCompleted,
             }}
-            activeOpacity={wakeDemoState.hasMinjuJoined ? 0.8 : 1}
-            disabled={!wakeDemoState.hasMinjuJoined}
+            activeOpacity={
+              wakeDemoState.hasMinjuJoined && !isWakeCompleted ? 0.8 : 1
+            }
+            disabled={!wakeDemoState.hasMinjuJoined || isWakeCompleted}
             onPress={
-              !isMinjuViewer
+              !isMinjuViewer && !isWakeCompleted
                 ? () => wakeMinju().catch(() => undefined)
                 : undefined
             }
             style={[
               styles.memberActionButton,
-              (wakeDemoState.hasMinjuWakeRequest && !isMinjuViewer) ||
-              secondMemberPhotoPath
+              isWakeCompleted
+                ? styles.wakeCompletedButton
+                : isJiwooBaseState
+                ? styles.wakeActionButton
+                : (wakeDemoState.hasMinjuWakeRequest && !isMinjuViewer) ||
+                  secondMemberPhotoPath
                 ? styles.wakeRequestedButton
                 : wakeDemoState.hasMinjuJoined
                 ? styles.selfAwakeButton
                 : styles.waitingWakeButton,
               {
-                width: 164 * scale,
-                height: 30 * scale,
-                borderRadius: 7 * scale,
+                width: 171 * scale,
+                height: 44 * scale,
+                borderRadius: 8 * scale,
               },
             ]}
           >
@@ -1051,9 +1204,12 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
                   !isMinjuViewer &&
                   styles.wakeRequestedButtonText,
                 secondMemberPhotoPath && styles.wakeRequestedButtonText,
+                isWakeCompleted && styles.wakeCompletedButtonText,
               ]}
             >
-              {bothMembersAwake
+              {isWakeCompleted
+                ? '기상 완료'
+                : bothMembersAwake
                 ? isMinjuViewer
                   ? '05 : 20'
                   : '30 : 00'
@@ -1065,6 +1221,43 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {[23, 212].map((left, index) => (
+          <React.Fragment key={left}>
+            <View
+              style={[
+                styles.inviteMemberCard,
+                styles.inviteEmptyCard,
+                {
+                  left: left * scale,
+                  top: 435 * scale,
+                  width: 170 * scale,
+                  height: 219 * scale,
+                  borderRadius: 8 * scale,
+                },
+              ]}
+            />
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`친구 ${index + 1} 초대하기`}
+              activeOpacity={0.7}
+              onPress={() => copyInviteCode().catch(() => undefined)}
+              style={[
+                styles.inviteActionButton,
+                styles.inviteActionButtonInactive,
+                {
+                  left: (left - 1) * scale,
+                  top: 663 * scale,
+                  width: 171 * scale,
+                  height: 44 * scale,
+                  borderRadius: 8 * scale,
+                },
+              ]}
+            >
+              <Text style={styles.inviteActionTextInactive}>친구 초대하기</Text>
+            </TouchableOpacity>
+          </React.Fragment>
+        ))}
 
         <Modal
           animationType="fade"
@@ -1211,6 +1404,15 @@ const styles = StyleSheet.create({
   wakeActionButton: {
     backgroundColor: '#FF4B4B',
   },
+  wakeActionRequestedButton: {
+    backgroundColor: Colors.gray,
+  },
+  wakeActionRequestedText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
   wakeConfirmOverlay: {
     flex: 1,
     alignItems: 'center',
@@ -1219,25 +1421,24 @@ const styles = StyleSheet.create({
   },
   wakeConfirmPanel: {
     alignItems: 'center',
-    paddingTop: 39,
     backgroundColor: Colors.background,
   },
   wakeConfirmIcon: {
-    lineHeight: 86,
+    marginTop: 26,
   },
   wakeConfirmTitle: {
-    marginTop: 22,
+    marginTop: 15,
     color: Colors.textBlack,
     fontFamily: 'PretendardBold',
-    fontSize: 22,
-    lineHeight: 27,
+    fontSize: 24,
+    lineHeight: 29,
   },
   wakeConfirmDescription: {
     marginTop: 6,
     color: Colors.textGray,
     fontFamily: 'PretendardMedium',
-    fontSize: 14,
-    lineHeight: 17,
+    fontSize: 16,
+    lineHeight: 19,
   },
   wakeConfirmActions: {
     position: 'absolute',
@@ -1292,7 +1493,21 @@ const styles = StyleSheet.create({
   waitingMemberCard: {
     position: 'absolute',
     overflow: 'hidden',
-    backgroundColor: '#DCDCDD',
+    backgroundColor: Colors.gray,
+  },
+  helpNeededCard: {
+    backgroundColor: '#FF4B4B',
+  },
+  helpFire: {
+    position: 'absolute',
+  },
+  helpNeededText: {
+    position: 'absolute',
+    alignSelf: 'center',
+    color: Colors.textWhite,
+    fontFamily: 'PretendardBold',
+    fontSize: 14,
+    lineHeight: 17,
   },
   memberPhoto: {
     position: 'absolute',
@@ -1319,6 +1534,18 @@ const styles = StyleSheet.create({
     fontSize: 8,
     lineHeight: 10,
   },
+  memberNameOnPhoto: {
+    color: Colors.textWhite,
+  },
+  memberMetaDot: {
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: Colors.textGray,
+  },
+  memberMetaDotOnPhoto: {
+    backgroundColor: Colors.textWhite,
+  },
   sleepDetails: {
     position: 'absolute',
     flexDirection: 'row',
@@ -1341,7 +1568,7 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   awakeDetailText: {
-    color: Colors.secondary,
+    color: Colors.textWhite,
   },
   memberActionRow: {
     position: 'absolute',
@@ -1367,6 +1594,18 @@ const styles = StyleSheet.create({
   },
   awakeSelfButtonText: {
     color: Colors.secondary,
+  },
+  photoLockedButton: {
+    backgroundColor: '#FF4B4B',
+  },
+  photoLockedButtonText: {
+    color: Colors.textWhite,
+  },
+  wakeCompletedButton: {
+    backgroundColor: '#202224',
+  },
+  wakeCompletedButtonText: {
+    color: Colors.textWhite,
   },
   waitingWakeButton: {
     backgroundColor: '#B8B8B8',

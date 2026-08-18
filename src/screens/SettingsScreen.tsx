@@ -17,7 +17,7 @@ import { Colors } from '../constants/Colors';
 import {
   DEMO_USER_NAMES,
   DEMO_USER_STORAGE_KEY,
-  MINJU_WAKE_REQUEST_STORAGE_KEY,
+  JIWOO_WAKE_REQUEST_STORAGE_KEY,
   type DemoUser,
 } from '../constants/DemoUser';
 import SettingsProfile from '../assets/images/settings-profile.svg';
@@ -58,9 +58,9 @@ export const SettingsScreen = ({ navigation }: Props) => {
     setShowDemoUserSheet(false);
     await AsyncStorage.setItem(DEMO_USER_STORAGE_KEY, user);
 
-    if (user === 'minju') {
+    if (user === 'jiwoo') {
       const hasWakeRequest = await AsyncStorage.getItem(
-        MINJU_WAKE_REQUEST_STORAGE_KEY,
+        JIWOO_WAKE_REQUEST_STORAGE_KEY,
       );
       if (hasWakeRequest === 'true') {
         navigation.replace('WakeNotification');

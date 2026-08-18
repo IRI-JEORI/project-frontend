@@ -7,6 +7,7 @@ export const JIWOO_WAKE_PHOTO_STORAGE_KEY = '@nunnun/jiwoo-wake-photo-path';
 export const MINJU_WAKE_PHOTO_STORAGE_KEY = '@nunnun/minju-wake-photo-path';
 export const MINJU_WAKE_REQUEST_STORAGE_KEY = '@nunnun/minju-wake-requested';
 export const JIWOO_WAKE_REQUEST_STORAGE_KEY = '@nunnun/jiwoo-wake-requested';
+export const JIWOO_WAKE_EXHAUSTED_STORAGE_KEY = '@nunnun/jiwoo-wake-exhausted';
 export const WAKE_GROUP_INVITE_CODE_STORAGE_KEY =
   '@nunnun/wake-group-invite-code';
 

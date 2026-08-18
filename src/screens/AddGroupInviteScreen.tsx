@@ -17,6 +17,7 @@ import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import {
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
+  JIWOO_WAKE_EXHAUSTED_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
   JIWOO_WAKE_GROUP_STORAGE_KEY,
   MINJU_WAKE_PHOTO_STORAGE_KEY,
@@ -76,6 +77,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
           AsyncStorage.setItem(JIWOO_WAKE_GROUP_STORAGE_KEY, groupName),
           AsyncStorage.setItem(WAKE_GROUP_MINJU_JOINED_STORAGE_KEY, 'false'),
           AsyncStorage.removeItem(JIWOO_WAKE_PHOTO_STORAGE_KEY),
+          AsyncStorage.removeItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
           AsyncStorage.removeItem(JIWOO_WAKE_REQUEST_STORAGE_KEY),
           AsyncStorage.removeItem(MINJU_WAKE_PHOTO_STORAGE_KEY),
           AsyncStorage.removeItem(MINJU_WAKE_REQUEST_STORAGE_KEY),
