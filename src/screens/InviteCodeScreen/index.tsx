@@ -4,6 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import Button from '../../components/Button';
 import NavHeader from '../../components/NavHeader';
+import { useGroups } from '../../context/GroupsContext';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/tokens';
 import CodeInput from './components/CodeInput';
@@ -17,6 +18,7 @@ const InviteCodeScreen = () => {
   const [code, setCode] = useState('');
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'InviteCode'>>();
+  const { addGroup } = useGroups();
 
   return (
     <View style={styles.container}>
@@ -32,7 +34,10 @@ const InviteCodeScreen = () => {
       <View style={styles.buttonWrapper}>
         <Button
           label="그룹 들어가기"
-          onPress={() => navigation.navigate('WakeGroupDetail')}
+          onPress={() => {
+            addGroup({ id: 'wake', label: '아침 야호', accentColor: colors.mint });
+            navigation.navigate('WakeGroupDetail');
+          }}
         />
       </View>
     </View>

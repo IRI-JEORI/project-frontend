@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useGroups } from '../../context/GroupsContext';
 import { colors } from '../../theme/tokens';
 import { RootStackParamList } from '../../navigation/types';
 import FilterTabs from './components/FilterTabs';
@@ -18,6 +19,7 @@ const HomeScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const [addMenuVisible, setAddMenuVisible] = useState(false);
+  const { groups } = useGroups();
 
   return (
     <View style={styles.container}>
@@ -32,11 +34,16 @@ const HomeScreen = () => {
         <FilterTabs />
       </View>
       <View style={[styles.groupRow, styles.padded]}>
-        <GroupCard
-          label="눈눈"
-          accentColor={colors.mint}
-          onPress={() => navigation.navigate('PersonalGroup')}
-        />
+        {groups.map((group) => (
+          <GroupCard
+            key={group.id}
+            label={group.label}
+            accentColor={group.accentColor}
+            onPress={() =>
+              navigation.navigate(group.id === 'me' ? 'PersonalGroup' : 'WakeGroupDetail')
+            }
+          />
+        ))}
         <GroupCard
           label="그룹 추가하기"
           accentColor={colors.brown}
@@ -78,7 +85,9 @@ const styles = StyleSheet.create({
   },
   groupRow: {
     flexDirection: 'row',
-    gap: 16,
+    flexWrap: 'wrap',
+    columnGap: 16,
+    rowGap: 25,
     marginTop: 44,
   },
 });

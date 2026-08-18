@@ -8,4 +8,11 @@ export type RootStackParamList = {
   PersonalGroup: undefined;
   InviteCode: undefined;
   WakeGroupDetail: undefined;
+  WakeAlarm: { memberName: string; onComplete: (photoUri: string) => void };
+  CameraCapture: { memberName: string; onComplete: (photoUri: string) => void };
+  PhotoReview: {
+    photoUri: string;
+    memberName: string;
+    onComplete: (photoUri: string) => void;
+  };
 };

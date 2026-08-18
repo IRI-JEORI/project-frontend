@@ -14,12 +14,15 @@ export interface GroupCardProps {
 const ACCENT_WIDTH = 110;
 const ACCENT_HEIGHT = 124.856;
 const ACCENT_ROTATION = '-4.093deg';
+const ACCENT_LEFT = 17.316;
+const ACCENT_TOP = 0;
 
-const CARD_WIDTH = 130;
-const CARD_HEIGHT = 117;
-const CARD_TOP = 10;
+const ICON_WIDTH = 154;
+const ICON_HEIGHT = 139;
+const ICON_TOP = 23.233;
 
-const ARTWORK_HEIGHT = CARD_TOP + CARD_HEIGHT;
+const ARTWORK_WIDTH = ICON_WIDTH;
+const ARTWORK_HEIGHT = ICON_TOP + ICON_HEIGHT;
 
 const GroupCard = ({ label, accentColor, showPlus, onPress }: GroupCardProps) => {
   return (
@@ -33,8 +36,8 @@ const GroupCard = ({ label, accentColor, showPlus, onPress }: GroupCardProps) =>
         />
         <SvgXml
           xml={folderTabSvg}
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
+          width={ICON_WIDTH}
+          height={ICON_HEIGHT}
           color={colors.folderGray}
           style={styles.card}
         />
@@ -53,27 +56,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   artwork: {
-    width: CARD_WIDTH,
+    width: ARTWORK_WIDTH,
     height: ARTWORK_HEIGHT,
   },
   accent: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: ACCENT_TOP,
+    left: ACCENT_LEFT,
     width: ACCENT_WIDTH,
     height: ACCENT_HEIGHT,
-    borderRadius: 16,
+    borderRadius: 14,
     transform: [{ rotate: ACCENT_ROTATION }],
   },
   card: {
     position: 'absolute',
-    top: CARD_TOP,
+    top: ICON_TOP,
     left: 0,
   },
   plus: {
     position: 'absolute',
-    top: CARD_TOP + CARD_HEIGHT / 2 - 16,
-    left: CARD_WIDTH / 2 - 10,
+    top: ICON_TOP + ICON_HEIGHT / 2 - 16,
+    left: ICON_WIDTH / 2 - 10,
     fontSize: 28,
     color: colors.grayMedium,
     fontWeight: '300',
