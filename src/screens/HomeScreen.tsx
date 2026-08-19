@@ -94,7 +94,7 @@ export const HomeScreen = ({ navigation }: Props) => {
           accessibilityLabel="프로필 및 설정"
           activeOpacity={0.7}
           hitSlop={12}
-          onPress={() => navigation.navigate('Settings')}
+          onPress={() => navigation.navigate('PersonalGroup')}
           style={[
             styles.profileButton,
             {
