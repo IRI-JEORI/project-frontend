@@ -1,14 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../theme/tokens';
 import { RootStackParamList } from '../../navigation/types';
 import { nunnunApi } from '../../api';
 import type { CurrentUser, GroupSummary, MyTodayResponse } from '../../api/types';
 import FilterTabs from './components/FilterTabs';
 import GroupAddMenu from './components/GroupAddMenu';
-import GroupCard from './components/GroupCard';
+import GroupCard, { type GroupCardRef } from './components/GroupCard';
 import Header from './components/Header';
 import PromoBanner from './components/PromoBanner';
 
@@ -17,9 +18,17 @@ const HORIZONTAL_MARGIN = 32;
 const BANNER_WIDTH = 346;
 
 const HomeScreen = () => {
+  const insets = useSafeAreaInsets();
+  const addGroupCardRef = useRef<GroupCardRef>(null);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const [addMenuVisible, setAddMenuVisible] = useState(false);
+  const [addMenuAnchor, setAddMenuAnchor] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [groups, setGroups] = useState<GroupSummary[]>([]);
   const [today, setToday] = useState<MyTodayResponse | null>(null);
@@ -68,8 +77,15 @@ const HomeScreen = () => {
     }
   };
 
+  const openAddMenu = () => {
+    addGroupCardRef.current?.measureInWindow((x, y, width, height) => {
+      setAddMenuAnchor({ x, y, width, height });
+      setAddMenuVisible(true);
+    });
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + TOP_SPACING }]}>
       <View style={styles.padded}>
         <Header />
       </View>
@@ -108,15 +124,17 @@ const HomeScreen = () => {
             />
           ))}
           <GroupCard
+            ref={addGroupCardRef}
             label="그룹 추가하기"
             accentColor={colors.brown}
             showPlus
-            onPress={() => setAddMenuVisible(true)}
+            onPress={openAddMenu}
           />
         </View>
       )}
       <GroupAddMenu
         visible={addMenuVisible}
+        anchor={addMenuAnchor}
         onClose={() => setAddMenuVisible(false)}
         onPressCreateRoom={() => navigation.navigate('AddGroupName', { groupType: 'wake' })}
         onPressEnterCode={() => navigation.navigate('InviteCode')}
@@ -126,7 +144,7 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.white, paddingTop: TOP_SPACING },
+  container: { flex: 1, backgroundColor: colors.white },
   padded: { paddingHorizontal: HORIZONTAL_MARGIN },
   bannerWrapper: { marginTop: 17, alignSelf: 'center', width: BANNER_WIDTH },
   sectionTitle: { fontSize: 24, fontFamily: 'PretendardBold', color: colors.black, marginTop: 25 },

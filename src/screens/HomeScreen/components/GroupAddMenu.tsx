@@ -5,33 +5,51 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { colors } from '../../../theme/tokens';
 
 export interface GroupAddMenuProps {
   visible: boolean;
+  anchor: { x: number; y: number; width: number; height: number } | null;
   onClose: () => void;
   onPressCreateRoom?: () => void;
   onPressEnterCode?: () => void;
 }
 
+const MENU_WIDTH = 170;
+const MENU_GAP = 8;
+const SCREEN_EDGE_GAP = 8;
+
 const GroupAddMenu = ({
   visible,
+  anchor,
   onClose,
   onPressCreateRoom,
   onPressEnterCode,
 }: GroupAddMenuProps) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const right = anchor ? anchor.x + anchor.width + MENU_GAP : SCREEN_EDGE_GAP;
+  const left = anchor
+    ? right + MENU_WIDTH <= windowWidth - SCREEN_EDGE_GAP
+      ? right
+      : Math.max(SCREEN_EDGE_GAP, anchor.x - MENU_WIDTH - MENU_GAP)
+    : SCREEN_EDGE_GAP;
+  const top = anchor?.y ?? SCREEN_EDGE_GAP;
+
   return (
     <Modal
-      visible={visible}
+      visible={visible && anchor !== null}
       transparent
       animationType="fade"
+      statusBarTranslucent
+      navigationBarTranslucent
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>
-          <View style={styles.menu}>
+          <View style={[styles.menu, { left, top }]}>
             <TouchableOpacity
               style={styles.item}
               onPress={() => {
@@ -64,9 +82,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: 'absolute',
-    left: 124,
-    top: 319,
-    width: 170,
+    width: MENU_WIDTH,
     backgroundColor: colors.white,
     borderRadius: 12,
     shadowColor: colors.black,

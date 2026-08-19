@@ -19,12 +19,14 @@ import {
   useCameraPermission,
   usePhotoOutput,
 } from 'react-native-vision-camera';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from '../../components/Icon';
 import { closeSvg, flashSvg } from '../../assets/icons/navIcons';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/tokens';
 
 const CameraCaptureScreen = () => {
+  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, 'CameraCapture'>
@@ -71,13 +73,13 @@ const CameraCaptureScreen = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        style={styles.closeButton}
+        style={[styles.closeButton, { top: insets.top + 22 }]}
         onPress={() => navigation.goBack()}
       >
         <Icon xml={closeSvg} size={24} color={colors.white} />
       </TouchableOpacity>
       <TouchableOpacity
-        style={styles.flashButton}
+        style={[styles.flashButton, { top: insets.top + 22 }]}
         onPress={() => setFlashEnabled(enabled => !enabled)}
       >
         <Icon
@@ -133,7 +135,6 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     left: 24,
-    top: 22,
     width: 30,
     height: 30,
     alignItems: 'center',
@@ -143,7 +144,6 @@ const styles = StyleSheet.create({
   flashButton: {
     position: 'absolute',
     right: 25,
-    top: 22,
     width: 30,
     height: 30,
     alignItems: 'center',

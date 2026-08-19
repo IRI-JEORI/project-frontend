@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import NavHeader from '../../components/NavHeader';
 import PaginationDots from '../../components/PaginationDots';
 import { RootStackParamList } from '../../navigation/types';
@@ -18,6 +19,7 @@ const memberPrimary = (member: WakeGroupMember) =>
   member.state === 'AWAKE' ? member.actual_wake_time ?? '--:--' : member.target_wake_time ?? '--:--';
 
 const WakeGroupScreen = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'WakeGroupDetail'>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'WakeGroupDetail'>>();
   const [detail, setDetail] = useState<WakeGroupDetail | null>(null);
@@ -73,7 +75,7 @@ const WakeGroupScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <NavHeader
         title={detail.name}
         rightIcon="menu"

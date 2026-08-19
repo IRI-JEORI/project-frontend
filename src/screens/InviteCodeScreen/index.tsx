@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../components/Button';
 import NavHeader from '../../components/NavHeader';
 import { RootStackParamList } from '../../navigation/types';
@@ -15,6 +16,7 @@ const CONTENT_HORIZONTAL_MARGIN = 28;
 const BUTTON_BOTTOM_SPACING = 52;
 
 const InviteCodeScreen = () => {
+  const insets = useSafeAreaInsets();
   const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const inFlight = useRef(false);
@@ -41,7 +43,7 @@ const InviteCodeScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <NavHeader title="" onPressBack={() => navigation.goBack()} />
       <View style={styles.content}>
         <Text style={styles.title}>초대 코드를 입력해주세요</Text>
