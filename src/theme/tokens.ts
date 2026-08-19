@@ -17,6 +17,9 @@ export const colors = {
   grayBorder: '#B3B3B3',
   brownDark: '#453933',
   grayText: '#757575',
+  charcoal: '#202224',
+  red: '#FF4B4B',
+  textDefault: '#1E1E1E',
 };
 
 export const spacing = {
