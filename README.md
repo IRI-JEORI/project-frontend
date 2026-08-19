@@ -2,6 +2,10 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 
 # Getting Started
 
+## Backend API
+
+백엔드 호출 코드와 연결 방법은 [백엔드 연동 가이드](docs/BACKEND_INTEGRATION.md)를 참고하세요.
+
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
 ## Step 1: Start Metro
