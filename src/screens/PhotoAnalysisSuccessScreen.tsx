@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Image,
   StatusBar,
@@ -42,46 +42,82 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
 
+  const completeVerification = useCallback(
+    async (groups: readonly string[]) => {
+      const photoStorageKey =
+        route.params.photographer === 'minju'
+          ? MINJU_WAKE_PHOTO_STORAGE_KEY
+          : JIWOO_WAKE_PHOTO_STORAGE_KEY;
+      const wakeRequestStorageKey =
+        route.params.photographer === 'minju'
+          ? MINJU_WAKE_REQUEST_STORAGE_KEY
+          : JIWOO_WAKE_REQUEST_STORAGE_KEY;
+      const wakeSuccessStorageKey =
+        route.params.photographer === 'minju'
+          ? JIWOO_WAKE_SUCCESS_STORAGE_KEY
+          : MINJU_WAKE_SUCCESS_STORAGE_KEY;
+      const hadWakeRequest =
+        (await AsyncStorage.getItem(wakeRequestStorageKey)) === 'true';
+
+      await Promise.all([
+        AsyncStorage.setItem(photoStorageKey, route.params.photoPath),
+        AsyncStorage.removeItem(wakeRequestStorageKey),
+        hadWakeRequest
+          ? AsyncStorage.setItem(wakeSuccessStorageKey, 'true')
+          : Promise.resolve(),
+        AsyncStorage.removeItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
+      ]);
+
+      navigation.replace('WaitingForMembers', {
+        groupType: 'wake',
+        groupName: groups.includes('아침 야호')
+          ? '아침야호'
+          : groups[0] || '아침야호',
+        viewer: route.params.photographer,
+      });
+    },
+    [navigation, route.params.photoPath, route.params.photographer],
+  );
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShareSheetVisible(true);
-    }, SHARE_SHEET_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const confirmShare = async () => {
-    const photoStorageKey =
-      route.params.photographer === 'minju'
-        ? MINJU_WAKE_PHOTO_STORAGE_KEY
-        : JIWOO_WAKE_PHOTO_STORAGE_KEY;
+    let isActive = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const wakeRequestStorageKey =
       route.params.photographer === 'minju'
         ? MINJU_WAKE_REQUEST_STORAGE_KEY
         : JIWOO_WAKE_REQUEST_STORAGE_KEY;
-    const wakeSuccessStorageKey =
-      route.params.photographer === 'minju'
-        ? JIWOO_WAKE_SUCCESS_STORAGE_KEY
-        : MINJU_WAKE_SUCCESS_STORAGE_KEY;
-    const hadWakeRequest =
-      (await AsyncStorage.getItem(wakeRequestStorageKey)) === 'true';
 
-    await Promise.all([
-      AsyncStorage.setItem(photoStorageKey, route.params.photoPath),
-      AsyncStorage.removeItem(wakeRequestStorageKey),
-      hadWakeRequest
-        ? AsyncStorage.setItem(wakeSuccessStorageKey, 'true')
-        : Promise.resolve(),
-      AsyncStorage.removeItem(JIWOO_WAKE_EXHAUSTED_STORAGE_KEY),
-    ]);
+    AsyncStorage.getItem(wakeRequestStorageKey)
+      .then(savedWakeRequest => {
+        if (!isActive) {
+          return;
+        }
 
-    navigation.replace('WaitingForMembers', {
-      groupType: 'wake',
-      groupName: selectedGroups.includes('아침 야호')
-        ? '아침야호'
-        : selectedGroups[0] || '아침야호',
-      viewer: route.params.photographer,
-    });
+        timer = setTimeout(() => {
+          if (savedWakeRequest === 'true') {
+            completeVerification([SHARE_GROUPS[0]]).catch(() => undefined);
+            return;
+          }
+
+          setShareSheetVisible(true);
+        }, SHARE_SHEET_DELAY_MS);
+      })
+      .catch(() => {
+        if (isActive) {
+          setShareSheetVisible(true);
+        }
+      });
+
+    return () => {
+      isActive = false;
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [completeVerification, route.params.photographer]);
+
+  const confirmShare = async () => {
+    await completeVerification(selectedGroups);
   };
 
   const toggleGroup = (groupName: string) => {
