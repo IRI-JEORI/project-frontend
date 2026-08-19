@@ -136,6 +136,12 @@ const PersonalGroupScreen = () => {
               toggleValue={nudgeEnabled}
               onToggleChange={setNudgeEnabled}
             />
+            {__DEV__ && (
+              <SettingsRow
+                label="데모 설정"
+                onPress={() => navigation.navigate('Settings')}
+              />
+            )}
           </AccordionSection>
 
           <AccordionSection

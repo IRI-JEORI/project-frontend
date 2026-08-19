@@ -21,7 +21,9 @@ const BUTTON_BOTTOM_SPACING = 52;
 
 const PermissionScreen = () => {
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Permission'>>();
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'Permission'>
+    >();
 
   return (
     <View style={styles.container}>
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.black,
     lineHeight: 29,
   },

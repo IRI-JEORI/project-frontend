@@ -19,7 +19,9 @@ const RegisterScreen = () => {
     <View style={styles.container}>
       <Logo color={colors.brownDarkest} />
       <View style={styles.form}>
-        <RegisterForm onRegisterPress={() => navigation.navigate('Permission')} />
+        <RegisterForm
+          onRegisterPress={() => navigation.navigate('Permission')}
+        />
       </View>
     </View>
   );

@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Icon from '../../../components/Icon';
 import { checkSvg } from '../../../assets/icons/mypageIcons';
 import { colors } from '../../../theme/tokens';
@@ -30,11 +37,19 @@ const AddScheduleMethodModal = ({
       onConfirmManual();
       return;
     }
-    Alert.alert('준비 중이에요', '이 입력 방식은 다음 업데이트에서 지원할 예정이에요.');
+    Alert.alert(
+      '준비 중이에요',
+      '이 입력 방식은 다음 업데이트에서 지원할 예정이에요.',
+    );
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <View style={styles.backdrop}>
         <TouchableOpacity style={styles.backdropTouchable} onPress={onClose} />
         <View style={styles.sheet}>
@@ -42,7 +57,7 @@ const AddScheduleMethodModal = ({
           <Text style={styles.title}>입력 방식을 선택해주세요</Text>
           <Text style={styles.subtitle}>쉽게 시간표를 추가할 수 있어요</Text>
           <View style={styles.options}>
-            {METHOD_OPTIONS.map((option) => (
+            {METHOD_OPTIONS.map(option => (
               <TouchableOpacity
                 key={option.key}
                 style={styles.option}
@@ -63,7 +78,10 @@ const AddScheduleMethodModal = ({
               </TouchableOpacity>
             ))}
           </View>
-          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirm}
+          >
             <Text style={styles.confirmLabel}>확인</Text>
           </TouchableOpacity>
         </View>
@@ -99,12 +117,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.black,
   },
   subtitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.grayBorder,
     marginTop: 6,
   },
@@ -119,7 +137,7 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.black,
   },
   checkbox: {
@@ -145,7 +163,7 @@ const styles = StyleSheet.create({
   },
   confirmLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.white,
   },
 });

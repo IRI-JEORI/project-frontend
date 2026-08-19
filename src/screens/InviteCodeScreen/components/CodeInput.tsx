@@ -13,7 +13,11 @@ const BOX_WIDTH = 51;
 const BOX_HEIGHT = 98;
 const BOX_GAP = 8;
 
-const CodeInput = ({ value, onChangeText, length = DEFAULT_LENGTH }: CodeInputProps) => {
+const CodeInput = ({
+  value,
+  onChangeText,
+  length = DEFAULT_LENGTH,
+}: CodeInputProps) => {
   const inputRef = useRef<TextInput>(null);
   const chars = value.toUpperCase().split('');
 
@@ -28,7 +32,7 @@ const CodeInput = ({ value, onChangeText, length = DEFAULT_LENGTH }: CodeInputPr
         ref={inputRef}
         style={styles.hiddenInput}
         value={value}
-        onChangeText={(text) => onChangeText(text.toUpperCase().slice(0, length))}
+        onChangeText={text => onChangeText(text.toUpperCase().slice(0, length))}
         maxLength={length}
         autoFocus
         autoCapitalize="characters"
@@ -52,7 +56,7 @@ const styles = StyleSheet.create({
   },
   char: {
     fontSize: 32,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.black,
   },
   hiddenInput: {
@@ -60,6 +64,7 @@ const styles = StyleSheet.create({
     opacity: 0,
     width: 1,
     height: 1,
+    fontFamily: 'PretendardMedium',
   },
 });
 

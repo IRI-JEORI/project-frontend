@@ -24,16 +24,16 @@ const ICON_TOP = 23.233;
 const ARTWORK_WIDTH = ICON_WIDTH;
 const ARTWORK_HEIGHT = ICON_TOP + ICON_HEIGHT;
 
-const GroupCard = ({ label, accentColor, showPlus, onPress }: GroupCardProps) => {
+const GroupCard = ({
+  label,
+  accentColor,
+  showPlus,
+  onPress,
+}: GroupCardProps) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.artwork}>
-        <View
-          style={[
-            styles.accent,
-            { backgroundColor: accentColor },
-          ]}
-        />
+        <View style={[styles.accent, { backgroundColor: accentColor }]} />
         <SvgXml
           xml={folderTabSvg}
           width={ICON_WIDTH}
@@ -41,9 +41,7 @@ const GroupCard = ({ label, accentColor, showPlus, onPress }: GroupCardProps) =>
           color={colors.folderGray}
           style={styles.card}
         />
-        {showPlus && (
-          <Text style={styles.plus}>+</Text>
-        )}
+        {showPlus && <Text style={styles.plus}>+</Text>}
       </View>
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
@@ -79,10 +77,11 @@ const styles = StyleSheet.create({
     left: ICON_WIDTH / 2 - 10,
     fontSize: 28,
     color: colors.grayMedium,
-    fontWeight: '300',
+    fontFamily: 'PretendardMedium',
   },
   label: {
     fontSize: 13,
+    fontFamily: 'PretendardMedium',
     color: colors.brownDarkest,
   },
 });

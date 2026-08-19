@@ -34,13 +34,15 @@ const HomeScreen = () => {
         <FilterTabs />
       </View>
       <View style={[styles.groupRow, styles.padded]}>
-        {groups.map((group) => (
+        {groups.map(group => (
           <GroupCard
             key={group.id}
             label={group.label}
             accentColor={group.accentColor}
             onPress={() =>
-              navigation.navigate(group.id === 'me' ? 'PersonalGroup' : 'WakeGroupDetail')
+              navigation.navigate(
+                group.id === 'me' ? 'PersonalGroup' : 'WakeGroupDetail',
+              )
             }
           />
         ))}
@@ -76,7 +78,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.black,
     marginTop: 25,
   },

@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     color: '#FFFFFF',
-    fontFamily: 'PretendardLight',
+    fontFamily: 'PretendardMedium',
     fontSize: 42,
     lineHeight: 42,
   },

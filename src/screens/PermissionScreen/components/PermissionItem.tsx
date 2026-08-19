@@ -40,12 +40,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.black,
   },
   description: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.grayBorder,
   },
 });

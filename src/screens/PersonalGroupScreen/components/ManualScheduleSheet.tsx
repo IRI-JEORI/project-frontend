@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { colors } from '../../../theme/tokens';
 
 export type ManualScheduleTarget = 'FIXED' | 'DND';
@@ -11,7 +18,10 @@ export interface ManualScheduleSheetProps {
   onConfirm: (value: string) => void;
 }
 
-const COPY: Record<ManualScheduleTarget, { subtitle: string; placeholder: string }> = {
+const COPY: Record<
+  ManualScheduleTarget,
+  { subtitle: string; placeholder: string }
+> = {
   FIXED: {
     subtitle: '요일과 시간, 이름을 순서대로 입력하세요',
     placeholder: '예) 월요일, 오전 8시, 스터디',
@@ -22,7 +32,12 @@ const COPY: Record<ManualScheduleTarget, { subtitle: string; placeholder: string
   },
 };
 
-const ManualScheduleSheet = ({ visible, target, onClose, onConfirm }: ManualScheduleSheetProps) => {
+const ManualScheduleSheet = ({
+  visible,
+  target,
+  onClose,
+  onConfirm,
+}: ManualScheduleSheetProps) => {
   const [value, setValue] = useState('');
   const copy = COPY[target];
 
@@ -36,7 +51,12 @@ const ManualScheduleSheet = ({ visible, target, onClose, onConfirm }: ManualSche
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <View style={styles.backdrop}>
         <TouchableOpacity style={styles.backdropTouchable} onPress={onClose} />
         <View style={styles.sheet}>
@@ -50,7 +70,10 @@ const ManualScheduleSheet = ({ visible, target, onClose, onConfirm }: ManualSche
             placeholder={copy.placeholder}
             placeholderTextColor={colors.grayBorder}
           />
-          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirm}
+          >
             <Text style={styles.confirmLabel}>확인</Text>
           </TouchableOpacity>
         </View>
@@ -86,12 +109,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.black,
   },
   subtitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.grayBorder,
     marginTop: 6,
   },
@@ -102,6 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.folderGray,
     paddingHorizontal: 12,
     fontSize: 15,
+    fontFamily: 'PretendardMedium',
     color: colors.black,
   },
   confirmButton: {
@@ -114,7 +138,7 @@ const styles = StyleSheet.create({
   },
   confirmLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.white,
   },
 });

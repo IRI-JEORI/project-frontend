@@ -1,5 +1,12 @@
 import React from 'react';
-import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { colors } from '../../../theme/tokens';
 
 const cautionImage = require('../../../assets/images/caution.png');
@@ -10,19 +17,40 @@ export interface LogoutConfirmModalProps {
   onConfirm: () => void;
 }
 
-const LogoutConfirmModal = ({ visible, onCancel, onConfirm }: LogoutConfirmModalProps) => {
+const LogoutConfirmModal = ({
+  visible,
+  onCancel,
+  onConfirm,
+}: LogoutConfirmModalProps) => {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onCancel}
+    >
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Image source={cautionImage} style={styles.cautionImage} resizeMode="contain" />
+          <Image
+            source={cautionImage}
+            style={styles.cautionImage}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>로그아웃 할까요?</Text>
           <Text style={styles.subtitle}>정보는 남아있어요</Text>
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.cancelButton} onPress={onCancel} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={onCancel}
+              activeOpacity={0.7}
+            >
               <Text style={styles.cancelLabel}>아니요</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton} onPress={onConfirm} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.confirmButton}
+              onPress={onConfirm}
+              activeOpacity={0.7}
+            >
               <Text style={styles.confirmLabel}>네</Text>
             </TouchableOpacity>
           </View>
@@ -54,13 +82,13 @@ const styles = StyleSheet.create({
   title: {
     marginTop: 20,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.black,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.grayBorder,
   },
   buttonRow: {
@@ -79,7 +107,7 @@ const styles = StyleSheet.create({
   },
   cancelLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.grayText,
   },
   confirmButton: {
@@ -92,7 +120,7 @@ const styles = StyleSheet.create({
   },
   confirmLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.white,
   },
 });

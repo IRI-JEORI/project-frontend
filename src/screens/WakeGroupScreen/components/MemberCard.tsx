@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 8,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.black,
   },
   statsRow: {
@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
   },
   statLabel: {
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
   },
   buttonWrapper: {
     marginTop: 12,

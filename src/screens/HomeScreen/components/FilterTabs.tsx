@@ -16,10 +16,7 @@ const FilterTabs = () => {
           style={[styles.tab, selected === index && styles.tabSelected]}
         >
           <Text
-            style={[
-              styles.label,
-              selected === index && styles.labelSelected,
-            ]}
+            style={[styles.label, selected === index && styles.labelSelected]}
           >
             {tab}
           </Text>
@@ -47,7 +44,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.grayBorder,
   },
   labelSelected: {

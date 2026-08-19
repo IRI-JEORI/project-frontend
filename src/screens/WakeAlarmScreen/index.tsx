@@ -19,7 +19,9 @@ const WakeAlarmScreen = () => {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.time}>07:32</Text>
-        <Text style={styles.wakerMessage}>{params.memberName}님이 깨웠어요</Text>
+        <Text style={styles.wakerMessage}>
+          {params.memberName}님이 깨웠어요
+        </Text>
         <Text style={styles.description}>
           일어났다면 인증사진을 찍어주세요{'\n'}사진은 8시간 후 사라져요
         </Text>
@@ -53,18 +55,18 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 64,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.white,
   },
   wakerMessage: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.folderGray,
     marginTop: 18,
   },
   description: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.folderGray,
     textAlign: 'center',
     marginTop: 33,

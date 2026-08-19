@@ -21,16 +21,24 @@ const AccordionSection = ({
 }: AccordionSectionProps) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.header} onPress={onToggle} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.header}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
         <Text style={styles.title}>{title}</Text>
         <View style={styles.headerRight}>
-          {rightLabel ? <Text style={styles.rightLabel}>{rightLabel}</Text> : null}
+          {rightLabel ? (
+            <Text style={styles.rightLabel}>{rightLabel}</Text>
+          ) : null}
           <View style={expanded ? styles.chevronExpanded : undefined}>
             <Icon xml={chevronDownSvg} size={20} color={colors.black} />
           </View>
         </View>
       </TouchableOpacity>
-      {expanded && children ? <View style={styles.content}>{children}</View> : null}
+      {expanded && children ? (
+        <View style={styles.content}>{children}</View>
+      ) : null}
       <View style={styles.divider} />
     </View>
   );
@@ -52,12 +60,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.black,
   },
   rightLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.black,
   },
   chevronExpanded: {

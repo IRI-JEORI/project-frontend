@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   previewMessage: {
     color: colors.grayBorder,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
   },
   helperText: {
     position: 'absolute',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: colors.grayBorder,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
   },
   shutterOuter: {
     position: 'absolute',

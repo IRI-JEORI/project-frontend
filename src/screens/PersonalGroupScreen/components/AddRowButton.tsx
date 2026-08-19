@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.grayBorder,
   },
 });

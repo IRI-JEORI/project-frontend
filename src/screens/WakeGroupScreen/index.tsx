@@ -19,19 +19,28 @@ const DOTS_TOP_SPACING = 40;
 
 const WakeGroupScreen = () => {
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'WakeGroupDetail'>>();
-  const [jiwooState, setJiwooState] = useState<MemberState>({ status: 'pending' });
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'WakeGroupDetail'>
+    >();
+  const [jiwooState, setJiwooState] = useState<MemberState>({
+    status: 'pending',
+  });
 
   const handleWakePress = () => {
     navigation.navigate('WakeAlarm', {
       memberName: '지우',
-      onComplete: (photoUri: string) => setJiwooState({ status: 'done', photoUri }),
+      onComplete: (photoUri: string) =>
+        setJiwooState({ status: 'done', photoUri }),
     });
   };
 
   return (
     <View style={styles.container}>
-      <NavHeader title="아침 야호" rightIcon="menu" onPressBack={() => navigation.goBack()} />
+      <NavHeader
+        title="아침 야호"
+        rightIcon="menu"
+        onPressBack={() => navigation.goBack()}
+      />
       <View style={styles.cardRow}>
         <MemberCard
           name="민주"

@@ -1,5 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
+} from 'react-native';
 import { colors } from '../../theme/tokens';
 
 export interface TextFieldProps extends TextInputProps {
@@ -26,6 +32,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     color: colors.brownDarkest,
+    fontFamily: 'PretendardMedium',
   },
   input: {
     borderWidth: 1,
@@ -35,6 +42,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: colors.brownDarkest,
+    fontFamily: 'PretendardMedium',
   },
 });
 

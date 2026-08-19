@@ -50,12 +50,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.grayBorder,
   },
   subtitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.black,
     marginTop: 4,
   },

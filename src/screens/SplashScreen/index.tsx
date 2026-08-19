@@ -16,9 +16,7 @@ const SplashScreen = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Splash'>>();
 
   return (
-    <TouchableWithoutFeedback
-      onPress={() => navigation.replace('Login')}
-    >
+    <TouchableWithoutFeedback onPress={() => navigation.replace('Login')}>
       <View style={styles.container}>
         <View style={{ flex: TOP_SPACING }} />
         <Logo color={LOGO_COLOR} />

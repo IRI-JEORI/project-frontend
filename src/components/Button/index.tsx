@@ -14,7 +14,12 @@ export interface ButtonProps {
   variant?: 'primary' | 'secondary';
 }
 
-const Button = ({ label, onPress, size = 'large', variant = 'primary' }: ButtonProps) => {
+const Button = ({
+  label,
+  onPress,
+  size = 'large',
+  variant = 'primary',
+}: ButtonProps) => {
   return (
     <TouchableOpacity
       style={[
@@ -55,7 +60,7 @@ const styles = StyleSheet.create({
   label: {
     color: colors.bannerBg,
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
   },
   labelMedium: {
     fontSize: 13,

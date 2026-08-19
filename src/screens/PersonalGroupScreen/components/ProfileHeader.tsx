@@ -78,13 +78,13 @@ const styles = StyleSheet.create({
   nickname: {
     marginTop: 10,
     fontSize: 24,
-    fontWeight: '700',
+    fontFamily: 'PretendardBold',
     color: colors.bannerBg,
   },
   streak: {
     marginTop: 8,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.bannerBg,
   },
 });

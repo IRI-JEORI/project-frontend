@@ -17,7 +17,9 @@ const Logo = ({
   height = DEFAULT_HEIGHT,
   color = colors.cream,
 }: LogoProps) => {
-  return <SvgXml xml={nunLogoSvg} width={width} height={height} color={color} />;
+  return (
+    <SvgXml xml={nunLogoSvg} width={width} height={height} color={color} />
+  );
 };
 
 export default Logo;

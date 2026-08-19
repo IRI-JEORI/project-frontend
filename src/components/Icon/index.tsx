@@ -10,7 +10,11 @@ export interface IconProps {
 
 const DEFAULT_SIZE = 24;
 
-const Icon = ({ xml, size = DEFAULT_SIZE, color = colors.brownDarkest }: IconProps) => {
+const Icon = ({
+  xml,
+  size = DEFAULT_SIZE,
+  color = colors.brownDarkest,
+}: IconProps) => {
   return <SvgXml xml={xml} width={size} height={size} color={color} />;
 };
 

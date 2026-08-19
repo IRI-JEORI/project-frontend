@@ -8,15 +8,25 @@ import { colors } from '../../theme/tokens';
 
 const PhotoReviewScreen = () => {
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'PhotoReview'>>();
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'PhotoReview'>
+    >();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PhotoReview'>>();
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: params.photoUri }} style={styles.photo} resizeMode="cover" />
+      <Image
+        source={{ uri: params.photoUri }}
+        style={styles.photo}
+        resizeMode="cover"
+      />
       <View style={styles.buttonRow}>
         <View style={styles.buttonHalf}>
-          <Button label="다시 찍기" variant="secondary" onPress={() => navigation.goBack()} />
+          <Button
+            label="다시 찍기"
+            variant="secondary"
+            onPress={() => navigation.goBack()}
+          />
         </View>
         <View style={styles.buttonHalf}>
           <Button

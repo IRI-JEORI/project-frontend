@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   },
   orText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.black,
   },
   linkRow: {
@@ -40,11 +40,12 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PretendardSemiBold',
     color: colors.grayBorder,
   },
   divider: {
     fontSize: 13,
+    fontFamily: 'PretendardMedium',
     color: colors.grayBorder,
   },
 });

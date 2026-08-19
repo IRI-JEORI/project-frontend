@@ -1,5 +1,12 @@
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { colors } from '../../../theme/tokens';
 
 export interface GroupAddMenuProps {
@@ -9,9 +16,19 @@ export interface GroupAddMenuProps {
   onPressEnterCode?: () => void;
 }
 
-const GroupAddMenu = ({ visible, onClose, onPressCreateRoom, onPressEnterCode }: GroupAddMenuProps) => {
+const GroupAddMenu = ({
+  visible,
+  onClose,
+  onPressCreateRoom,
+  onPressEnterCode,
+}: GroupAddMenuProps) => {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.backdrop}>
           <View style={styles.menu}>
@@ -64,7 +81,7 @@ const styles = StyleSheet.create({
   },
   itemLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.black,
   },
   divider: {

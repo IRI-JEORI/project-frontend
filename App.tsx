@@ -6,6 +6,7 @@ import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import PermissionScreen from './src/screens/PermissionScreen';
+import PersonalGroupScreen from './src/screens/PersonalGroupScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { AddGroupNameScreen } from './src/screens/AddGroupNameScreen';
 import { AddGroupInviteScreen } from './src/screens/AddGroupInviteScreen';
@@ -27,6 +28,7 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Permission: undefined;
+  PersonalGroup: undefined;
   Home: undefined;
   Settings: undefined;
   InviteCode: undefined;
@@ -89,6 +91,7 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Permission" component={PermissionScreen} />
+          <Stack.Screen name="PersonalGroup" component={PersonalGroupScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
           <Stack.Screen name="InviteCode" component={InviteCodeScreen} />

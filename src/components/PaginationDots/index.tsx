@@ -16,7 +16,10 @@ const PaginationDots = ({ count, activeIndex }: PaginationDotsProps) => {
       {Array.from({ length: count }).map((_, index) => (
         <View
           key={index}
-          style={[styles.dot, index === activeIndex ? styles.dotActive : styles.dotInactive]}
+          style={[
+            styles.dot,
+            index === activeIndex ? styles.dotActive : styles.dotInactive,
+          ]}
         />
       ))}
     </View>

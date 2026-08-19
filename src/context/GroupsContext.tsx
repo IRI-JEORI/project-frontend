@@ -14,17 +14,23 @@ interface GroupsContextValue {
 
 const GroupsContext = createContext<GroupsContextValue | undefined>(undefined);
 
-const INITIAL_GROUPS: Group[] = [{ id: 'me', label: '눈눈', accentColor: colors.mint }];
+const INITIAL_GROUPS: Group[] = [
+  { id: 'me', label: '눈눈', accentColor: colors.mint },
+];
 
 export const GroupsProvider = ({ children }: { children: ReactNode }) => {
   const [groups, setGroups] = useState<Group[]>(INITIAL_GROUPS);
 
   const addGroup = (group: Group) => {
-    setGroups((prev) => (prev.some((g) => g.id === group.id) ? prev : [...prev, group]));
+    setGroups(prev =>
+      prev.some(g => g.id === group.id) ? prev : [...prev, group],
+    );
   };
 
   return (
-    <GroupsContext.Provider value={{ groups, addGroup }}>{children}</GroupsContext.Provider>
+    <GroupsContext.Provider value={{ groups, addGroup }}>
+      {children}
+    </GroupsContext.Provider>
   );
 };
 

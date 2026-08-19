@@ -5,6 +5,7 @@ export type RootStackParamList = {
   Permission: undefined;
   Home: undefined;
   PersonalGroup: undefined;
+  Settings: undefined;
   InviteCode: undefined;
   WakeGroupDetail: undefined;
   WakeAlarm: { memberName: string; onComplete: (photoUri: string) => void };

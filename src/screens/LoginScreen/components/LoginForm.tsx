@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
   },
   forgotPassword: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'PretendardMedium',
     color: colors.textDefault,
   },
 });
