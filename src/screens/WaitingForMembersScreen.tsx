@@ -268,6 +268,8 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
   );
   const isScheduleRestricted =
     wakeDemoState.hasMinjuJoined && wakeDemoState.scheduleStatus === 'inClass';
+  const isSelfScheduleRestricted =
+    wakeDemoState.selfScheduleStatus === 'inClass';
 
   if (wakeDemoState.expandedPhoto) {
     return (
@@ -863,13 +865,19 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
 
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="지금 인증할게요"
-            activeOpacity={0.8}
-            onPress={() =>
-              navigation.navigate('SelfWakeVerification', {
-                recipientName: '지우',
-                photographer: 'jiwoo',
-              })
+            accessibilityLabel={
+              isSelfScheduleRestricted ? '방해 금지' : '지금 인증할게요'
+            }
+            activeOpacity={isSelfScheduleRestricted ? 1 : 0.8}
+            disabled={isSelfScheduleRestricted}
+            onPress={
+              isSelfScheduleRestricted
+                ? undefined
+                : () =>
+                    navigation.navigate('SelfWakeVerification', {
+                      recipientName: '지우',
+                      photographer: 'jiwoo',
+                    })
             }
             style={[
               styles.inviteActionButton,
@@ -883,7 +891,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
-            <Text style={styles.inviteActionTextActive}>지금 인증할게요</Text>
+            <Text style={styles.inviteActionTextActive}>
+              {isSelfScheduleRestricted ? '방해 금지' : '지금 인증할게요'}
+            </Text>
           </TouchableOpacity>
 
           {wakeDemoState.aiFriendEnabled && (
@@ -1332,13 +1342,19 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
 
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="지금 인증할게요"
-            activeOpacity={0.8}
-            onPress={() =>
-              navigation.navigate('SelfWakeVerification', {
-                recipientName: '눈눈',
-                photographer: 'minju',
-              })
+            accessibilityLabel={
+              isSelfScheduleRestricted ? '방해 금지' : '지금 인증할게요'
+            }
+            activeOpacity={isSelfScheduleRestricted ? 1 : 0.8}
+            disabled={isSelfScheduleRestricted}
+            onPress={
+              isSelfScheduleRestricted
+                ? undefined
+                : () =>
+                    navigation.navigate('SelfWakeVerification', {
+                      recipientName: '눈눈',
+                      photographer: 'minju',
+                    })
             }
             style={[
               styles.inviteActionButton,
@@ -1352,7 +1368,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
-            <Text style={styles.inviteActionTextActive}>지금 인증할게요</Text>
+            <Text style={styles.inviteActionTextActive}>
+              {isSelfScheduleRestricted ? '방해 금지' : '지금 인증할게요'}
+            </Text>
           </TouchableOpacity>
 
           {emptySlots.map((left, index) => (
@@ -1941,17 +1959,25 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
         >
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel="지금 인증할게요"
-            activeOpacity={0.8}
-            onPress={() =>
-              navigation.navigate('SelfWakeVerification', {
-                recipientName: isMinjuViewer ? '눈눈' : '지우',
-                photographer: isMinjuViewer ? 'minju' : 'jiwoo',
-              })
+            accessibilityLabel={
+              isSelfScheduleRestricted ? '방해 금지' : '지금 인증할게요'
+            }
+            activeOpacity={isSelfScheduleRestricted ? 1 : 0.8}
+            disabled={isSelfScheduleRestricted}
+            onPress={
+              isSelfScheduleRestricted
+                ? undefined
+                : () =>
+                    navigation.navigate('SelfWakeVerification', {
+                      recipientName: isMinjuViewer ? '눈눈' : '지우',
+                      photographer: isMinjuViewer ? 'minju' : 'jiwoo',
+                    })
             }
             style={[
               styles.memberActionButton,
-              styles.wakeActionButton,
+              isSelfScheduleRestricted
+                ? styles.wakeCompletedButton
+                : styles.wakeActionButton,
               {
                 width: 171 * scale,
                 height: 44 * scale,
@@ -1959,7 +1985,9 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
               },
             ]}
           >
-            <Text style={styles.selfAwakeButtonText}>지금 인증할게요</Text>
+            <Text style={styles.selfAwakeButtonText}>
+              {isSelfScheduleRestricted ? '방해 금지' : '지금 인증할게요'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityRole="button"
