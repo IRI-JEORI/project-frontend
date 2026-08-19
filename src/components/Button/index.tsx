@@ -40,7 +40,7 @@ const Button = ({ label, onPress, size = 'large', variant = 'primary' }: ButtonP
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.brown,
+    backgroundColor: colors.charcoal,
     borderRadius: 8,
     height: 60,
     alignItems: 'center',
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.folderGray,
   },
   label: {
-    color: colors.white,
+    color: colors.bannerBg,
     fontSize: 18,
     fontWeight: '600',
   },

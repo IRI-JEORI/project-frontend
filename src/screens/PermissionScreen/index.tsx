@@ -52,7 +52,7 @@ const PermissionScreen = () => {
       </View>
       <View style={styles.spacer} />
       <View style={styles.buttonWrapper}>
-        <Button label="확인" onPress={() => navigation.navigate('MoodCheck')} />
+        <Button label="확인" onPress={() => navigation.navigate('Home')} />
       </View>
     </View>
   );
