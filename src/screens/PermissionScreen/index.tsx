@@ -8,7 +8,7 @@ import {
   galleryIconSvg,
   mailIconSvg,
 } from '../../assets/icons/permissionIcons';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import { RootStackParamList } from '../../navigation/types';
 import PermissionItem from './components/PermissionItem';
 
@@ -52,7 +52,11 @@ const PermissionScreen = () => {
       </View>
       <View style={styles.spacer} />
       <View style={styles.buttonWrapper}>
-        <Button label="확인" onPress={() => navigation.navigate('Home')} />
+        <Button
+          label="확인"
+          borderRadius={16}
+          onPress={() => navigation.navigate('Home')}
+        />
       </View>
     </View>
   );

@@ -22,7 +22,7 @@ import {
 import Icon from '../../components/Icon';
 import { closeSvg, flashSvg } from '../../assets/icons/navIcons';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 
 const CameraCaptureScreen = () => {
   const navigation =

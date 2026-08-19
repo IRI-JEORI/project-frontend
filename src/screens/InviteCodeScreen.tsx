@@ -13,7 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import {
   MINJU_WAKE_GROUP_STORAGE_KEY,
   JIWOO_WAKE_GROUP_STORAGE_KEY,
@@ -203,14 +203,14 @@ const styles = StyleSheet.create({
   },
   title: {
     position: 'absolute',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
   },
   description: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -222,10 +222,10 @@ const styles = StyleSheet.create({
   codeBox: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   codeCharacter: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 32,
     lineHeight: 38,
@@ -244,18 +244,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   enterButtonActive: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   enterButtonText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 18,
     lineHeight: 22,
   },
   enterButtonTextActive: {
-    color: Colors.textWhite,
+    color: colors.white,
   },
 });

@@ -4,7 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import Button from '../../components/Button';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 
 const TIME_TOP_SPACING = 297;
 const BUTTON_BOTTOM_SPACING = 52;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 export interface SettingsRowProps {
   label: string;

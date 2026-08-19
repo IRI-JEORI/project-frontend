@@ -3,7 +3,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import Logo from '../../components/Logo';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import { RootStackParamList } from '../../navigation/types';
 import { ApiError, nunnunApi } from '../../api';
 import BottomLinks from './components/BottomLinks';

@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { colors } from '../theme/tokens';
+import { colors } from '../constants/Colors';
 
 export interface Group {
   id: string;

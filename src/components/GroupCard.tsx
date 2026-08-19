@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 
 type GroupCardProps = {
   type: 'normal' | 'add';
@@ -40,7 +40,7 @@ export const GroupCard = ({
             height: 124.856 * scale,
             borderRadius: 14 * scale,
             backgroundColor:
-              backColor ?? (isAddGroup ? '#070707' : Colors.primary),
+              backColor ?? (isAddGroup ? '#070707' : colors.yellow),
           },
         ]}
       />
@@ -101,16 +101,16 @@ const styles = StyleSheet.create({
   },
   plusVertical: {
     position: 'absolute',
-    backgroundColor: Colors.textGray,
+    backgroundColor: colors.grayBorder,
   },
   plusHorizontal: {
     position: 'absolute',
-    backgroundColor: Colors.textGray,
+    backgroundColor: colors.grayBorder,
   },
   title: {
     position: 'absolute',
     width: '100%',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 12,
     lineHeight: 15,

@@ -12,7 +12,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
@@ -28,7 +28,7 @@ export const AddGroupNameScreen = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <TouchableOpacity
           accessibilityRole="button"
@@ -86,8 +86,8 @@ export const AddGroupNameScreen = ({ navigation, route }: Props) => {
           value={groupName}
           onChangeText={setGroupName}
           placeholder="예) 우리집, 제주도 여행팀"
-          placeholderTextColor={Colors.textGray}
-          selectionColor={Colors.secondary}
+          placeholderTextColor={colors.grayBorder}
+          selectionColor={colors.charcoal}
           maxLength={30}
           style={[
             styles.nameInput,
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   backButton: {
     position: 'absolute',
@@ -162,28 +162,28 @@ const styles = StyleSheet.create({
     position: 'absolute',
     height: 2,
     borderRadius: 8,
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   progressLineActive: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   stepText: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
   },
   title: {
     position: 'absolute',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
   },
   description: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
   nameInput: {
     position: 'absolute',
     paddingVertical: 0,
-    color: Colors.textBlack,
-    backgroundColor: Colors.gray,
+    color: colors.black,
+    backgroundColor: colors.folderGray,
     fontFamily: 'PretendardSemiBold',
     fontSize: 15,
     lineHeight: 18,
@@ -203,18 +203,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   nextButtonDisabled: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   nextButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 18,
     lineHeight: 22,
   },
   nextButtonTextDisabled: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
   },
 });

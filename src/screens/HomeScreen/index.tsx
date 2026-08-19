@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useGroups } from '../../context/GroupsContext';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import { RootStackParamList } from '../../navigation/types';
 import FilterTabs from './components/FilterTabs';
 import GroupAddMenu from './components/GroupAddMenu';

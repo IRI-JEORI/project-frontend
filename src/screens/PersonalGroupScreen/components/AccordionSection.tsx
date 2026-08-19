@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from '../../../components/Icon';
 import { chevronDownSvg } from '../../../assets/icons/mypageIcons';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 export interface AccordionSectionProps {
   title: string;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 export interface GroupAddMenuProps {
   visible: boolean;

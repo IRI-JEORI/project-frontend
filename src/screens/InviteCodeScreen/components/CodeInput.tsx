@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 export interface CodeInputProps {
   value: string;

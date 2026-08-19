@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from '../../../components/Icon';
 import { checkSvg } from '../../../assets/icons/mypageIcons';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 export type ScheduleInputMethod = 'MANUAL' | 'ALBUM' | 'CALENDAR';
 

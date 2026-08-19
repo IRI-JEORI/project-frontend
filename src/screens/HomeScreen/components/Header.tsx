@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Icon from '../../../components/Icon';
 import Logo from '../../../components/Logo';
 import { bellIconSvg } from '../../../assets/icons/homeIcons';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 const Header = () => {
   return (

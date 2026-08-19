@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../../../components/Button';
 import TextField from '../../../components/TextField';
-import { colors, spacing } from '../../../theme/tokens';
+import { colors, spacing } from '../../../constants/Colors';
 
 export interface LoginFormProps {
   onLoginPress?: () => void;

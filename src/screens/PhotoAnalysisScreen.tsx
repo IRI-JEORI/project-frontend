@@ -10,7 +10,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import { getDemoPoseAnalysisResult } from '../utils/analyzePose';
 
 const DESIGN_WIDTH = 402;
@@ -44,7 +44,7 @@ export const PhotoAnalysisScreen = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <Image
           accessibilityLabel="사진 분석 중"
@@ -74,12 +74,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   cautionIcon: {
     position: 'absolute',
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   title: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   description: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,

@@ -11,7 +11,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -34,7 +34,7 @@ export const PhotoReviewScreen = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <View
           style={[
@@ -124,17 +124,17 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   reviewCard: {
     position: 'absolute',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   title: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -161,19 +161,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   retakeButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   uploadButton: {
     backgroundColor: '#FF4B4B',
   },
   retakeButtonText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
   },
   uploadButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,

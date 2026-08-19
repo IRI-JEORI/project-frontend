@@ -11,7 +11,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -44,7 +44,7 @@ export const RewardListScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <TouchableOpacity
           accessibilityRole="button"
@@ -165,12 +165,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   backButton: {
     position: 'absolute',
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -194,19 +194,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   summaryTitle: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
   },
   rewardCount: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
   },
   rewardCountActive: {
-    color: Colors.textBlack,
+    color: colors.black,
   },
   rewardItem: {
     position: 'absolute',
@@ -216,21 +216,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.gray,
-    backgroundColor: Colors.background,
+    borderColor: colors.folderGray,
+    backgroundColor: colors.white,
   },
   rewardName: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,
     textAlign: 'center',
   },
   lockedCard: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   lockedName: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,

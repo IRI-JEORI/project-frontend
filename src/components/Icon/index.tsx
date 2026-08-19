@@ -1,6 +1,6 @@
 import React from 'react';
 import { SvgXml } from 'react-native-svg';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 
 export interface IconProps {
   xml: string;

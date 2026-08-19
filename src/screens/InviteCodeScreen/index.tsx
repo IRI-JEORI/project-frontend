@@ -6,7 +6,7 @@ import Button from '../../components/Button';
 import NavHeader from '../../components/NavHeader';
 import { useGroups } from '../../context/GroupsContext';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import CodeInput from './components/CodeInput';
 
 const CODE_LENGTH = 6;

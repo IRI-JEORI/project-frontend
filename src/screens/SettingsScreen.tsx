@@ -13,7 +13,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import {
   DEMO_GROUP_CAPACITY_NAMES,
   DEMO_GROUP_CAPACITY_STORAGE_KEY,
@@ -104,7 +104,7 @@ export const SettingsScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <TouchableOpacity
           accessibilityRole="button"
@@ -277,8 +277,8 @@ export const SettingsScreen = ({ navigation }: Props) => {
               onChangeText={setNicknameDraft}
               maxLength={20}
               placeholder="예) 눈눈곡곡"
-              placeholderTextColor={Colors.textGray}
-              selectionColor={Colors.secondary}
+              placeholderTextColor={colors.grayBorder}
+              selectionColor={colors.charcoal}
               style={[
                 styles.nicknameInput,
                 {
@@ -514,12 +514,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   backButton: {
     position: 'absolute',
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   screenTitle: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   nickname: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -560,10 +560,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.textGray,
+    borderBottomColor: colors.grayBorder,
   },
   nicknameEditText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,
@@ -574,10 +574,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray,
+    borderBottomColor: colors.folderGray,
   },
   rowTitle: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,
@@ -597,10 +597,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     borderRadius: 7,
-    backgroundColor: Colors.textGray,
+    backgroundColor: colors.grayBorder,
   },
   switchOffThumb: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   demoUserValueRow: {
     flexDirection: 'row',
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   demoUserChevron: {
     marginLeft: 8,
     marginTop: -2,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 25,
     lineHeight: 25,
@@ -627,8 +627,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10,
-    backgroundColor: Colors.background,
-    shadowColor: Colors.textBlack,
+    backgroundColor: colors.white,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
@@ -640,28 +640,28 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 10,
-    backgroundColor: Colors.background,
-    shadowColor: Colors.textBlack,
+    backgroundColor: colors.white,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 20,
   },
   demoSheetTitle: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 20,
     lineHeight: 24,
   },
   demoSheetDescription: {
     marginTop: 5,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 14,
     lineHeight: 17,
   },
   demoStatusLabel: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,
@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
   },
   scheduleUserName: {
     width: 62,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 15,
     lineHeight: 18,
@@ -684,10 +684,10 @@ const styles = StyleSheet.create({
   scheduleStatusOption: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   scheduleStatusOptionText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 14,
     lineHeight: 17,
@@ -699,19 +699,19 @@ const styles = StyleSheet.create({
   demoUserOption: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   demoUserOptionSelected: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   demoUserOptionText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
   },
   demoUserOptionTextSelected: {
-    color: Colors.textWhite,
+    color: colors.white,
   },
   sheetGrabber: {
     position: 'absolute',
@@ -720,14 +720,14 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     position: 'absolute',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 20,
     lineHeight: 24,
   },
   sheetDescription: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 14,
     lineHeight: 17,
@@ -735,8 +735,8 @@ const styles = StyleSheet.create({
   nicknameInput: {
     position: 'absolute',
     paddingVertical: 0,
-    color: Colors.textBlack,
-    backgroundColor: Colors.gray,
+    color: colors.black,
+    backgroundColor: colors.folderGray,
     fontFamily: 'PretendardSemiBold',
     fontSize: 15,
     lineHeight: 18,
@@ -746,10 +746,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   completeButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 12,
     lineHeight: 15,

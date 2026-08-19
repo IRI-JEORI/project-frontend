@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 const cautionImage = require('../../../assets/images/caution.png');
 

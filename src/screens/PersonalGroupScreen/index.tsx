@@ -3,7 +3,7 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import { tokenStorage } from '../../api/tokenStorage';
 import ProfileHeader from './components/ProfileHeader';
 import AccordionSection from './components/AccordionSection';

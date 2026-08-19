@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from '../../../components/Icon';
 import { chevronLeftSvg } from '../../../assets/icons/navIcons';
 import { editSvg } from '../../../assets/icons/mypageIcons';
-import { colors } from '../../../theme/tokens';
+import { colors } from '../../../constants/Colors';
 
 export interface ProfileHeaderProps {
   nickname: string;

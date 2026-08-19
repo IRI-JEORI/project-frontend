@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from '../Icon';
 import { chevronLeftSvg, menuIconSvg, plusCircleSvg } from '../../assets/icons/navIcons';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 
 export interface NavHeaderProps {
   title: string;

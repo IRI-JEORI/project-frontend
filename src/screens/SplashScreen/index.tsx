@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import Logo from '../../components/Logo';
 
 const LOGO_COLOR = colors.bannerBg;

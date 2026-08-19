@@ -12,7 +12,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import {
   JIWOO_WAKE_EXHAUSTED_STORAGE_KEY,
   JIWOO_WAKE_REQUEST_STORAGE_KEY,
@@ -72,7 +72,7 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <Text style={[styles.title, { top: 93 * scale }]}>판정 완료!</Text>
         <Text style={[styles.description, { top: 128 * scale }]}>
@@ -203,18 +203,18 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   title: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -222,14 +222,14 @@ const styles = StyleSheet.create({
   description: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
   },
   resultCard: {
     position: 'absolute',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
@@ -249,14 +249,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scoreLabel: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 14,
     lineHeight: 17,
   },
   score: {
     marginTop: 1,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 40,
     lineHeight: 48,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   retrySheet: {
     position: 'absolute',
     bottom: 0,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.08,
@@ -278,14 +278,14 @@ const styles = StyleSheet.create({
   },
   retryTitle: {
     position: 'absolute',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
   },
   retryDescription: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF4B4B',
   },
   retryButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 18,
     lineHeight: 23,

@@ -5,22 +5,30 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 
 export interface ButtonProps {
   label: string;
   onPress?: (event: GestureResponderEvent) => void;
   size?: 'large' | 'medium';
   variant?: 'primary' | 'secondary';
+  borderRadius?: number;
 }
 
-const Button = ({ label, onPress, size = 'large', variant = 'primary' }: ButtonProps) => {
+const Button = ({
+  label,
+  onPress,
+  size = 'large',
+  variant = 'primary',
+  borderRadius,
+}: ButtonProps) => {
   return (
     <TouchableOpacity
       style={[
         styles.button,
         size === 'medium' && styles.buttonMedium,
         variant === 'secondary' && styles.buttonSecondary,
+        borderRadius !== undefined && { borderRadius },
       ]}
       onPress={onPress}
       activeOpacity={0.8}

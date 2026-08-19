@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import NavHeader from '../../components/NavHeader';
 import PaginationDots from '../../components/PaginationDots';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/tokens';
+import { colors } from '../../constants/Colors';
 import MemberCard from './components/MemberCard';
 
 interface MemberState {

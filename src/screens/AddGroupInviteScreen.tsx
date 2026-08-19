@@ -14,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import {
   JIWOO_WAKE_PHOTO_STORAGE_KEY,
   JIWOO_WAKE_EXHAUSTED_STORAGE_KEY,
@@ -93,7 +93,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <TouchableOpacity
           accessibilityRole="button"
@@ -252,12 +252,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   backButton: {
     position: 'absolute',
@@ -272,25 +272,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     height: 2,
     borderRadius: 8,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   stepText: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
   },
   title: {
     position: 'absolute',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
   },
   description: {
     position: 'absolute',
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -299,10 +299,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   inviteCode: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 32,
     lineHeight: 38,
@@ -318,19 +318,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeButton: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   activeButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
   },
   inactiveButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   inactiveButtonText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -340,10 +340,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   enterGroupButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 18,
     lineHeight: 22,

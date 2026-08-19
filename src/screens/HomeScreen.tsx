@@ -15,7 +15,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import {
   DEMO_USER_STORAGE_KEY,
   JIWOO_WAKE_GROUP_STORAGE_KEY,
@@ -73,7 +73,7 @@ export const HomeScreen = ({ navigation }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <Image
           source={require('../assets/images/nunnun-logo.png')}
@@ -223,11 +223,11 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
     overflow: 'hidden',
   },
   logo: {
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     position: 'absolute',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingVertical: 7,
     backgroundColor: 'rgba(244, 244, 244, 0.94)',
-    shadowColor: Colors.textBlack,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 18,
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
   },
   addGroupMenuText: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 20,

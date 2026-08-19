@@ -19,7 +19,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import type { RootStackParamList } from '../../App';
-import { Colors } from '../constants/Colors';
+import { colors } from '../constants/Colors';
 import {
   AI_FRIEND_ENABLED_STORAGE_KEYS,
   AI_FRIEND_PROMPT_STORAGE_KEY,
@@ -275,7 +275,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          backgroundColor={Colors.background}
+          backgroundColor={colors.white}
           barStyle="dark-content"
         />
         <View style={[styles.container, { width: contentWidth }]}>
@@ -431,7 +431,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          backgroundColor={Colors.background}
+          backgroundColor={colors.white}
           barStyle="dark-content"
         />
         <View style={[styles.container, { width: contentWidth }]}>
@@ -706,7 +706,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          backgroundColor={Colors.background}
+          backgroundColor={colors.white}
           barStyle="dark-content"
         />
         <View style={[styles.container, { width: contentWidth }]}>
@@ -1058,7 +1058,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar
-          backgroundColor={Colors.background}
+          backgroundColor={colors.white}
           barStyle="dark-content"
         />
         <View style={[styles.container, { width: contentWidth }]}>
@@ -1490,7 +1490,7 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <StatusBar backgroundColor={colors.white} barStyle="dark-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <TouchableOpacity
           accessibilityRole="button"
@@ -2538,12 +2538,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   headerIconButton: {
     position: 'absolute',
@@ -2557,7 +2557,7 @@ const styles = StyleSheet.create({
   groupTitle: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -2567,12 +2567,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inviteSelfCard: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   inviteEmptyCard: {
     borderWidth: 1,
     borderColor: 'rgba(234, 234, 234, 0.9)',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   inviteMemberMeta: {
     position: 'absolute',
@@ -2581,7 +2581,7 @@ const styles = StyleSheet.create({
     columnGap: 3,
   },
   inviteMetaText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 10,
     lineHeight: 12,
@@ -2590,7 +2590,7 @@ const styles = StyleSheet.create({
     width: 2,
     height: 2,
     borderRadius: 1,
-    backgroundColor: Colors.textGray,
+    backgroundColor: colors.grayBorder,
   },
   inviteSleepDetails: {
     position: 'absolute',
@@ -2598,14 +2598,14 @@ const styles = StyleSheet.create({
     columnGap: 37,
   },
   inviteSleepValue: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardBold',
     fontSize: 14,
     lineHeight: 17,
   },
   inviteSleepLabel: {
     marginTop: 1,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardSemiBold',
     fontSize: 10,
     lineHeight: 12,
@@ -2622,10 +2622,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF4B4B',
   },
   wakeActionRequestedButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   wakeActionRequestedText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2638,17 +2638,17 @@ const styles = StyleSheet.create({
   },
   wakeConfirmPanel: {
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   wakeSuccessPanel: {
     alignItems: 'center',
     paddingTop: 27,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
     overflow: 'hidden',
   },
   wakeSuccessTitle: {
     marginTop: 15,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -2656,7 +2656,7 @@ const styles = StyleSheet.create({
   },
   wakeSuccessDescription: {
     marginTop: 6,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2677,19 +2677,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   wakeSuccessLaterButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   wakeSuccessSendButton: {
     backgroundColor: '#FF4B4B',
   },
   wakeSuccessLaterText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
   },
   wakeSuccessSendText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2698,11 +2698,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 46,
     overflow: 'hidden',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   leaveConfirmTitle: {
     marginTop: 15,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -2724,19 +2724,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   leaveConfirmCancelButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   leaveConfirmAcceptButton: {
     backgroundColor: '#FF4B4B',
   },
   leaveConfirmCancelText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
   },
   leaveConfirmAcceptText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2745,11 +2745,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 26,
     overflow: 'hidden',
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   aiFriendConfirmDescription: {
     marginTop: 6,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2777,7 +2777,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   inviteFriendBannerText: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -2786,11 +2786,11 @@ const styles = StyleSheet.create({
   wakeLockedPanel: {
     alignItems: 'center',
     paddingTop: 21,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   wakeLockedTitle: {
     marginTop: 15,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -2798,7 +2798,7 @@ const styles = StyleSheet.create({
   },
   wakeLockedDescription: {
     marginTop: 6,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2812,7 +2812,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF4B4B',
   },
   wakeLockedConfirmText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2822,14 +2822,14 @@ const styles = StyleSheet.create({
   },
   wakeConfirmTitle: {
     marginTop: 15,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
   },
   wakeConfirmDescription: {
     marginTop: 6,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2850,27 +2850,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   wakeConfirmCancelButton: {
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   wakeConfirmAcceptButton: {
     backgroundColor: '#FF4B4B',
   },
   wakeConfirmCancelText: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 14,
     lineHeight: 17,
   },
   wakeConfirmAcceptText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 14,
     lineHeight: 17,
   },
   inviteActionButtonInactive: {
     borderWidth: 1,
-    borderColor: Colors.gray,
-    backgroundColor: Colors.background,
+    borderColor: colors.folderGray,
+    backgroundColor: colors.white,
   },
   inviteActionTextActive: {
     color: '#F6F6F6',
@@ -2879,7 +2879,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   inviteActionTextInactive: {
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2906,7 +2906,7 @@ const styles = StyleSheet.create({
   waitingMemberCard: {
     position: 'absolute',
     overflow: 'hidden',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   fullCapacityMemberCard: {
     position: 'absolute',
@@ -2965,16 +2965,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#B8B8B8',
   },
   fullCapacityPageDotActive: {
-    backgroundColor: Colors.textBlack,
+    backgroundColor: colors.black,
   },
   capacityFullPanel: {
     alignItems: 'center',
     paddingTop: 21,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.white,
   },
   capacityFullTitle: {
     marginTop: 15,
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
@@ -2982,7 +2982,7 @@ const styles = StyleSheet.create({
   },
   capacityFullDescription: {
     marginTop: 6,
-    color: Colors.textGray,
+    color: colors.grayBorder,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -2996,7 +2996,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF4B4B',
   },
   capacityFullButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
@@ -3013,7 +3013,7 @@ const styles = StyleSheet.create({
   scheduleRestrictedText: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardBold',
     fontSize: 14,
     lineHeight: 17,
@@ -3024,7 +3024,7 @@ const styles = StyleSheet.create({
   helpNeededText: {
     position: 'absolute',
     alignSelf: 'center',
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardBold',
     fontSize: 14,
     lineHeight: 17,
@@ -3041,7 +3041,7 @@ const styles = StyleSheet.create({
   expandedPhotoCard: {
     position: 'absolute',
     overflow: 'hidden',
-    backgroundColor: Colors.gray,
+    backgroundColor: colors.folderGray,
   },
   expandedMemberIdentity: {
     position: 'absolute',
@@ -3050,7 +3050,7 @@ const styles = StyleSheet.create({
     columnGap: 6,
   },
   expandedMemberMeta: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -3062,13 +3062,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   expandedPhotoValue: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardBold',
     fontSize: 24,
     lineHeight: 29,
   },
   expandedPhotoLabel: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
@@ -3084,22 +3084,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   memberName: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardSemiBold',
     fontSize: 8,
     lineHeight: 10,
   },
   memberNameOnPhoto: {
-    color: Colors.textWhite,
+    color: colors.white,
   },
   memberMetaDot: {
     width: 2,
     height: 2,
     borderRadius: 1,
-    backgroundColor: Colors.textGray,
+    backgroundColor: colors.grayBorder,
   },
   memberMetaDotOnPhoto: {
-    backgroundColor: Colors.textWhite,
+    backgroundColor: colors.white,
   },
   sleepDetails: {
     position: 'absolute',
@@ -3123,7 +3123,7 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   awakeDetailText: {
-    color: Colors.textWhite,
+    color: colors.white,
   },
   memberActionRow: {
     position: 'absolute',
@@ -3134,50 +3134,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selfAwakeButton: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.charcoal,
   },
   awakeSelfButton: {
     borderWidth: 1,
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.background,
+    borderColor: colors.charcoal,
+    backgroundColor: colors.white,
   },
   selfAwakeButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 12,
     lineHeight: 15,
   },
   awakeSelfButtonText: {
-    color: Colors.secondary,
+    color: colors.charcoal,
   },
   photoLockedButton: {
     backgroundColor: '#FF4B4B',
   },
   photoLockedButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
   },
   wakeCompletedButton: {
     backgroundColor: '#202224',
   },
   wakeCompletedButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
   },
   waitingWakeButton: {
     backgroundColor: '#B8B8B8',
   },
   wakeRequestedButton: {
     borderWidth: 1,
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.background,
+    borderColor: colors.charcoal,
+    backgroundColor: colors.white,
   },
   waitingWakeButtonText: {
-    color: Colors.textWhite,
+    color: colors.white,
     fontFamily: 'PretendardMedium',
     fontSize: 12,
     lineHeight: 15,
   },
   wakeRequestedButtonText: {
-    color: Colors.secondary,
+    color: colors.charcoal,
   },
   menuOverlay: {
     flex: 1,
@@ -3188,7 +3188,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingVertical: 7,
     backgroundColor: 'rgba(244, 244, 244, 0.88)',
-    shadowColor: Colors.textBlack,
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18,
     shadowRadius: 18,
@@ -3200,7 +3200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
   },
   menuItemText: {
-    color: Colors.textBlack,
+    color: colors.black,
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 20,
