@@ -4,7 +4,6 @@ import CameraCaptureScreen from '../screens/CameraCaptureScreen';
 import HomeScreen from '../screens/HomeScreen';
 import InviteCodeScreen from '../screens/InviteCodeScreen';
 import LoginScreen from '../screens/LoginScreen';
-import MoodCheckScreen from '../screens/MoodCheckScreen';
 import PermissionScreen from '../screens/PermissionScreen';
 import PersonalGroupScreen from '../screens/PersonalGroupScreen';
 import PhotoReviewScreen from '../screens/PhotoReviewScreen';
@@ -26,7 +25,6 @@ const RootNavigator = () => {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Permission" component={PermissionScreen} />
-      <Stack.Screen name="MoodCheck" component={MoodCheckScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="PersonalGroup" component={PersonalGroupScreen} />
       <Stack.Screen name="InviteCode" component={InviteCodeScreen} />

@@ -30,8 +30,9 @@ const styles = StyleSheet.create({
     gap: spacing.formGap,
   },
   forgotPassword: {
-    fontSize: 13,
-    color: colors.brownLight,
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.textDefault,
   },
 });
 
