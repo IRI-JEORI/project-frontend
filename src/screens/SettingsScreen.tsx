@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   StatusBar,
   StyleSheet,
@@ -10,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
@@ -26,6 +29,9 @@ import {
   type DemoScheduleStatus,
   type DemoUser,
 } from '../constants/DemoUser';
+import { registerDeviceAfterLogin } from '../notifications/messaging';
+import { ApiError, nunnunApi, tokenStorage } from '../api';
+import { clearPendingWakeRequestNavigation } from '../navigation/rootNavigation';
 import SettingsProfile from '../assets/images/settings-profile.svg';
 import SettingsEdit from '../assets/images/settings-edit.svg';
 import SettingsToggleOn from '../assets/images/settings-toggle-on.svg';
@@ -35,13 +41,54 @@ const MAX_CONTENT_WIDTH = 430;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
+const profileErrorMessage = (error: unknown) => {
+  if (!(error instanceof ApiError)) {
+    return '사용자 정보를 불러오지 못했어요.';
+  }
+
+  switch (error.code) {
+    case 'UNAUTHORIZED':
+    case 'INVALID_JWT':
+    case 'EXPIRED_JWT':
+      return '데모 사용자를 다시 선택해주세요.';
+    case 'USER_NOT_FOUND':
+      return '사용자 정보를 찾을 수 없어요.';
+    default:
+      return '사용자 정보를 불러오지 못했어요.';
+  }
+};
+
+const profileUpdateErrorMessage = (error: unknown) => {
+  if (!(error instanceof ApiError)) {
+    return '닉네임을 변경하지 못했어요.';
+  }
+
+  switch (error.code) {
+    case 'VALIDATION_ERROR':
+      return '닉네임은 공백이 아니어야 하며 30자 이하여야 해요.';
+    case 'UNAUTHORIZED':
+    case 'INVALID_JWT':
+    case 'EXPIRED_JWT':
+      return '데모 사용자를 다시 선택해주세요.';
+    case 'USER_NOT_FOUND':
+      return '사용자 정보를 찾을 수 없어요.';
+    default:
+      return '닉네임을 변경하지 못했어요.';
+  }
+};
+
 export const SettingsScreen = ({ navigation }: Props) => {
   const [calendarEnabled, setCalendarEnabled] = useState(true);
   const [nickname, setNickname] = useState(DEMO_USER_NAMES.jiwoo);
   const [nicknameDraft, setNicknameDraft] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileUpdating, setProfileUpdating] = useState(false);
   const [showNicknameSheet, setShowNicknameSheet] = useState(false);
   const [demoUser, setDemoUser] = useState<DemoUser>('jiwoo');
   const [showDemoUserSheet, setShowDemoUserSheet] = useState(false);
+  const [demoLoginLoading, setDemoLoginLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [scheduleStatuses, setScheduleStatuses] = useState<
     Record<DemoUser, DemoScheduleStatus>
   >({ jiwoo: 'available', minju: 'available' });
@@ -50,6 +97,46 @@ export const SettingsScreen = ({ navigation }: Props) => {
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = contentWidth / DESIGN_WIDTH;
+  const profileUpdateInFlightRef = useRef(false);
+  const logoutInFlightRef = useRef(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const loadProfile = async () => {
+        setProfileLoading(true);
+        setProfileError(null);
+        try {
+          const accessToken = await tokenStorage.getAccessToken();
+          if (!accessToken) {
+            if (isActive) {
+              setProfileError('데모 사용자를 선택해주세요.');
+            }
+            return;
+          }
+
+          const profile = await nunnunApi.user.getMe();
+          if (isActive) {
+            setNickname(profile.nickname);
+          }
+        } catch (error) {
+          if (isActive) {
+            setProfileError(profileErrorMessage(error));
+          }
+        } finally {
+          if (isActive) {
+            setProfileLoading(false);
+          }
+        }
+      };
+
+      loadProfile().catch(() => undefined);
+      return () => {
+        isActive = false;
+      };
+    }, []),
+  );
 
   useEffect(() => {
     const loadDemoUser = async () => {
@@ -62,7 +149,6 @@ export const SettingsScreen = ({ navigation }: Props) => {
         ]);
       if (savedUser === 'jiwoo' || savedUser === 'minju') {
         setDemoUser(savedUser);
-        setNickname(DEMO_USER_NAMES[savedUser]);
       }
       setScheduleStatuses({
         jiwoo: jiwooScheduleStatus === 'inClass' ? 'inClass' : 'available',
@@ -75,17 +161,47 @@ export const SettingsScreen = ({ navigation }: Props) => {
   }, []);
 
   const selectDemoUser = async (user: DemoUser) => {
-    setDemoUser(user);
-    setNickname(DEMO_USER_NAMES[user]);
-    await AsyncStorage.setItem(DEMO_USER_STORAGE_KEY, user);
+    if (demoLoginLoading) {
+      return;
+    }
 
-    if (user === 'jiwoo') {
-      const hasWakeRequest = await AsyncStorage.getItem(
-        JIWOO_WAKE_REQUEST_STORAGE_KEY,
+    setDemoLoginLoading(true);
+    try {
+      const { accounts } = await nunnunApi.auth.getDemoAccounts();
+      const account = accounts.find(
+        candidate => candidate.nickname === DEMO_USER_NAMES[user],
       );
-      if (hasWakeRequest === 'true') {
-        navigation.replace('WakeNotification');
+      if (!account) {
+        throw new Error('선택한 데모 계정을 찾을 수 없습니다.');
       }
+
+      await nunnunApi.auth.demoLogin(account.id);
+      await registerDeviceAfterLogin();
+      const profile = await nunnunApi.user.getMe();
+      setDemoUser(user);
+      setNickname(profile.nickname);
+      setProfileError(null);
+      await AsyncStorage.setItem(DEMO_USER_STORAGE_KEY, user);
+
+      if (user === 'jiwoo') {
+        const hasWakeRequest = await AsyncStorage.getItem(
+          JIWOO_WAKE_REQUEST_STORAGE_KEY,
+        );
+        if (hasWakeRequest === 'true') {
+          navigation.replace('WakeNotification');
+        }
+      }
+    } catch (error) {
+      Alert.alert(
+        '로그인 실패',
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : '데모 계정 로그인에 실패했습니다.',
+      );
+    } finally {
+      setDemoLoginLoading(false);
     }
   };
 
@@ -100,6 +216,74 @@ export const SettingsScreen = ({ navigation }: Props) => {
   const selectGroupCapacity = async (capacity: DemoGroupCapacity) => {
     setGroupCapacity(capacity);
     await AsyncStorage.setItem(DEMO_GROUP_CAPACITY_STORAGE_KEY, capacity);
+  };
+
+  const updateNickname = async () => {
+    const nextNickname = nicknameDraft.trim();
+    if (
+      !nextNickname ||
+      nextNickname.length > 30 ||
+      profileUpdateInFlightRef.current
+    ) {
+      return;
+    }
+
+    profileUpdateInFlightRef.current = true;
+    setProfileUpdating(true);
+    try {
+      const profile = await nunnunApi.user.updateMe({
+        nickname: nextNickname,
+      });
+      setNickname(profile.nickname);
+      setProfileError(null);
+      setShowNicknameSheet(false);
+    } catch (error) {
+      Alert.alert('닉네임 변경 실패', profileUpdateErrorMessage(error));
+    } finally {
+      profileUpdateInFlightRef.current = false;
+      setProfileUpdating(false);
+    }
+  };
+
+  const logout = async () => {
+    if (logoutInFlightRef.current) {
+      return;
+    }
+
+    logoutInFlightRef.current = true;
+    setLogoutLoading(true);
+    try {
+      await nunnunApi.auth.logout();
+      clearPendingWakeRequestNavigation();
+      setProfileError('데모 사용자를 선택해주세요.');
+      setShowNicknameSheet(false);
+      setShowDemoUserSheet(false);
+      navigation.reset({ index: 0, routes: [{ name: 'Settings' }] });
+    } catch {
+      Alert.alert(
+        '로그아웃 실패',
+        '서버에 연결하지 못했어요. 네트워크를 확인한 뒤 다시 시도해주세요.',
+      );
+    } finally {
+      logoutInFlightRef.current = false;
+      setLogoutLoading(false);
+    }
+  };
+
+  const confirmLogout = () => {
+    if (logoutInFlightRef.current) {
+      return;
+    }
+    Alert.alert('로그아웃하시겠어요?', '현재 데모 인증 세션을 종료합니다.', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: () => {
+          logout().catch(() => undefined);
+        },
+      },
+    ]);
   };
 
   return (
@@ -159,13 +343,18 @@ export const SettingsScreen = ({ navigation }: Props) => {
             ]}
           />
           <View style={[styles.profileText, { marginLeft: 18 * scale }]}>
-            <Text style={styles.nickname}>{nickname}</Text>
+            {profileLoading ? (
+              <ActivityIndicator color={Colors.secondary} size="small" />
+            ) : (
+              <Text style={styles.nickname}>{nickname}</Text>
+            )}
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="닉네임 변경하기"
               activeOpacity={0.7}
+              disabled={profileLoading || profileError !== null}
               onPress={() => {
-                setNicknameDraft('');
+                setNicknameDraft(nickname);
                 setShowNicknameSheet(true);
               }}
               style={[styles.nicknameEditRow, { width: 88 * scale }]}
@@ -174,6 +363,11 @@ export const SettingsScreen = ({ navigation }: Props) => {
             </TouchableOpacity>
           </View>
         </View>
+        {profileError && !profileLoading && (
+          <Text accessibilityLiveRegion="polite" style={styles.profileError}>
+            {profileError}
+          </Text>
+        )}
 
         <SettingRow
           title="캘린더 연동"
@@ -214,16 +408,41 @@ export const SettingsScreen = ({ navigation }: Props) => {
         />
 
         <SettingRow
-          title="에브리타임 시간표"
-          description="사진으로 등록하기"
+          title="기상 목표"
+          description="요일별 목표 시간 설정"
           top={259 * scale}
           scale={scale}
+          onPress={() => navigation.navigate('WakeTargets')}
+        />
+
+        <SettingRow
+          title="방해금지 시간"
+          description="깨우기 요청을 받지 않을 시간"
+          top={326 * scale}
+          scale={scale}
+          onPress={() => navigation.navigate('DndWindows')}
+        />
+
+        <SettingRow
+          title="에브리타임 시간표"
+          description="고정 일정 관리"
+          top={393 * scale}
+          scale={scale}
+          onPress={() => navigation.navigate('FixedSchedules')}
+        />
+
+        <SettingRow
+          title="기상 통계"
+          description="성공률과 연속 인증 기록"
+          top={460 * scale}
+          scale={scale}
+          onPress={() => navigation.navigate('Stats')}
         />
 
         <SettingRow
           title="데모 사용자"
           description="두 사용자 플로우를 확인해요"
-          top={326 * scale}
+          top={527 * scale}
           scale={scale}
           onPress={() => setShowDemoUserSheet(true)}
           rightAccessory={
@@ -234,6 +453,15 @@ export const SettingsScreen = ({ navigation }: Props) => {
               <Text style={styles.demoUserChevron}>›</Text>
             </View>
           }
+        />
+
+        <SettingRow
+          title={logoutLoading ? '로그아웃 중...' : '로그아웃'}
+          description="현재 인증 세션 종료"
+          top={594 * scale}
+          scale={scale}
+          disabled={logoutLoading}
+          onPress={confirmLogout}
         />
 
         {showNicknameSheet && (
@@ -269,13 +497,14 @@ export const SettingsScreen = ({ navigation }: Props) => {
                 { left: 31 * scale, top: 68 * scale },
               ]}
             >
-              3번 이상 재설정 시 2주 뒤에 변경이 가능해요
+              공백이 아닌 30자 이하의 이름을 입력해주세요
             </Text>
             <TextInput
               accessibilityLabel="새로운 닉네임"
               value={nicknameDraft}
               onChangeText={setNicknameDraft}
-              maxLength={20}
+              editable={!profileUpdating}
+              maxLength={30}
               placeholder="예) 눈눈곡곡"
               placeholderTextColor={Colors.textGray}
               selectionColor={Colors.secondary}
@@ -296,13 +525,12 @@ export const SettingsScreen = ({ navigation }: Props) => {
               accessibilityRole="button"
               accessibilityLabel="닉네임 변경 완료"
               activeOpacity={0.8}
-              onPress={() => {
-                const nextNickname = nicknameDraft.trim();
-                if (nextNickname) {
-                  setNickname(nextNickname);
-                }
-                setShowNicknameSheet(false);
-              }}
+              disabled={
+                profileUpdating ||
+                nicknameDraft.trim().length === 0 ||
+                nicknameDraft.trim().length > 30
+              }
+              onPress={() => updateNickname().catch(() => undefined)}
               style={[
                 styles.completeButton,
                 {
@@ -314,7 +542,11 @@ export const SettingsScreen = ({ navigation }: Props) => {
                 },
               ]}
             >
-              <Text style={styles.completeButtonText}>완료</Text>
+              {profileUpdating ? (
+                <ActivityIndicator color={Colors.textWhite} size="small" />
+              ) : (
+                <Text style={styles.completeButtonText}>완료</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -359,6 +591,7 @@ export const SettingsScreen = ({ navigation }: Props) => {
                     accessibilityLabel={`${DEMO_USER_NAMES[user]} 사용자`}
                     accessibilityState={{ selected }}
                     activeOpacity={0.8}
+                    disabled={demoLoginLoading}
                     onPress={() => {
                       selectDemoUser(user).catch(() => undefined);
                     }}
@@ -483,6 +716,7 @@ type SettingRowProps = {
   scale: number;
   rightAccessory?: React.ReactNode;
   onPress?: () => void;
+  disabled?: boolean;
 };
 
 const SettingRow = ({
@@ -492,10 +726,13 @@ const SettingRow = ({
   scale,
   rightAccessory,
   onPress,
+  disabled = false,
 }: SettingRowProps) => (
   <TouchableOpacity
     accessibilityRole="button"
+    accessibilityLabel={title}
     activeOpacity={0.7}
+    disabled={disabled}
     onPress={onPress}
     style={[
       styles.settingRow,
@@ -545,6 +782,15 @@ const styles = StyleSheet.create({
   },
   profileText: {
     justifyContent: 'center',
+  },
+  profileError: {
+    position: 'absolute',
+    left: 103,
+    top: 157,
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 12,
+    lineHeight: 15,
   },
   profileEditIcon: {
     position: 'absolute',

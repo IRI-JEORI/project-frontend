@@ -55,8 +55,13 @@ const CameraCaptureScreen = () => {
       );
       navigation.navigate('PhotoReview', {
         photoUri: `file://${photo.filePath}`,
-        memberName: params.memberName,
+        memberName: params.memberName ?? params.recipientName ?? '사용자',
+        recipientName: params.recipientName,
+        photographer: params.photographer,
         onComplete: params.onComplete,
+        requestId: params.requestId,
+        groupId: params.groupId,
+        verificationMode: params.verificationMode,
       });
     } finally {
       setIsTakingPhoto(false);
@@ -105,7 +110,7 @@ const CameraCaptureScreen = () => {
       </View>
 
       <Text style={styles.helperText}>
-        {params.memberName}님에게 보여줄 인증사진이에요
+        {params.memberName ?? params.recipientName ?? '사용자'}님에게 보여줄 인증사진이에요
       </Text>
 
       <TouchableOpacity

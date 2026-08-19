@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   StatusBar,
   StyleSheet,
@@ -13,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
+import { ApiError, nunnunApi } from '../api';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
@@ -21,10 +24,61 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AddGroupName'>;
 
 export const AddGroupNameScreen = ({ navigation, route }: Props) => {
   const [groupName, setGroupName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
   const hasGroupName = groupName.trim().length > 0;
+
+  const createErrorMessage = (error: unknown) => {
+    if (!(error instanceof ApiError)) {
+      return '그룹을 만들지 못했어요. 다시 시도해주세요.';
+    }
+
+    switch (error.code) {
+      case 'UNAUTHORIZED':
+      case 'INVALID_JWT':
+      case 'EXPIRED_JWT':
+        return '데모 사용자를 다시 선택해주세요.';
+      case 'VALIDATION_ERROR':
+      case 'INVALID_REQUEST':
+        return '그룹 이름을 확인해주세요.';
+      case 'ACTIVE_WAKE_GROUP_EXISTS':
+        return '이미 참여 중인 깨우기 그룹이 있어요.';
+      case 'INVITE_CODE_GENERATION_FAILED':
+        return '초대 코드를 만들지 못했어요. 다시 시도해주세요.';
+      default:
+        return '그룹을 만들지 못했어요. 다시 시도해주세요.';
+    }
+  };
+
+  const createGroup = async () => {
+    const name = groupName.trim();
+    const groupType = route.params?.groupType ?? 'wake';
+    if (!name || submitting) {
+      return;
+    }
+
+    if (groupType !== 'wake') {
+      navigation.navigate('AddGroupInvite', { groupType, groupName: name });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const created = await nunnunApi.group.create(name);
+      navigation.navigate('AddGroupInvite', {
+        groupType,
+        groupName: created.name,
+        groupId: created.id,
+        inviteCode: created.invite_code,
+      });
+    } catch (error) {
+      Alert.alert('그룹 생성 실패', createErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -104,18 +158,13 @@ export const AddGroupNameScreen = ({ navigation, route }: Props) => {
 
         <TouchableOpacity
           accessibilityRole="button"
-          accessibilityState={{ disabled: !hasGroupName }}
+          accessibilityState={{ disabled: !hasGroupName || submitting }}
           activeOpacity={0.8}
-          disabled={!hasGroupName}
-          onPress={() =>
-            navigation.navigate('AddGroupInvite', {
-              groupType: route.params?.groupType ?? 'wake',
-              groupName: groupName.trim(),
-            })
-          }
+          disabled={!hasGroupName || submitting}
+          onPress={() => createGroup().catch(() => undefined)}
           style={[
             styles.nextButton,
-            !hasGroupName && styles.nextButtonDisabled,
+            (!hasGroupName || submitting) && styles.nextButtonDisabled,
             {
               bottom: 22 * scale,
               width: 346 * scale,
@@ -124,14 +173,18 @@ export const AddGroupNameScreen = ({ navigation, route }: Props) => {
             },
           ]}
         >
-          <Text
-            style={[
-              styles.nextButtonText,
-              !hasGroupName && styles.nextButtonTextDisabled,
-            ]}
-          >
-            다음
-          </Text>
+          {submitting ? (
+            <ActivityIndicator color={Colors.textGray} />
+          ) : (
+            <Text
+              style={[
+                styles.nextButtonText,
+                !hasGroupName && styles.nextButtonTextDisabled,
+              ]}
+            >
+              다음
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

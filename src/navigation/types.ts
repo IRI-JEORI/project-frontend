@@ -1,3 +1,5 @@
+import type { WakeProofResult } from '../api';
+
 export type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
@@ -6,13 +8,51 @@ export type RootStackParamList = {
   Home: undefined;
   PersonalGroup: undefined;
   Settings: undefined;
+  WakeTargets: undefined;
+  DndWindows: undefined;
+  FixedSchedules: undefined;
+  Stats: undefined;
   InviteCode: undefined;
-  WakeGroupDetail: undefined;
+  AddGroupName: { groupType: 'wake' | 'roommate' };
+  WaitingForMembers: { groupId: number; groupType: 'wake'; groupName?: string };
+  WakeGroupDetail: { groupId: number };
   WakeAlarm: { memberName: string; onComplete: (photoUri: string) => void };
-  CameraCapture: { memberName: string; onComplete: (photoUri: string) => void };
+  WakeNotification: { requestId: number } | undefined;
+  CameraCapture: {
+    memberName?: string;
+    onComplete?: (photoUri: string) => void;
+    recipientName?: string;
+    photographer?: 'jiwoo' | 'minju';
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+  };
   PhotoReview: {
     photoUri: string;
     memberName: string;
-    onComplete: (photoUri: string) => void;
+    recipientName?: string;
+    photographer?: 'jiwoo' | 'minju';
+    onComplete?: (photoUri: string) => void;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+  };
+  PhotoAnalysisSuccess: {
+    photoPath: string;
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+    proofResult?: WakeProofResult;
+  };
+  PhotoAnalysisFailure: {
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    attempt: number;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+    proofResult?: WakeProofResult;
   };
 };

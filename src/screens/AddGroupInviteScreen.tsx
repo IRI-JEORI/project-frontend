@@ -40,6 +40,11 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
 
   useEffect(() => {
     const prepareInviteCode = async () => {
+      if (route.params?.groupId !== undefined && route.params.inviteCode) {
+        setInviteCode(route.params.inviteCode);
+        return;
+      }
+
       const generatedCode = createInviteCode();
       await AsyncStorage.setItem(
         WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
@@ -49,7 +54,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
     };
 
     prepareInviteCode().catch(() => undefined);
-  }, []);
+  }, [route.params?.groupId, route.params?.inviteCode]);
 
   const copyInviteCode = () => {
     if (!inviteCode) {
@@ -70,6 +75,11 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
   const enterGroup = async () => {
     const groupType = route.params?.groupType ?? 'wake';
     const groupName = route.params?.groupName?.trim() || '아침 야호';
+
+    if (route.params?.groupId !== undefined) {
+      navigation.replace('WakeGroupDetail', { groupId: route.params.groupId });
+      return;
+    }
 
     try {
       if (groupType === 'wake') {

@@ -1,11 +1,14 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   Modal,
   Pressable,
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -20,6 +23,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Clipboard from '@react-native-clipboard/clipboard';
 import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
+import { ApiError, nunnunApi } from '../api';
+import type { WakeGroupDetail, WakeGroupMember } from '../api/types';
 import {
   AI_FRIEND_ENABLED_STORAGE_KEYS,
   AI_FRIEND_PROMPT_STORAGE_KEY,
@@ -46,7 +51,13 @@ const MAX_CONTENT_WIDTH = 430;
 type Props = NativeStackScreenProps<RootStackParamList, 'WaitingForMembers'>;
 
 export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
+  const groupId = route.params?.groupId;
   const isMinjuViewer = route.params?.viewer === 'minju';
+  const [groupDetail, setGroupDetail] = useState<WakeGroupDetail | null>(null);
+  const [groupDetailLoading, setGroupDetailLoading] = useState(
+    groupId !== undefined,
+  );
+  const [groupDetailError, setGroupDetailError] = useState<string | null>(null);
   const [wakeDemoState, setWakeDemoState] = useState({
     menuVisible: false,
     hasMinjuJoined: isMinjuViewer,
@@ -72,6 +83,55 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
   const insets = useSafeAreaInsets();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
+  useFocusEffect(
+    useCallback(() => {
+      if (groupId === undefined) {
+        return undefined;
+      }
+
+      let isActive = true;
+      setGroupDetailLoading(true);
+      setGroupDetailError(null);
+
+      nunnunApi.group
+        .detail(groupId)
+        .then(detail => {
+          if (isActive) {
+            setGroupDetail(detail);
+          }
+        })
+        .catch(error => {
+          if (!isActive) {
+            return;
+          }
+
+          setGroupDetail(null);
+          if (error instanceof ApiError) {
+            if (error.status === 401) {
+              setGroupDetailError('데모 사용자를 다시 선택해주세요.');
+            } else if (error.status === 403) {
+              setGroupDetailError('이 그룹을 볼 권한이 없어요.');
+            } else if (error.status === 404) {
+              setGroupDetailError('존재하지 않는 그룹이에요.');
+            } else {
+              setGroupDetailError('그룹 정보를 불러오지 못했어요.');
+            }
+          } else {
+            setGroupDetailError('그룹 정보를 불러오지 못했어요.');
+          }
+        })
+        .finally(() => {
+          if (isActive) {
+            setGroupDetailLoading(false);
+          }
+        });
+
+      return () => {
+        isActive = false;
+      };
+    }, [groupId]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -270,6 +330,68 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
     wakeDemoState.hasMinjuJoined && wakeDemoState.scheduleStatus === 'inClass';
   const isSelfScheduleRestricted =
     wakeDemoState.selfScheduleStatus === 'inClass';
+
+  const wakeBackendMember = useCallback(
+    async (receiverId: number) => {
+      if (groupId === undefined) {
+        return;
+      }
+
+      await nunnunApi.wake.wakeMember(groupId, receiverId);
+      const refreshedDetail = await nunnunApi.group.detail(groupId);
+      setGroupDetail(refreshedDetail);
+    },
+    [groupId],
+  );
+
+  const leaveBackendGroup = useCallback(async () => {
+    if (groupId === undefined) {
+      return;
+    }
+
+    await nunnunApi.group.leave(groupId);
+    navigation.popTo('Home');
+  }, [groupId, navigation]);
+
+  const renameBackendGroup = useCallback(
+    async (name: string) => {
+      if (groupId === undefined) {
+        return;
+      }
+
+      await nunnunApi.group.rename(groupId, name);
+      const refreshedDetail = await nunnunApi.group.detail(groupId);
+      setGroupDetail(refreshedDetail);
+    },
+    [groupId],
+  );
+
+  if (groupId !== undefined) {
+    return (
+      <BackendWakeGroupDetail
+        detail={groupDetail}
+        error={groupDetailError}
+        fallbackName={route.params?.groupName}
+        loading={groupDetailLoading}
+        onBack={() => navigation.popTo('Home')}
+        onLeave={leaveBackendGroup}
+        onRename={renameBackendGroup}
+        onSelfVerify={() =>
+          navigation.navigate('SelfWakeVerification', {
+            recipientName:
+              groupDetail?.members.find(member => member.is_me)?.nickname ??
+              '나',
+            photographer: route.params?.viewer ?? 'jiwoo',
+            groupId,
+            groupName: groupDetail?.name ?? route.params?.groupName,
+          })
+        }
+        onWake={wakeBackendMember}
+        scale={scale}
+        width={contentWidth}
+      />
+    );
+  }
 
   if (wakeDemoState.expandedPhoto) {
     return (
@@ -2321,11 +2443,667 @@ export const WaitingForMembersScreen = ({ navigation, route }: Props) => {
   );
 };
 
+type BackendWakeGroupDetailProps = {
+  detail: WakeGroupDetail | null;
+  error: string | null;
+  fallbackName?: string;
+  loading: boolean;
+  onBack: () => void;
+  onLeave: () => Promise<void>;
+  onRename: (name: string) => Promise<void>;
+  onSelfVerify: () => void;
+  onWake: (receiverId: number) => Promise<void>;
+  scale: number;
+  width: number;
+};
+
+const memberPositions = [
+  { left: 21, top: 145 },
+  { left: 211, top: 145 },
+  { left: 21, top: 435 },
+  { left: 211, top: 435 },
+] as const;
+
+const remainingText = (member: WakeGroupMember) => {
+  if (member.remaining_to_target) {
+    const unit = member.remaining_to_target.unit === 'HOUR' ? '시간' : '분';
+    return `${member.remaining_to_target.value}${unit} 남음`;
+  }
+  if (member.state === 'AWAKE') {
+    return '기상 완료';
+  }
+  return member.target_wake_time
+    ? `${member.target_wake_time} 목표`
+    : '목표 없음';
+};
+
+const stateText = (member: WakeGroupMember) => {
+  switch (member.state) {
+    case 'AWAKE':
+      return '기상 완료';
+    case 'SLEEPING':
+      return '수면 중';
+    case 'NEEDS_HELP':
+      return '도움 필요';
+    default:
+      return '기상 전';
+  }
+};
+
+const actionText = (member: WakeGroupMember) => {
+  if (member.is_me) {
+    return member.state === 'AWAKE' ? '기상 완료' : '지금 인증할게요';
+  }
+  if (member.can_wake) {
+    return '깨우기';
+  }
+  return member.block_reason === 'DND' ? '방해 금지 중' : '깨우기 대기 중';
+};
+
+const wakeRequestErrorMessage = (error: unknown) => {
+  if (!(error instanceof ApiError)) {
+    return '깨우기 요청을 보내지 못했어요.';
+  }
+
+  switch (error.code) {
+    case 'UNAUTHORIZED':
+    case 'INVALID_JWT':
+    case 'EXPIRED_JWT':
+      return '데모 사용자를 다시 선택해주세요.';
+    case 'WAKE_GROUP_SENDER_NOT_MEMBER':
+    case 'FORBIDDEN':
+      return '깨우기 요청 권한이 없어요.';
+    case 'WAKE_GROUP_NOT_FOUND':
+    case 'WAKE_GROUP_RECEIVER_NOT_MEMBER':
+    case 'USER_NOT_FOUND':
+      return '그룹 또는 멤버를 찾을 수 없어요.';
+    case 'CANNOT_WAKE_SELF':
+      return '본인은 깨울 수 없어요.';
+    case 'WAKE_BLOCKED_DND':
+      return '현재 방해 금지 상태라 깨울 수 없어요.';
+    case 'WAKE_COOLDOWN':
+      return '최근 인증 후 30분 동안은 깨울 수 없어요.';
+    case 'ACTIVE_POSE_NOT_FOUND':
+      return '오늘의 인증 포즈가 준비되지 않았어요.';
+    default:
+      return '깨우기 요청을 보내지 못했어요.';
+  }
+};
+
+const leaveGroupErrorMessage = (error: unknown) => {
+  if (!(error instanceof ApiError)) {
+    return '그룹에서 나가지 못했어요.';
+  }
+
+  switch (error.code) {
+    case 'UNAUTHORIZED':
+    case 'INVALID_JWT':
+    case 'EXPIRED_JWT':
+      return '데모 사용자를 다시 선택해주세요.';
+    case 'WAKE_GROUP_ACCESS_DENIED':
+    case 'FORBIDDEN':
+      return '이 그룹에서 나갈 권한이 없어요.';
+    case 'WAKE_GROUP_NOT_FOUND':
+      return '깨우기 그룹을 찾을 수 없어요.';
+    case 'WAKE_GROUP_MEMBER_NOT_FOUND':
+      return '이미 탈퇴했거나 그룹 멤버가 아니에요.';
+    default:
+      return '그룹에서 나가지 못했어요.';
+  }
+};
+
+const renameGroupErrorMessage = (error: unknown) => {
+  if (!(error instanceof ApiError)) {
+    return '그룹 이름을 변경하지 못했어요.';
+  }
+
+  switch (error.code) {
+    case 'VALIDATION_ERROR':
+      return '그룹 이름은 공백이 아니어야 하며 50자 이하여야 해요.';
+    case 'UNAUTHORIZED':
+    case 'INVALID_JWT':
+    case 'EXPIRED_JWT':
+      return '데모 사용자를 다시 선택해주세요.';
+    case 'WAKE_GROUP_ACCESS_DENIED':
+    case 'FORBIDDEN':
+      return '이 그룹의 이름을 바꿀 권한이 없어요.';
+    case 'WAKE_GROUP_NOT_FOUND':
+      return '깨우기 그룹을 찾을 수 없어요.';
+    default:
+      return '그룹 이름을 변경하지 못했어요.';
+  }
+};
+
+const BackendWakeGroupDetail = ({
+  detail,
+  error,
+  fallbackName,
+  loading,
+  onBack,
+  onLeave,
+  onRename,
+  onSelfVerify,
+  onWake,
+  scale,
+  width,
+}: BackendWakeGroupDetailProps) => {
+  const [selectedMember, setSelectedMember] = useState<WakeGroupMember | null>(
+    null,
+  );
+  const [wakingReceiverId, setWakingReceiverId] = useState<number | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [leaveConfirmVisible, setLeaveConfirmVisible] = useState(false);
+  const [renameVisible, setRenameVisible] = useState(false);
+  const [renameInput, setRenameInput] = useState('');
+  const [renaming, setRenaming] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const renameInFlightRef = useRef(false);
+  const leaveInFlightRef = useRef(false);
+  const slots = Array.from({ length: detail?.capacity ?? 0 }, (_, index) => ({
+    member: detail?.members[index] ?? null,
+    position: memberPositions[index],
+  })).filter(slot => slot.position);
+
+  const confirmWake = async () => {
+    if (
+      !selectedMember ||
+      selectedMember.is_me ||
+      !selectedMember.can_wake ||
+      wakingReceiverId !== null
+    ) {
+      return;
+    }
+
+    const receiver = selectedMember;
+    setWakingReceiverId(receiver.user_id);
+    try {
+      await onWake(receiver.user_id);
+      setSelectedMember(null);
+      Alert.alert(
+        '요청 완료',
+        `${receiver.nickname}님에게 깨우기 요청을 보냈어요.`,
+      );
+    } catch (wakeError) {
+      Alert.alert('깨우기 실패', wakeRequestErrorMessage(wakeError));
+    } finally {
+      setWakingReceiverId(null);
+    }
+  };
+
+  const confirmLeave = async () => {
+    if (leaveInFlightRef.current) {
+      return;
+    }
+
+    leaveInFlightRef.current = true;
+    setLeaving(true);
+    try {
+      await onLeave();
+    } catch (leaveError) {
+      Alert.alert('그룹 탈퇴 실패', leaveGroupErrorMessage(leaveError));
+    } finally {
+      leaveInFlightRef.current = false;
+      setLeaving(false);
+    }
+  };
+
+  const confirmRename = async () => {
+    const nextName = renameInput.trim();
+    if (!nextName || nextName.length > 50 || renameInFlightRef.current) {
+      return;
+    }
+
+    renameInFlightRef.current = true;
+    setRenaming(true);
+    try {
+      await onRename(nextName);
+      setRenameVisible(false);
+    } catch (renameError) {
+      Alert.alert('이름 변경 실패', renameGroupErrorMessage(renameError));
+    } finally {
+      renameInFlightRef.current = false;
+      setRenaming(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor={Colors.background} barStyle="dark-content" />
+      <View style={[styles.container, { width }]}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="홈으로 이동"
+          activeOpacity={0.7}
+          hitSlop={12}
+          onPress={onBack}
+          style={[
+            styles.headerIconButton,
+            {
+              left: 28 * scale,
+              top: 9 * scale,
+              width: 24 * scale,
+              height: 24 * scale,
+            },
+          ]}
+        >
+          <Image
+            resizeMode="contain"
+            source={require('../assets/images/chevron-left.png')}
+            style={styles.fullImage}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.groupTitle, { top: 20 * scale }]}>
+          {detail?.name || fallbackName || 'Wake Group'}
+        </Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="그룹 메뉴"
+          activeOpacity={0.7}
+          hitSlop={12}
+          onPress={() => setMenuVisible(true)}
+          style={[
+            styles.headerIconButton,
+            {
+              right: 27 * scale,
+              top: 11 * scale,
+              width: 20 * scale,
+              height: 20 * scale,
+            },
+          ]}
+        >
+          <Image
+            resizeMode="contain"
+            source={require('../assets/images/menu.png')}
+            style={styles.fullImage}
+          />
+        </TouchableOpacity>
+
+        {loading && (
+          <View style={styles.groupDetailState}>
+            <ActivityIndicator color={Colors.primary} size="small" />
+          </View>
+        )}
+        {!loading && error && (
+          <View style={styles.groupDetailState}>
+            <Text
+              accessibilityLiveRegion="polite"
+              style={styles.groupDetailStateText}
+            >
+              {error}
+            </Text>
+          </View>
+        )}
+        {!loading && detail && (
+          <>
+            <Text style={[styles.groupMemberCount, { top: 55 * scale }]}>
+              {detail.current_members}/{detail.capacity}명
+            </Text>
+            {slots.map(({ member, position }, index) => (
+              <React.Fragment key={member?.user_id ?? `empty-${index}`}>
+                <View
+                  style={[
+                    styles.fullCapacityMemberCard,
+                    {
+                      left: position.left * scale,
+                      top: position.top * scale,
+                      width: (position.left === 21 ? 172 : 170) * scale,
+                      height: 219 * scale,
+                      borderRadius: 8 * scale,
+                    },
+                  ]}
+                >
+                  {member?.proof_image_url && (
+                    <Image
+                      accessibilityIgnoresInvertColors
+                      accessibilityLabel={`${member.nickname} 인증사진`}
+                      resizeMode="cover"
+                      source={{ uri: member.proof_image_url }}
+                      style={styles.memberPhoto}
+                    />
+                  )}
+                  <View
+                    style={[
+                      styles.memberIdentity,
+                      { left: 9 * scale, top: 9 * scale, columnGap: 3 * scale },
+                    ]}
+                  >
+                    {member?.proof_image_url ? (
+                      <MemberStatusWhite
+                        width={16.78 * scale}
+                        height={16 * scale}
+                      />
+                    ) : (
+                      <MemberStatusLightGray
+                        width={16.78 * scale}
+                        height={16 * scale}
+                      />
+                    )}
+                    <Text
+                      style={[
+                        styles.memberName,
+                        member?.proof_image_url && styles.memberNameOnPhoto,
+                      ]}
+                    >
+                      {member?.nickname ?? '빈 자리'}
+                    </Text>
+                    {member && <View style={styles.memberMetaDot} />}
+                    {member && (
+                      <Text
+                        style={[
+                          styles.memberName,
+                          member.proof_image_url && styles.memberNameOnPhoto,
+                        ]}
+                      >
+                        {remainingText(member)}
+                      </Text>
+                    )}
+                  </View>
+                  {member && (
+                    <View
+                      style={[
+                        styles.fullCapacitySleepDetails,
+                        { bottom: 17 * scale },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.fullCapacityFirstDetailColumn,
+                          { width: 86 * scale },
+                        ]}
+                      >
+                        <Text style={styles.fullCapacityDetailValue}>
+                          {member.actual_wake_time ??
+                            member.target_wake_time ??
+                            '--:--'}
+                        </Text>
+                        <Text style={styles.fullCapacityDetailLabel}>
+                          {member.actual_wake_time ? '기상 시간' : '기상 목표'}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.fullCapacitySecondDetailColumn,
+                          { width: 86 * scale },
+                        ]}
+                      >
+                        <Text style={styles.fullCapacityDetailValue}>
+                          {stateText(member)}
+                        </Text>
+                        <Text style={styles.fullCapacityDetailLabel}>
+                          현재 상태
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    member ? actionText(member) : '친구 초대하기'
+                  }
+                  accessibilityState={{
+                    disabled:
+                      !member ||
+                      (member.is_me
+                        ? member.state === 'AWAKE'
+                        : !member.can_wake) ||
+                      wakingReceiverId !== null,
+                  }}
+                  activeOpacity={
+                    member &&
+                    (member.is_me
+                      ? member.state !== 'AWAKE'
+                      : member.can_wake) &&
+                    wakingReceiverId === null
+                      ? 0.8
+                      : 1
+                  }
+                  disabled={
+                    !member ||
+                    (member.is_me
+                      ? member.state === 'AWAKE'
+                      : !member.can_wake) ||
+                    wakingReceiverId !== null
+                  }
+                  onPress={() => {
+                    if (!member) {
+                      return;
+                    }
+                    if (member.is_me) {
+                      onSelfVerify();
+                      return;
+                    }
+                    setSelectedMember(member);
+                  }}
+                  style={[
+                    styles.fullCapacityActionButton,
+                    member &&
+                    (member.is_me ? member.state !== 'AWAKE' : member.can_wake)
+                      ? styles.backendWakeActionEnabled
+                      : styles.backendWakeActionDisabled,
+                    {
+                      left: position.left * scale,
+                      top: (position.top + 228) * scale,
+                      width: 171 * scale,
+                      height: 44 * scale,
+                      borderRadius: 8 * scale,
+                    },
+                  ]}
+                >
+                  <Text style={styles.fullCapacityActionText}>
+                    {member && wakingReceiverId === member.user_id
+                      ? '요청 중...'
+                      : member
+                      ? actionText(member)
+                      : '친구 초대하기'}
+                  </Text>
+                </TouchableOpacity>
+              </React.Fragment>
+            ))}
+            <Modal
+              animationType="fade"
+              onRequestClose={() => setSelectedMember(null)}
+              statusBarTranslucent
+              transparent
+              visible={selectedMember !== null}
+            >
+              <View style={styles.wakeConfirmOverlay}>
+                <View
+                  style={[
+                    styles.wakeConfirmPanel,
+                    {
+                      width: 320 * scale,
+                      height: 315 * scale,
+                      borderRadius: 16 * scale,
+                    },
+                  ]}
+                >
+                  <Image
+                    accessibilityLabel="주의"
+                    resizeMode="contain"
+                    source={require('../assets/images/wake-caution.png')}
+                    style={[
+                      styles.wakeConfirmIcon,
+                      { width: 104 * scale, height: 104 * scale },
+                    ]}
+                  />
+                  <Text style={styles.wakeConfirmTitle}>
+                    {selectedMember?.nickname}님을 깨울까요?
+                  </Text>
+                  <Text style={styles.wakeConfirmDescription}>
+                    깨우기 알림을 보낼게요
+                  </Text>
+                  <View style={styles.wakeConfirmActions}>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="안 깨울래요"
+                      activeOpacity={0.8}
+                      disabled={wakingReceiverId !== null}
+                      onPress={() => setSelectedMember(null)}
+                      style={[
+                        styles.wakeConfirmButton,
+                        styles.wakeConfirmCancelButton,
+                      ]}
+                    >
+                      <Text style={styles.wakeConfirmCancelText}>
+                        안 깨울래요
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="깨울게요"
+                      activeOpacity={0.8}
+                      disabled={wakingReceiverId !== null}
+                      onPress={() => confirmWake().catch(() => undefined)}
+                      style={[
+                        styles.wakeConfirmButton,
+                        styles.wakeConfirmAcceptButton,
+                      ]}
+                    >
+                      <Text style={styles.wakeConfirmAcceptText}>
+                        {wakingReceiverId !== null ? '요청 중...' : '깨울게요'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          </>
+        )}
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setMenuVisible(false)}
+          statusBarTranslucent
+          transparent
+          visible={menuVisible}
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="그룹 메뉴 닫기"
+            onPress={() => setMenuVisible(false)}
+            style={styles.menuOverlay}
+          >
+            <Pressable
+              onPress={event => event.stopPropagation()}
+              style={[
+                styles.menuPanel,
+                {
+                  right: 28 * scale,
+                  top: 52 * scale,
+                  width: 250 * scale,
+                  height: 105 * scale,
+                  borderRadius: 30 * scale,
+                },
+              ]}
+            >
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.7}
+                onPress={() => {
+                  setMenuVisible(false);
+                  setRenameInput(detail?.name ?? fallbackName ?? '');
+                  setRenameVisible(true);
+                }}
+                style={styles.menuItem}
+              >
+                <Text style={styles.menuItemText}>방 이름 바꾸기</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                activeOpacity={0.7}
+                onPress={() => {
+                  setMenuVisible(false);
+                  setLeaveConfirmVisible(true);
+                }}
+                style={styles.menuItem}
+              >
+                <Text style={styles.menuItemText}>방 나가기</Text>
+              </TouchableOpacity>
+            </Pressable>
+          </Pressable>
+        </Modal>
+        <Modal
+          animationType="fade"
+          onRequestClose={() => {
+            if (!renaming) {
+              setRenameVisible(false);
+            }
+          }}
+          statusBarTranslucent
+          transparent
+          visible={renameVisible}
+        >
+          <View style={styles.wakeConfirmOverlay}>
+            <View
+              style={[
+                styles.renameGroupPanel,
+                { width: 320 * scale, borderRadius: 16 * scale },
+              ]}
+            >
+              <Text style={styles.renameGroupTitle}>방 이름 바꾸기</Text>
+              <TextInput
+                accessibilityLabel="새 그룹 이름"
+                autoFocus
+                editable={!renaming}
+                maxLength={50}
+                onChangeText={setRenameInput}
+                placeholder="그룹 이름"
+                style={styles.renameGroupInput}
+                value={renameInput}
+              />
+              <View style={styles.wakeConfirmActions}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  activeOpacity={0.8}
+                  disabled={renaming}
+                  onPress={() => setRenameVisible(false)}
+                  style={[
+                    styles.wakeConfirmButton,
+                    styles.wakeConfirmCancelButton,
+                  ]}
+                >
+                  <Text style={styles.wakeConfirmCancelText}>취소</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  activeOpacity={0.8}
+                  disabled={
+                    renaming ||
+                    renameInput.trim().length === 0 ||
+                    renameInput.trim().length > 50
+                  }
+                  onPress={() => confirmRename().catch(() => undefined)}
+                  style={[
+                    styles.wakeConfirmButton,
+                    styles.wakeConfirmAcceptButton,
+                  ]}
+                >
+                  <Text style={styles.wakeConfirmAcceptText}>
+                    {renaming ? '저장 중...' : '저장'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+        <LeaveGroupConfirmModal
+          onCancel={() => setLeaveConfirmVisible(false)}
+          onConfirm={() => confirmLeave().catch(() => undefined)}
+          scale={scale}
+          submitting={leaving}
+          visible={leaveConfirmVisible}
+        />
+      </View>
+    </SafeAreaView>
+  );
+};
+
 type LeaveGroupConfirmModalProps = {
   visible: boolean;
   scale: number;
   onCancel: () => void;
   onConfirm: () => void;
+  submitting?: boolean;
 };
 
 const CapacityFullModal = ({
@@ -2395,10 +3173,11 @@ const LeaveGroupConfirmModal = ({
   scale,
   onCancel,
   onConfirm,
+  submitting = false,
 }: LeaveGroupConfirmModalProps) => (
   <Modal
     animationType="fade"
-    onRequestClose={onCancel}
+    onRequestClose={submitting ? () => undefined : onCancel}
     statusBarTranslucent
     transparent
     visible={visible}
@@ -2426,6 +3205,7 @@ const LeaveGroupConfirmModal = ({
             accessibilityRole="button"
             accessibilityLabel="그룹에 남기"
             activeOpacity={0.8}
+            disabled={submitting}
             onPress={onCancel}
             style={[styles.leaveConfirmButton, styles.leaveConfirmCancelButton]}
           >
@@ -2435,10 +3215,15 @@ const LeaveGroupConfirmModal = ({
             accessibilityRole="button"
             accessibilityLabel="그룹에서 나가기"
             activeOpacity={0.8}
+            disabled={submitting}
             onPress={onConfirm}
             style={[styles.leaveConfirmButton, styles.leaveConfirmAcceptButton]}
           >
-            <Text style={styles.leaveConfirmAcceptText}>예</Text>
+            {submitting ? (
+              <ActivityIndicator color={Colors.textWhite} />
+            ) : (
+              <Text style={styles.leaveConfirmAcceptText}>예</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -2561,6 +3346,33 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardSemiBold',
     fontSize: 16,
     lineHeight: 19,
+  },
+  groupMemberCount: {
+    position: 'absolute',
+    alignSelf: 'center',
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 12,
+    lineHeight: 15,
+  },
+  groupDetailState: {
+    position: 'absolute',
+    top: 145,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  groupDetailStateText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  backendWakeActionEnabled: {
+    backgroundColor: '#FF4B4B',
+  },
+  backendWakeActionDisabled: {
+    backgroundColor: '#202224',
   },
   inviteMemberCard: {
     position: 'absolute',
@@ -3204,5 +4016,28 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 20,
+  },
+  renameGroupPanel: {
+    padding: 24,
+    backgroundColor: Colors.background,
+  },
+  renameGroupTitle: {
+    marginBottom: 20,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 20,
+    lineHeight: 26,
+    textAlign: 'center',
+  },
+  renameGroupInput: {
+    height: 48,
+    marginBottom: 20,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#D9D9D9',
+    borderRadius: 8,
+    color: Colors.textBlack,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
   },
 });

@@ -1,10 +1,18 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../../theme/tokens';
 
 const DOT_COUNT = 3;
 
-const PromoBanner = () => {
+const PromoBanner = ({
+  subtitle,
+  actionLabel,
+  onPressAction,
+}: {
+  subtitle?: string;
+  actionLabel?: string;
+  onPressAction?: () => void;
+}) => {
   return (
     <View style={styles.card}>
       <View style={styles.dots}>
@@ -17,8 +25,13 @@ const PromoBanner = () => {
       </View>
       <Text style={styles.title}>NUNNUN을 잘 활용하려면?</Text>
       <Text style={styles.subtitle}>
-        시간표를 추가하면 수면 시간을 추천받을 수 있어요
+        {subtitle ?? '시간표를 추가하면 수면 시간을 추천받을 수 있어요'}
       </Text>
+      {actionLabel && (
+        <TouchableOpacity onPress={onPressAction}>
+          <Text style={styles.action}>{actionLabel}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -58,6 +71,12 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardSemiBold',
     color: colors.black,
     marginTop: 4,
+  },
+  action: {
+    marginTop: 8,
+    fontSize: 12,
+    fontFamily: 'PretendardSemiBold',
+    color: colors.brown,
   },
 });
 

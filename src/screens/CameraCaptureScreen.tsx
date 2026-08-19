@@ -57,6 +57,9 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
         recipientName: route.params.recipientName,
         photographer: route.params.photographer,
         attempt: route.params.attempt ?? 1,
+        requestId: route.params.requestId,
+        groupId: route.params.groupId,
+        verificationMode: route.params.verificationMode,
       });
     } finally {
       setIsTakingPhoto(false);
@@ -182,7 +185,7 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     color: '#FFFFFF',
-    fontFamily: 'PretendardMedium',
+    fontFamily: 'PretendardLight',
     fontSize: 42,
     lineHeight: 42,
   },

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   StatusBar,
   StyleSheet,
@@ -14,16 +15,121 @@ import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import WakeTimerTrack from '../assets/images/wake-timer-track.svg';
 import WakeTimerProgress from '../assets/images/wake-timer-progress.svg';
+import { ApiError, nunnunApi, type WakeRequest } from '../api';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WakeNotification'>;
 
-export const WakeNotificationScreen = ({ navigation }: Props) => {
+const formatRequestedTime = (requestedAt: string) => {
+  const date = new Date(requestedAt);
+  if (Number.isNaN(date.getTime())) {
+    return '--:--';
+  }
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(
+    date.getMinutes(),
+  ).padStart(2, '0')}`;
+};
+
+const requestErrorMessage = (error: unknown) => {
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      return '데모 사용자를 다시 선택해주세요.';
+    }
+    if (error.status === 403) {
+      return '이 깨우기 요청을 확인할 권한이 없어요.';
+    }
+    if (error.status === 404) {
+      return '깨우기 요청을 찾을 수 없어요.';
+    }
+  }
+
+  return '깨우기 요청 정보를 불러오지 못했어요.';
+};
+
+export const WakeNotificationScreen = ({ navigation, route }: Props) => {
+  const requestId = route.params?.requestId;
+  const [wakeRequest, setWakeRequest] = useState<WakeRequest | null>(null);
+  const [loading, setLoading] = useState(requestId !== undefined);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
+
+  useEffect(() => {
+    if (requestId === undefined) {
+      setWakeRequest(null);
+      setLoading(false);
+      setErrorMessage(null);
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setErrorMessage(null);
+
+    nunnunApi.wake
+      .getRequest(requestId)
+      .then(request => {
+        if (active) {
+          setWakeRequest(request);
+        }
+      })
+      .catch(error => {
+        if (active) {
+          setErrorMessage(requestErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [requestId]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={styles.feedbackContainer}>
+          <ActivityIndicator color={Colors.textBlack} />
+          <Text style={styles.feedbackText}>
+            깨우기 요청을 불러오고 있어요.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={styles.feedbackContainer}>
+          <Text style={styles.feedbackText}>{errorMessage}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const senderNickname = wakeRequest?.sender.nickname ?? '지우';
+  const requestedTime = wakeRequest
+    ? formatRequestedTime(wakeRequest.requested_at)
+    : '07:32';
+  const poseDescription =
+    wakeRequest?.pose.description ?? '00분 내에 오늘의 포즈를 따라해주세요';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -41,9 +147,11 @@ export const WakeNotificationScreen = ({ navigation }: Props) => {
             },
           ]}
         >
-          <Text style={[styles.groupName, { top: 42 * scale }]}>아침야호</Text>
+          <Text style={[styles.groupName, { top: 42 * scale }]}>
+            {wakeRequest ? '깨우기 요청' : '아침야호'}
+          </Text>
           <Text style={[styles.notificationTitle, { top: 64 * scale }]}>
-            지우님이 깨웠어요
+            {senderNickname}님이 깨웠어요
           </Text>
 
           <WakeTimerTrack
@@ -73,15 +181,19 @@ export const WakeNotificationScreen = ({ navigation }: Props) => {
               },
             ]}
           />
-          <Text style={[styles.wakeTime, { top: 221 * scale }]}>07:32</Text>
+          <Text style={[styles.wakeTime, { top: 221 * scale }]}>
+            {requestedTime}
+          </Text>
         </View>
 
         <Text style={[styles.poseDescription, { top: 400 * scale }]}>
-          00분 내에 오늘의 포즈를 따라해주세요
+          {poseDescription}
         </Text>
 
         <Image
-          accessibilityLabel="오늘의 인증 포즈"
+          accessibilityLabel={
+            wakeRequest ? '인증 포즈 참고 이미지' : '오늘의 인증 포즈'
+          }
           source={require('../assets/images/wake-pose-reference.png')}
           resizeMode="cover"
           style={[
@@ -102,8 +214,11 @@ export const WakeNotificationScreen = ({ navigation }: Props) => {
           activeOpacity={0.8}
           onPress={() =>
             navigation.replace('CameraCapture', {
-              recipientName: '지우',
+              recipientName: senderNickname,
               photographer: 'jiwoo',
+              requestId,
+              groupId: wakeRequest?.group_id,
+              verificationMode: 'wake-proof',
             })
           }
           style={[
@@ -134,6 +249,20 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: Colors.background,
+  },
+  feedbackContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 32,
+  },
+  feedbackText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
   },
   notificationCard: {
     position: 'absolute',

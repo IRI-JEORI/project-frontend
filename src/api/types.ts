@@ -20,7 +20,27 @@ export type AuthTokens = {
 
 export type DemoLoginResponse = AuthTokens & { user: User };
 
+export type CurrentUser = {
+  id: number;
+  nickname: string;
+  email: string;
+};
+
+export type UpdateCurrentUserRequest = {
+  nickname: string;
+};
+
+export type ApiSuccessResponse<T> = {
+  success: true;
+  data: T;
+};
+
 export type ApiErrorResponse = {
+  success?: false;
+  error?: {
+    code?: string;
+    message?: string;
+  };
   code?: string;
   message?: string;
   details?: unknown;
@@ -32,12 +52,25 @@ export type WakeTarget = {
   target_wake_time: string | null;
 };
 
+export type WakeTargetUpdated = {
+  day_of_week: DayOfWeek;
+  target_wake_time: string;
+  display_text: string;
+};
+
 export type DndWindow = {
   id: number;
   day_of_week: DayOfWeek;
   start_time: string;
   end_time: string;
   display_text: string;
+};
+
+export type GroupSummary = {
+  id: number;
+  type: 'WAKE' | 'ROOMMATE';
+  name: string;
+  status: 'WAITING' | 'ACTIVE' | null;
 };
 
 export type WakeGroupSummary = {
@@ -72,9 +105,26 @@ export type WakeGroupMember = {
   wake_available_at: string | null;
 };
 
-export type WakeGroupDetail = WakeGroupSummary & {
+export type WakeGroupDetail = {
+  id: number;
+  name: string;
   invite_code: string;
+  capacity: number;
+  current_members: number;
   members: WakeGroupMember[];
+};
+
+export type WakeGroupCreated = {
+  id: number;
+  name: string;
+  invite_code: string;
+  capacity: number;
+  current_members: number;
+};
+
+export type WakeGroupUpdated = {
+  id: number;
+  name: string;
 };
 
 export type WakeGroupPreview = {
@@ -86,8 +136,13 @@ export type WakeGroupPreview = {
     | 'ALREADY_MEMBER'
     | null;
   group_name: string | null;
-  current_members: number;
-  capacity: number;
+  current_members: number | null;
+  capacity: number | null;
+};
+
+export type WakeGroupJoinResult = {
+  id: number;
+  name: string;
 };
 
 export type Pose = {
@@ -97,6 +152,7 @@ export type Pose = {
 
 export type WakeRequest = {
   id: number;
+  group_id: number;
   status: 'SENT' | 'VERIFIED' | 'NEEDS_HELP';
   sender: Pick<User, 'id' | 'nickname'>;
   receiver: Pick<User, 'id' | 'nickname'>;
@@ -135,9 +191,49 @@ export type WakeProofResult = {
 export type FixedSchedule = {
   id: number;
   title: string;
-  day_of_week: DayOfWeek;
-  start_time: string;
-  end_time: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+};
+
+export type CreateFixedScheduleRequest = {
+  title: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+};
+
+export type UpdateFixedScheduleRequest = Partial<CreateFixedScheduleRequest>;
+
+export type TodaySleepStatus = 'AWAKE' | 'SLEEPING';
+
+export type TodaySleep = {
+  status: TodaySleepStatus;
+  sleep_session_id: number | null;
+  started_at: string | null;
+};
+
+export type MyTodayResponse = {
+  date: string;
+  targetBedTime: string | null;
+  targetWakeTime: string | null;
+  estimatedReturnTime: string | null;
+  fixedSchedules: FixedSchedule[];
+  resolved_target_wake_time: string | null;
+  next_target_at: string | null;
+  sleep: TodaySleep;
+};
+
+export type CreateSleepSessionResponse = {
+  sleep_session_id: number;
+  started_at: string;
+  bedtime_reminders_cancelled: boolean;
+};
+
+export type MyStatsResponse = {
+  success_rate: number;
+  avg_gap_minutes: number;
+  streak_days: number;
 };
 
 export type JsonObject = Record<string, unknown>;

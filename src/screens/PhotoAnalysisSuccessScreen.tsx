@@ -41,6 +41,7 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
   ]);
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
+  const isBackendResult = route.params.proofResult !== undefined;
 
   const completeVerification = useCallback(
     async (groups: readonly string[]) => {
@@ -80,6 +81,19 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
   );
 
   useEffect(() => {
+    if (isBackendResult) {
+      const timer = setTimeout(() => {
+        if (route.params.groupId !== undefined) {
+          navigation.replace('WakeGroupDetail', { groupId: route.params.groupId });
+          return;
+        }
+
+        navigation.replace('Home');
+      }, SHARE_SHEET_DELAY_MS);
+
+      return () => clearTimeout(timer);
+    }
+
     let isActive = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const wakeRequestStorageKey =
@@ -114,7 +128,13 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
         clearTimeout(timer);
       }
     };
-  }, [completeVerification, route.params.photographer]);
+  }, [
+    completeVerification,
+    isBackendResult,
+    navigation,
+    route.params.groupId,
+    route.params.photographer,
+  ]);
 
   const confirmShare = async () => {
     await completeVerification(selectedGroups);
@@ -175,7 +195,9 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
           />
           <View style={[styles.scoreArea, { top: 168 * scale }]}>
             <Text style={styles.scoreLabel}>포즈 일치율</Text>
-            <Text style={styles.score}>98%</Text>
+            <Text style={styles.score}>
+              {route.params.proofResult?.pose_match_score ?? 98}%
+            </Text>
           </View>
         </View>
 

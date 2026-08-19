@@ -27,7 +27,10 @@ const MAX_CONTENT_WIDTH = 430;
 type Props = NativeStackScreenProps<RootStackParamList, 'PhotoAnalysisFailure'>;
 
 export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
-  const isRetryExhausted = route.params.attempt >= 2;
+  const isBackendResult = route.params.proofResult !== undefined;
+  const isRetryExhausted = isBackendResult
+    ? !route.params.proofResult?.can_retry
+    : route.params.attempt >= 2;
   const [secondsRemaining, setSecondsRemaining] = useState(10);
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
@@ -42,6 +45,15 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
       setSecondsRemaining(seconds => Math.max(seconds - 1, 0));
     }, 1000);
     const timer = setTimeout(() => {
+      if (isBackendResult) {
+        if (route.params.groupId !== undefined) {
+          navigation.replace('WakeGroupDetail', { groupId: route.params.groupId });
+        } else {
+          navigation.replace('Home');
+        }
+        return;
+      }
+
       const wakeRequestStorageKey =
         route.params.photographer === 'minju'
           ? MINJU_WAKE_REQUEST_STORAGE_KEY
@@ -68,7 +80,13 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
       clearInterval(interval);
       clearTimeout(timer);
     };
-  }, [isRetryExhausted, navigation, route.params.photographer]);
+  }, [
+    isBackendResult,
+    isRetryExhausted,
+    navigation,
+    route.params.groupId,
+    route.params.photographer,
+  ]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -117,7 +135,9 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
           />
           <View style={[styles.scoreArea, { top: 168 * scale }]}>
             <Text style={styles.scoreLabel}>포즈 일치율</Text>
-            <Text style={styles.score}>02%</Text>
+            <Text style={styles.score}>
+              {route.params.proofResult?.pose_match_score ?? 2}%
+            </Text>
           </View>
         </View>
 
@@ -165,7 +185,7 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
           >
             {isRetryExhausted
               ? `${secondsRemaining}초 후 화면이 자동으로 닫혀요`
-              : '한번 더 남았어요'}
+              : `${route.params.proofResult?.remaining_attempts ?? 1}번 더 남았어요`}
           </Text>
           {!isRetryExhausted && (
             <TouchableOpacity
@@ -176,7 +196,12 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
                 navigation.replace('CameraCapture', {
                   recipientName: route.params.recipientName,
                   photographer: route.params.photographer,
-                  attempt: route.params.attempt + 1,
+                  attempt:
+                    (route.params.proofResult?.attempt_no ??
+                      route.params.attempt) + 1,
+                  requestId: route.params.requestId,
+                  groupId: route.params.groupId,
+                  verificationMode: route.params.verificationMode,
                 })
               }
               style={[

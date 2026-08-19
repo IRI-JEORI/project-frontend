@@ -1,22 +1,33 @@
 import { UPLOAD_TIMEOUT_MS } from '../config/api';
-import { apiRequest, createImageFormData } from './client';
+import { apiRequest, createImageFormData, logoutSession } from './client';
 import { tokenStorage } from './tokenStorage';
 import type {
   AuthTokens,
+  CurrentUser,
+  CreateFixedScheduleRequest,
   DayOfWeek,
   DemoLoginResponse,
   DndWindow,
   FixedSchedule,
+  GroupSummary,
+  MyTodayResponse,
+  MyStatsResponse,
+  CreateSleepSessionResponse,
   JsonObject,
   SelfVerifyCreated,
   User,
+  UpdateCurrentUserRequest,
+  UpdateFixedScheduleRequest,
   WakeGroupDetail,
+  WakeGroupCreated,
   WakeGroupPreview,
-  WakeGroupSummary,
+  WakeGroupJoinResult,
+  WakeGroupUpdated,
   WakeProofResult,
   WakeRequest,
   WakeRequestCreated,
   WakeTarget,
+  WakeTargetUpdated,
 } from './types';
 
 const encode = (value: string | number) => encodeURIComponent(String(value));
@@ -36,28 +47,32 @@ export const authApi = {
   },
 
   reissue: async (refreshToken: string) => {
-    const response = await apiRequest<AuthTokens>('/auth/reissue', {
+    const response = await apiRequest<{
+      accessToken: string;
+      refreshToken: string;
+    }>('/auth/reissue', {
       method: 'POST',
       auth: false,
-      body: { refresh_token: refreshToken },
+      body: { refreshToken },
     });
-    await tokenStorage.save(response);
-    return response;
+    const tokens: AuthTokens = {
+      access_token: response.accessToken,
+      refresh_token: response.refreshToken,
+    };
+    await tokenStorage.save(tokens);
+    return tokens;
   },
 
-  logout: async () => {
-    try {
-      await apiRequest<void>('/auth/logout', { method: 'POST' });
-    } finally {
-      await tokenStorage.clear();
-    }
-  },
+  logout: logoutSession,
 };
 
 export const userApi = {
-  getMe: () => apiRequest<User>('/users/me'),
-  updateMe: (input: { nickname?: string; avatar_url?: string | null }) =>
-    apiRequest<User>('/users/me', { method: 'PATCH', body: input }),
+  getMe: () => apiRequest<CurrentUser>('/users/me'),
+  updateMe: (input: UpdateCurrentUserRequest) =>
+    apiRequest<CurrentUser>('/users/me', {
+      method: 'PATCH',
+      body: input,
+    }),
   deleteMe: () => apiRequest<void>('/users/me', { method: 'DELETE' }),
 };
 
@@ -72,12 +87,14 @@ export const deviceApi = {
 export const wakeTargetApi = {
   list: () => apiRequest<{ targets: WakeTarget[] }>('/me/wake-targets'),
   upsert: (text: string) =>
-    apiRequest<WakeTarget & { display_text: string }>('/me/wake-targets', {
+    apiRequest<WakeTargetUpdated>('/me/wake-targets', {
       method: 'POST',
       body: { text },
     }),
   remove: (dayOfWeek: DayOfWeek) =>
-    apiRequest<void>(`/me/wake-targets/${dayOfWeek}`, { method: 'DELETE' }),
+    apiRequest<void>(`/me/wake-targets/${encode(dayOfWeek)}`, {
+      method: 'DELETE',
+    }),
 };
 
 export const dndApi = {
@@ -88,17 +105,19 @@ export const dndApi = {
       body: { text },
     }),
   remove: (id: number) =>
-    apiRequest<void>(`/me/dnd-windows/${encode(id)}`, { method: 'DELETE' }),
+    apiRequest<void>(`/me/dnd-windows/${encode(id)}`, {
+      method: 'DELETE',
+    }),
 };
 
 export const scheduleApi = {
-  list: () => apiRequest<{ schedules: FixedSchedule[] }>('/me/fixed-schedules'),
-  create: (input: Omit<FixedSchedule, 'id'>) =>
+  list: () => apiRequest<FixedSchedule[]>('/me/fixed-schedules'),
+  create: (input: CreateFixedScheduleRequest) =>
     apiRequest<FixedSchedule>('/me/fixed-schedules', {
       method: 'POST',
       body: input,
     }),
-  update: (id: number, input: Partial<Omit<FixedSchedule, 'id'>>) =>
+  update: (id: number, input: UpdateFixedScheduleRequest) =>
     apiRequest<FixedSchedule>(`/me/fixed-schedules/${encode(id)}`, {
       method: 'PATCH',
       body: input,
@@ -110,7 +129,7 @@ export const scheduleApi = {
   analyzeImage: (imagePath: string) =>
     apiRequest<JsonObject>('/me/fixed-schedules/analyze', {
       method: 'POST',
-      body: createImageFormData(imagePath),
+      bodyFactory: () => createImageFormData(imagePath),
       timeoutMs: UPLOAD_TIMEOUT_MS,
     }),
   import: (input: JsonObject) =>
@@ -121,16 +140,16 @@ export const scheduleApi = {
 };
 
 export const groupApi = {
-  list: () => apiRequest<{ groups: WakeGroupSummary[] }>('/groups'),
+  list: () => apiRequest<{ groups: GroupSummary[] }>('/groups'),
   create: (name: string) =>
-    apiRequest<WakeGroupSummary & { invite_code: string }>('/wake-groups', {
+    apiRequest<WakeGroupCreated>('/wake-groups', {
       method: 'POST',
       body: { name },
     }),
   detail: (id: number) =>
     apiRequest<WakeGroupDetail>(`/wake-groups/${encode(id)}`),
   rename: (id: number, name: string) =>
-    apiRequest<WakeGroupDetail>(`/wake-groups/${encode(id)}`, {
+    apiRequest<WakeGroupUpdated>(`/wake-groups/${encode(id)}`, {
       method: 'PATCH',
       body: { name },
     }),
@@ -139,9 +158,13 @@ export const groupApi = {
       `/wake-groups/preview?code=${encode(inviteCode)}`,
     ),
   join: (inviteCode: string) =>
-    apiRequest<WakeGroupDetail>('/wake-groups/join', {
+    apiRequest<WakeGroupJoinResult>('/wake-groups/join', {
       method: 'POST',
       body: { invite_code: inviteCode },
+    }),
+  leave: (id: number) =>
+    apiRequest<void>(`/wake-groups/${encode(id)}/members/me`, {
+      method: 'DELETE',
     }),
   getInviteCode: (id: number) =>
     apiRequest<{ invite_code: string }>(
@@ -162,16 +185,18 @@ export const wakeApi = {
       `/wake-requests/${encode(wakeRequestId)}/proof`,
       {
         method: 'POST',
-        body: createImageFormData(imagePath),
+        bodyFactory: () => createImageFormData(imagePath),
         timeoutMs: UPLOAD_TIMEOUT_MS,
       },
     ),
   startSelfVerify: () =>
-    apiRequest<SelfVerifyCreated>('/me/self-verify', { method: 'POST' }),
+    apiRequest<SelfVerifyCreated>('/me/self-verify', {
+      method: 'POST',
+    }),
 };
 
 export const meApi = {
-  getToday: () => apiRequest<JsonObject>('/me/today'),
+  getToday: () => apiRequest<MyTodayResponse>('/me/today'),
   updateBedTime: (bedTime: string) =>
     apiRequest<JsonObject>('/me/today/bed-time', {
       method: 'PATCH',
@@ -182,8 +207,12 @@ export const meApi = {
       method: 'PATCH',
       body: { return_time: returnTime },
     }),
-  sleep: () => apiRequest<JsonObject>('/me/sleep', { method: 'POST' }),
-  getStats: () => apiRequest<JsonObject>('/me/stats'),
+  sleep: () =>
+    apiRequest<CreateSleepSessionResponse>('/me/sleep', {
+      method: 'POST',
+      body: { source: 'APP' },
+    }),
+  getStats: () => apiRequest<MyStatsResponse>('/me/stats'),
   submitSleepFeedback: (input: JsonObject) =>
     apiRequest<JsonObject>('/me/sleep-feedback', {
       method: 'POST',

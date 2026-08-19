@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,21 +7,33 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import PermissionScreen from './src/screens/PermissionScreen';
 import PersonalGroupScreen from './src/screens/PersonalGroupScreen';
-import { HomeScreen } from './src/screens/HomeScreen';
+import MainHomeScreen from './src/screens/HomeScreen/index';
 import { AddGroupNameScreen } from './src/screens/AddGroupNameScreen';
 import { AddGroupInviteScreen } from './src/screens/AddGroupInviteScreen';
 import { WaitingForMembersScreen } from './src/screens/WaitingForMembersScreen';
 import type { GroupType } from './src/types/group';
+import type { WakeProofResult } from './src/api';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { InviteCodeScreen } from './src/screens/InviteCodeScreen';
-import { CameraCaptureScreen } from './src/screens/CameraCaptureScreen';
-import { PhotoReviewScreen } from './src/screens/PhotoReviewScreen';
+import MainInviteCodeScreen from './src/screens/InviteCodeScreen/index';
+import MainCameraCaptureScreen from './src/screens/CameraCaptureScreen/index';
+import MainPhotoReviewScreen from './src/screens/PhotoReviewScreen/index';
 import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
 import { PhotoAnalysisScreen } from './src/screens/PhotoAnalysisScreen';
 import { PhotoAnalysisSuccessScreen } from './src/screens/PhotoAnalysisSuccessScreen';
 import { PhotoAnalysisFailureScreen } from './src/screens/PhotoAnalysisFailureScreen';
 import { RewardListScreen } from './src/screens/RewardListScreen';
 import { SelfWakeVerificationScreen } from './src/screens/SelfWakeVerificationScreen';
+import WakeGroupScreen from './src/screens/WakeGroupScreen';
+import WakeAlarmScreen from './src/screens/WakeAlarmScreen';
+import { WakeTargetScreen } from './src/screens/WakeTargetScreen';
+import { DndWindowScreen } from './src/screens/DndWindowScreen';
+import { FixedScheduleScreen } from './src/screens/FixedScheduleScreen';
+import { StatsScreen } from './src/screens/StatsScreen';
+import {
+  flushPendingWakeRequestNavigation,
+  navigationRef,
+} from './src/navigation/rootNavigation';
+import { startForegroundMessaging } from './src/notifications/messaging';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -31,19 +43,29 @@ export type RootStackParamList = {
   PersonalGroup: undefined;
   Home: undefined;
   Settings: undefined;
+  WakeTargets: undefined;
+  DndWindows: undefined;
+  FixedSchedules: undefined;
+  Stats: undefined;
   InviteCode: undefined;
   CameraCapture: {
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
     attempt?: number;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
   };
   PhotoReview: {
     photoPath: string;
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
     attempt?: number;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
   };
-  WakeNotification: undefined;
+  WakeNotification: { requestId: number } | undefined;
   PhotoAnalysis: {
     photoPath: string;
     recipientName: string;
@@ -55,34 +77,54 @@ export type RootStackParamList = {
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
     attempt?: number;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+    proofResult?: WakeProofResult;
   };
   PhotoAnalysisFailure: {
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
     attempt: number;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+    proofResult?: WakeProofResult;
   };
   RewardList: undefined;
   SelfWakeVerification: {
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
+    groupId?: number;
+    groupName?: string;
   };
   AddGroupName: { groupType: GroupType } | undefined;
-  AddGroupInvite: { groupType: GroupType; groupName: string } | undefined;
+  AddGroupInvite:
+    | { groupType: GroupType; groupName: string; groupId?: number; inviteCode?: string }
+    | undefined;
   WaitingForMembers:
     | {
+        groupId?: number;
         groupType: GroupType;
-        groupName: string;
+        groupName?: string;
         viewer?: 'jiwoo' | 'minju';
       }
     | undefined;
+  WakeGroupDetail: { groupId: number };
+  WakeAlarm: { requestId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
+  useEffect(() => startForegroundMessaging(), []);
+
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={flushPendingWakeRequestNavigation}
+      >
         <Stack.Navigator
           initialRouteName="Splash"
           screenOptions={{ headerShown: false }}
@@ -92,11 +134,15 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Permission" component={PermissionScreen} />
           <Stack.Screen name="PersonalGroup" component={PersonalGroupScreen} />
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Home" component={MainHomeScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
-          <Stack.Screen name="CameraCapture" component={CameraCaptureScreen} />
-          <Stack.Screen name="PhotoReview" component={PhotoReviewScreen} />
+          <Stack.Screen name="WakeTargets" component={WakeTargetScreen} />
+          <Stack.Screen name="DndWindows" component={DndWindowScreen} />
+          <Stack.Screen name="FixedSchedules" component={FixedScheduleScreen} />
+          <Stack.Screen name="Stats" component={StatsScreen} />
+          <Stack.Screen name="InviteCode" component={MainInviteCodeScreen} />
+          <Stack.Screen name="CameraCapture" component={MainCameraCaptureScreen} />
+          <Stack.Screen name="PhotoReview" component={MainPhotoReviewScreen} />
           <Stack.Screen
             name="WakeNotification"
             component={WakeNotificationScreen}
@@ -124,6 +170,8 @@ export default function App() {
             name="WaitingForMembers"
             component={WaitingForMembersScreen}
           />
+          <Stack.Screen name="WakeGroupDetail" component={WakeGroupScreen} />
+          <Stack.Screen name="WakeAlarm" component={WakeAlarmScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

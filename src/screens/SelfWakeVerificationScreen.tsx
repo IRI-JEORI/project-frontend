@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   StatusBar,
   StyleSheet,
@@ -14,16 +15,99 @@ import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import WakeTimerTrack from '../assets/images/wake-timer-track.svg';
 import WakeTimerProgress from '../assets/images/wake-timer-progress.svg';
+import { ApiError, nunnunApi, type SelfVerifyCreated } from '../api';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SelfWakeVerification'>;
 
+const selfVerifyErrorMessage = (error: unknown) => {
+  if (!(error instanceof ApiError)) {
+    return '셀프 인증을 시작하지 못했어요.';
+  }
+
+  switch (error.code) {
+    case 'UNAUTHORIZED':
+    case 'INVALID_JWT':
+    case 'EXPIRED_JWT':
+      return '데모 사용자를 다시 선택해주세요.';
+    case 'WAKE_GROUP_NOT_FOUND':
+      return '가입한 깨우기 그룹을 찾을 수 없어요.';
+    case 'ACTIVE_POSE_NOT_FOUND':
+      return '오늘의 인증 포즈가 준비되지 않았어요.';
+    case 'USER_NOT_FOUND':
+      return '사용자 정보를 찾을 수 없어요.';
+    default:
+      return '셀프 인증을 시작하지 못했어요.';
+  }
+};
+
 export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
+  const isBackendFlow = route.params.groupId !== undefined;
+  const [selfVerify, setSelfVerify] = useState<SelfVerifyCreated | null>(null);
+  const [loading, setLoading] = useState(isBackendFlow);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
+
+  useEffect(() => {
+    if (!isBackendFlow) {
+      return;
+    }
+
+    let active = true;
+    nunnunApi.wake
+      .startSelfVerify()
+      .then(result => {
+        if (active) {
+          setSelfVerify(result);
+        }
+      })
+      .catch(error => {
+        if (active) {
+          setErrorMessage(selfVerifyErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isBackendFlow]);
+
+  if (loading || errorMessage) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={Colors.background}
+          barStyle="dark-content"
+        />
+        <View style={styles.feedbackContainer}>
+          {loading ? (
+            <ActivityIndicator color={Colors.textBlack} />
+          ) : (
+            <Text style={styles.feedbackText}>{errorMessage}</Text>
+          )}
+          {errorMessage && (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="그룹으로 돌아가기"
+              onPress={() => navigation.goBack()}
+              style={styles.feedbackButton}
+            >
+              <Text style={styles.feedbackButtonText}>돌아가기</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -41,7 +125,9 @@ export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
             },
           ]}
         >
-          <Text style={[styles.groupName, { top: 42 * scale }]}>아침야호</Text>
+          <Text style={[styles.groupName, { top: 42 * scale }]}>
+            {route.params.groupName ?? '아침야호'}
+          </Text>
           <Text style={[styles.title, { top: 64 * scale }]}>
             내 기상을 인증할게요
           </Text>
@@ -76,11 +162,14 @@ export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
         </View>
 
         <Text style={[styles.poseDescription, { top: 400 * scale }]}>
-          00분 내에 오늘의 포즈를 따라해주세요
+          {selfVerify?.pose.description ??
+            '00분 내에 오늘의 포즈를 따라해주세요'}
         </Text>
 
         <Image
-          accessibilityLabel="오늘의 셀프 인증 포즈"
+          accessibilityLabel={
+            isBackendFlow ? '데모 인증 포즈 이미지' : '오늘의 셀프 인증 포즈'
+          }
           resizeMode="cover"
           source={require('../assets/images/wake-pose-reference.png')}
           style={[
@@ -103,6 +192,9 @@ export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
             navigation.replace('CameraCapture', {
               recipientName: route.params.recipientName,
               photographer: route.params.photographer,
+              requestId: selfVerify?.wake_request_id,
+              groupId: route.params.groupId,
+              verificationMode: isBackendFlow ? 'self-verify' : undefined,
             })
           }
           style={[
@@ -133,6 +225,33 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: Colors.background,
+  },
+  feedbackContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    paddingHorizontal: 32,
+  },
+  feedbackText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  feedbackButton: {
+    minWidth: 120,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.textBlack,
+  },
+  feedbackButtonText: {
+    color: Colors.textWhite,
+    fontFamily: 'PretendardSemiBold',
+    fontSize: 16,
   },
   verificationCard: {
     position: 'absolute',

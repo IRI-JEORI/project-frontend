@@ -20,13 +20,3 @@ export const tokenStorage = {
       AsyncStorage.removeItem(REFRESH_TOKEN_KEY),
     ]),
 };
-
-export const saveTokens = (accessToken: string, refreshToken: string) =>
-  tokenStorage.save({
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  });
-
-export const getAccessToken = tokenStorage.getAccessToken;
-export const getRefreshToken = tokenStorage.getRefreshToken;
-export const clearTokens = tokenStorage.clear;

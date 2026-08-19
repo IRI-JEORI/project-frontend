@@ -1,196 +1,107 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/tokens';
-import { clearTokens } from '../../api/tokenStorage';
+import { ApiError, nunnunApi } from '../../api';
+import type { CurrentUser, DndWindow, FixedSchedule, MyStatsResponse } from '../../api/types';
 import ProfileHeader from './components/ProfileHeader';
 import AccordionSection from './components/AccordionSection';
 import ScheduleRow from './components/ScheduleRow';
 import AddRowButton from './components/AddRowButton';
 import SettingsRow from './components/SettingsRow';
-import AddScheduleMethodModal from './components/AddScheduleMethodModal';
-import ManualScheduleSheet from './components/ManualScheduleSheet';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
-
-type ScheduleTarget = 'FIXED' | 'DND';
 
 type SectionKey = 'FIXED' | 'DND' | 'SETTINGS' | 'REWARD';
 
 const PersonalGroupScreen = () => {
-  const navigation =
-    useNavigation<
-      NativeStackNavigationProp<RootStackParamList, 'PersonalGroup'>
-    >();
-
-  const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
-    new Set(),
-  );
-  const [fixedSchedules, setFixedSchedules] = useState<string[]>([
-    '월요일 10:00 수업',
-    '화요일 10:00 수업',
-  ]);
-  const [dndWindows, setDndWindows] = useState<string[]>([
-    '일요일 08:00~11:00',
-  ]);
-  const [nudgeEnabled, setNudgeEnabled] = useState(true);
-
-  const [methodModalTarget, setMethodModalTarget] =
-    useState<ScheduleTarget | null>(null);
-  const [manualSheetTarget, setManualSheetTarget] =
-    useState<ScheduleTarget | null>(null);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'PersonalGroup'>>();
+  const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(new Set());
+  const [profile, setProfile] = useState<CurrentUser | null>(null);
+  const [stats, setStats] = useState<MyStatsResponse | null>(null);
+  const [fixedSchedules, setFixedSchedules] = useState<FixedSchedule[]>([]);
+  const [dndWindows, setDndWindows] = useState<DndWindow[]>([]);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      Promise.all([
+        nunnunApi.user.getMe(),
+        nunnunApi.me.getStats(),
+        nunnunApi.schedule.list(),
+        nunnunApi.dnd.list(),
+      ])
+        .then(([user, statsData, schedules, dnd]) => {
+          if (!active) return;
+          setProfile(user);
+          setStats(statsData);
+          setFixedSchedules(schedules);
+          setDndWindows(dnd.windows);
+        })
+        .catch(() => {
+          if (active) Alert.alert('조회 실패', '내 정보를 불러오지 못했어요.');
+        });
+      return () => { active = false; };
+    }, []),
+  );
 
   const toggleSection = (key: SectionKey) => {
     setExpandedSections(prev => {
       const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   };
 
-  const handleConfirmManual = () => {
-    const target = methodModalTarget;
-    setMethodModalTarget(null);
-    setManualSheetTarget(target);
-  };
-
-  const handleManualConfirm = (value: string) => {
-    if (manualSheetTarget === 'FIXED') {
-      setFixedSchedules(prev => [...prev, value]);
-    } else if (manualSheetTarget === 'DND') {
-      setDndWindows(prev => [...prev, value]);
-    }
-    setManualSheetTarget(null);
-  };
-
   const handleLogout = async () => {
-    await clearTokens();
-    setLogoutModalVisible(false);
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Login' }],
-      }),
-    );
+    try {
+      await nunnunApi.auth.logout();
+      setLogoutModalVisible(false);
+      navigation.dispatch(CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] }));
+    } catch (error) {
+      Alert.alert('로그아웃 실패', error instanceof ApiError ? error.message : '로그아웃하지 못했어요.');
+    }
   };
 
   return (
     <>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-      >
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <ProfileHeader
-          nickname="눈눈"
-          streakText="이번 주 5일 연속 기상 성공"
+          nickname={profile?.nickname ?? '사용자'}
+          streakText={stats ? `${stats.streak_days}일 연속 기상 성공 · 성공률 ${stats.success_rate}%` : '기상 통계를 불러오는 중이에요'}
           onPressBack={() => navigation.goBack()}
         />
-
         <View style={styles.sections}>
-          <AccordionSection
-            title="내 고정 시간표"
-            expanded={expandedSections.has('FIXED')}
-            onToggle={() => toggleSection('FIXED')}
-          >
-            {fixedSchedules.map(item => (
-              <ScheduleRow key={item} label={item} />
-            ))}
-            <AddRowButton
-              label="시간표 추가하기"
-              onPress={() => setMethodModalTarget('FIXED')}
-            />
+          <AccordionSection title="내 고정 시간표" expanded={expandedSections.has('FIXED')} onToggle={() => toggleSection('FIXED')}>
+            {fixedSchedules.map(item => <ScheduleRow key={item.id} label={`${item.dayOfWeek} ${item.startTime}~${item.endTime} ${item.title}`} />)}
+            <AddRowButton label="시간표 관리하기" onPress={() => navigation.navigate('FixedSchedules')} />
           </AccordionSection>
-
-          <AccordionSection
-            title="방해금지 시간대"
-            rightLabel={`자동 ${dndWindows.length}개 적용 중이에요`}
-            expanded={expandedSections.has('DND')}
-            onToggle={() => toggleSection('DND')}
-          >
-            {dndWindows.map(item => (
-              <ScheduleRow key={item} label={item} />
-            ))}
-            <AddRowButton
-              label="방해금지 시간대 추가하기"
-              onPress={() => setMethodModalTarget('DND')}
-            />
+          <AccordionSection title="방해금지 시간대" rightLabel={`${dndWindows.length}개 적용 중이에요`} expanded={expandedSections.has('DND')} onToggle={() => toggleSection('DND')}>
+            {dndWindows.map(item => <ScheduleRow key={item.id} label={item.display_text} />)}
+            <AddRowButton label="방해금지 시간대 관리하기" onPress={() => navigation.navigate('DndWindows')} />
           </AccordionSection>
-
-          <AccordionSection
-            title="설정"
-            expanded={expandedSections.has('SETTINGS')}
-            onToggle={() => toggleSection('SETTINGS')}
-          >
-            <SettingsRow
-              label="로그아웃"
-              onPress={() => setLogoutModalVisible(true)}
-            />
-            <SettingsRow
-              label="취침 넛지 알림"
-              toggleValue={nudgeEnabled}
-              onToggleChange={setNudgeEnabled}
-            />
-            {__DEV__ && (
-              <SettingsRow
-                label="데모 설정"
-                onPress={() => navigation.navigate('Settings')}
-              />
-            )}
+          <AccordionSection title="설정" expanded={expandedSections.has('SETTINGS')} onToggle={() => toggleSection('SETTINGS')}>
+            <SettingsRow label="로그아웃" onPress={() => setLogoutModalVisible(true)} />
+            <SettingsRow label="상세 설정" onPress={() => navigation.navigate('Settings')} />
+            <SettingsRow label="기상 통계" onPress={() => navigation.navigate('Stats')} />
           </AccordionSection>
-
-          <AccordionSection
-            title="내 리워드"
-            expanded={expandedSections.has('REWARD')}
-            onToggle={() => toggleSection('REWARD')}
-          >
-            <ScheduleRow label="아직 받은 리워드가 없어요" />
+          <AccordionSection title="내 리워드" expanded={expandedSections.has('REWARD')} onToggle={() => toggleSection('REWARD')}>
+            <ScheduleRow label="리워드는 현재 Demo 기능이에요" />
           </AccordionSection>
         </View>
-
-        <AddRowButton
-          label="목표 기상 시간 설정하기"
-          onPress={() => Alert.alert('준비 중이에요', '곧 만나볼 수 있어요.')}
-        />
+        <AddRowButton label="목표 기상 시간 설정하기" onPress={() => navigation.navigate('WakeTargets')} />
       </ScrollView>
-
-      <AddScheduleMethodModal
-        visible={methodModalTarget !== null}
-        onClose={() => setMethodModalTarget(null)}
-        onConfirmManual={handleConfirmManual}
-      />
-      <ManualScheduleSheet
-        visible={manualSheetTarget !== null}
-        target={manualSheetTarget ?? 'FIXED'}
-        onClose={() => setManualSheetTarget(null)}
-        onConfirm={handleManualConfirm}
-      />
-      <LogoutConfirmModal
-        visible={logoutModalVisible}
-        onCancel={() => setLogoutModalVisible(false)}
-        onConfirm={handleLogout}
-      />
+      <LogoutConfirmModal visible={logoutModalVisible} onCancel={() => setLogoutModalVisible(false)} onConfirm={() => handleLogout().catch(() => undefined)} />
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  content: {
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  sections: {
-    marginTop: 24,
-  },
+  container: { flex: 1, backgroundColor: colors.white },
+  content: { flexGrow: 1, paddingBottom: 40 },
+  sections: { marginTop: 24 },
 });
 
 export default PersonalGroupScreen;

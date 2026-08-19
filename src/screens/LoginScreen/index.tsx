@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -8,6 +8,8 @@ import { RootStackParamList } from '../../navigation/types';
 import { ApiError, nunnunApi } from '../../api';
 import BottomLinks from './components/BottomLinks';
 import LoginForm from './components/LoginForm';
+import { registerDeviceAfterLogin } from '../../notifications/messaging';
+import type { User } from '../../api/types';
 
 const LOGO_TOP_SPACING = 198;
 const FORM_TOP_SPACING = 60;
@@ -18,22 +20,45 @@ const LoginScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Login'>>();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [accounts, setAccounts] = useState<User[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
+  const [accountError, setAccountError] = useState<string | null>(null);
+
+  const loadAccounts = useCallback(async () => {
+    setIsLoadingAccounts(true);
+    setAccountError(null);
+    setSelectedAccountId(null);
+    try {
+      const response = await nunnunApi.auth.getDemoAccounts();
+      setAccounts(response.accounts);
+      if (response.accounts.length === 0) {
+        setAccountError('사용 가능한 데모 계정이 없어요.');
+      }
+    } catch {
+      setAccounts([]);
+      setAccountError('데모 계정을 불러오지 못했어요.');
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAccounts().catch(() => undefined);
+  }, [loadAccounts]);
 
   const handleLoginPress = async () => {
     if (isLoggingIn) {
       return;
     }
+    if (selectedAccountId === null) {
+      Alert.alert('로그인 안내', '로그인할 데모 계정을 선택해주세요.');
+      return;
+    }
     setIsLoggingIn(true);
     try {
-      // 데모 로그인: 백엔드가 이메일/비밀번호 인증을 아직 지원하지 않아
-      // 데모 계정 목록의 첫 번째 계정으로 로그인합니다.
-      const { accounts } = await nunnunApi.auth.getDemoAccounts();
-      const demoAccount = accounts[0];
-      if (!demoAccount) {
-        Alert.alert('로그인 실패', '사용 가능한 데모 계정이 없어요.');
-        return;
-      }
-      await nunnunApi.auth.demoLogin(demoAccount.id);
+      await nunnunApi.auth.demoLogin(selectedAccountId);
+      await registerDeviceAfterLogin();
       navigation.navigate('Home');
     } catch (error) {
       const message =
@@ -50,7 +75,16 @@ const LoginScreen = () => {
     <View style={styles.container}>
       <Logo color={colors.brownDarkest} />
       <View style={styles.form}>
-        <LoginForm onLoginPress={handleLoginPress} />
+        <LoginForm
+          accounts={accounts}
+          selectedAccountId={selectedAccountId}
+          isLoadingAccounts={isLoadingAccounts}
+          accountError={accountError}
+          isLoggingIn={isLoggingIn}
+          onSelectAccount={setSelectedAccountId}
+          onRetryAccounts={() => loadAccounts().catch(() => undefined)}
+          onLoginPress={handleLoginPress}
+        />
       </View>
       <View style={styles.spacer} />
       <View style={styles.bottomLinks}>
