@@ -25,6 +25,7 @@ import type { RootStackParamList } from '../../App';
 import { Colors } from '../constants/Colors';
 import { ApiError, nunnunApi } from '../api';
 import type { WakeGroupDetail, WakeGroupMember } from '../api/types';
+import { formatTime } from '../utils/time';
 import {
   AI_FRIEND_ENABLED_STORAGE_KEYS,
   AI_FRIEND_PROMPT_STORAGE_KEY,
@@ -2473,7 +2474,7 @@ const remainingText = (member: WakeGroupMember) => {
     return '기상 완료';
   }
   return member.target_wake_time
-    ? `${member.target_wake_time} 목표`
+    ? `${formatTime(member.target_wake_time)} 목표`
     : '목표 없음';
 };
 
@@ -2812,9 +2813,11 @@ const BackendWakeGroupDetail = ({
                         ]}
                       >
                         <Text style={styles.fullCapacityDetailValue}>
-                          {member.actual_wake_time ??
-                            member.target_wake_time ??
-                            '--:--'}
+                          {member.actual_wake_time
+                            ? formatTime(member.actual_wake_time)
+                            : member.target_wake_time
+                            ? formatTime(member.target_wake_time)
+                            : '--:--'}
                         </Text>
                         <Text style={styles.fullCapacityDetailLabel}>
                           {member.actual_wake_time ? '기상 시간' : '기상 목표'}

@@ -19,6 +19,8 @@ import type { RootStackParamList } from '../../App';
 import { ApiError, nunnunApi, tokenStorage } from '../api';
 import type { DayOfWeek, FixedSchedule } from '../api/types';
 import { Colors } from '../constants/Colors';
+import { formatDayOfWeek } from '../utils/dayOfWeek';
+import { formatTime } from '../utils/time';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -76,8 +78,6 @@ const scheduleDeleteErrorMessage = (error: unknown) => {
   }
   return scheduleMutationErrorMessage(error).replace('저장', '삭제');
 };
-
-const shortTime = (time: string) => time.slice(0, 5);
 
 export const FixedScheduleScreen = ({ navigation }: Props) => {
   const [schedules, setSchedules] = useState<FixedSchedule[]>([]);
@@ -168,8 +168,8 @@ export const FixedScheduleScreen = ({ navigation }: Props) => {
     setEditingId(schedule.id);
     setTitle(schedule.title);
     setDayOfWeek(schedule.dayOfWeek);
-    setStartTime(shortTime(schedule.startTime));
-    setEndTime(shortTime(schedule.endTime));
+    setStartTime(formatTime(schedule.startTime));
+    setEndTime(formatTime(schedule.endTime));
   };
 
   const deleteSchedule = async (id: number) => {
@@ -327,8 +327,8 @@ export const FixedScheduleScreen = ({ navigation }: Props) => {
                 <View style={styles.scheduleInfo}>
                   <Text style={styles.scheduleTitle}>{schedule.title}</Text>
                   <Text style={styles.scheduleTime}>
-                    {DAYS.find(day => day.value === schedule.dayOfWeek)?.label}요일{' '}
-                    {shortTime(schedule.startTime)}~{shortTime(schedule.endTime)}
+                    {formatDayOfWeek(schedule.dayOfWeek)}{' '}
+                    {formatTime(schedule.startTime)}~{formatTime(schedule.endTime)}
                   </Text>
                 </View>
                 <TouchableOpacity

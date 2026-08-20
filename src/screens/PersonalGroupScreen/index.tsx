@@ -15,6 +15,8 @@ import LogoutConfirmModal from './components/LogoutConfirmModal';
 import AddScheduleMethodModal from './components/AddScheduleMethodModal';
 import ManualScheduleSheet from './components/ManualScheduleSheet';
 import DndWindowSheet from './components/DndWindowSheet';
+import { formatDayOfWeek } from '../../utils/dayOfWeek';
+import { formatTime } from '../../utils/time';
 
 type SectionKey = 'FIXED' | 'DND' | 'SETTINGS' | 'REWARD';
 type ScheduleModal = 'METHOD' | 'MANUAL' | null;
@@ -125,11 +127,11 @@ const PersonalGroupScreen = () => {
         />
         <View style={styles.sections}>
           <AccordionSection title="내 고정 시간표" expanded={expandedSections.has('FIXED')} onToggle={() => toggleSection('FIXED')}>
-            {fixedSchedules.map(item => <ScheduleRow key={item.id} label={`${item.dayOfWeek} ${item.startTime}~${item.endTime} ${item.title}`} />)}
+            {fixedSchedules.map(item => <ScheduleRow key={item.id} label={`${formatDayOfWeek(item.dayOfWeek)} ${formatTime(item.startTime)}~${formatTime(item.endTime)} ${item.title}`} />)}
             <AddRowButton label="시간표 추가하기" onPress={() => setScheduleModal('METHOD')} />
           </AccordionSection>
           <AccordionSection title="방해금지 시간대" rightLabel={`${dndWindows.length}개 적용 중이에요`} expanded={expandedSections.has('DND')} onToggle={() => toggleSection('DND')}>
-            {dndWindows.map(item => <ScheduleRow key={item.id} label={item.display_text} />)}
+            {dndWindows.map(item => <ScheduleRow key={item.id} label={`${formatDayOfWeek(item.day_of_week)} ${formatTime(item.start_time)}~${formatTime(item.end_time)}`} />)}
             <AddRowButton label="방해금지 시간대 추가하기" onPress={() => setDndSheetVisible(true)} />
           </AccordionSection>
           <AccordionSection title="설정" expanded={expandedSections.has('SETTINGS')} onToggle={() => toggleSection('SETTINGS')}>

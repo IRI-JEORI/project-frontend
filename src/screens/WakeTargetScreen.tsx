@@ -19,6 +19,7 @@ import type { RootStackParamList } from '../../App';
 import { ApiError, nunnunApi, tokenStorage } from '../api';
 import type { DayOfWeek, WakeTarget } from '../api/types';
 import { Colors } from '../constants/Colors';
+import { formatTime } from '../utils/time';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -105,7 +106,7 @@ export const WakeTargetScreen = ({ navigation }: Props) => {
       Object.fromEntries(
         response.targets.map(target => [
           target.day_of_week,
-          target.target_wake_time ?? '',
+          target.target_wake_time ? formatTime(target.target_wake_time) : '',
         ]),
       ) as Partial<Record<DayOfWeek, string>>,
     );
@@ -229,7 +230,7 @@ export const WakeTargetScreen = ({ navigation }: Props) => {
                     <Text style={styles.dayText}>{target.display_day}</Text>
                     <Text style={styles.currentText}>
                       {target.target_wake_time
-                        ? `현재 ${target.target_wake_time}`
+                        ? `현재 ${formatTime(target.target_wake_time)}`
                         : '설정 없음'}
                     </Text>
                   </View>

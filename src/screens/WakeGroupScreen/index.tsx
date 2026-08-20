@@ -28,6 +28,7 @@ import {
   memberActionLabel,
   memberCardStatus,
 } from './memberCardState';
+import { formatTime } from '../../utils/time';
 
 const CARD_ROW_TOP_SPACING = 80;
 const CARD_ROW_HORIZONTAL_MARGIN = 26;
@@ -35,7 +36,9 @@ const DOTS_TOP_SPACING = 40;
 const WAKE_SUCCESS_POLL_INTERVAL_MS = 4000;
 
 const memberPrimary = (member: WakeGroupMember) =>
-  member.state === 'AWAKE' ? member.actual_wake_time ?? '--:--' : member.target_wake_time ?? '--:--';
+  member.state === 'AWAKE'
+    ? member.actual_wake_time ? formatTime(member.actual_wake_time) : '--:--'
+    : member.target_wake_time ? formatTime(member.target_wake_time) : '--:--';
 
 const memberSecondary = (member: WakeGroupMember) =>
   member.remaining_to_target

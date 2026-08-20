@@ -19,6 +19,8 @@ import type { RootStackParamList } from '../../App';
 import { ApiError, nunnunApi, tokenStorage } from '../api';
 import type { DayOfWeek, DndWindow } from '../api/types';
 import { Colors } from '../constants/Colors';
+import { formatDayOfWeek } from '../utils/dayOfWeek';
+import { formatTime } from '../utils/time';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -34,6 +36,9 @@ const DAYS: Array<{ value: DayOfWeek; label: string }> = [
 ];
 
 type Props = NativeStackScreenProps<RootStackParamList, 'DndWindows'>;
+
+const dndWindowLabel = (window: DndWindow) =>
+  `${formatDayOfWeek(window.day_of_week)}, ${formatTime(window.start_time)}~${formatTime(window.end_time)}`;
 
 const dndLoadErrorMessage = (error: unknown) => {
   if (!(error instanceof ApiError)) return '방해금지 시간을 불러오지 못했어요.';
@@ -169,7 +174,7 @@ export const DndWindowScreen = ({ navigation }: Props) => {
   };
 
   const confirmDelete = (window: DndWindow) => {
-    Alert.alert('방해금지 시간 삭제', `${window.display_text}을 삭제할까요?`, [
+    Alert.alert('방해금지 시간 삭제', `${dndWindowLabel(window)}을 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
       {
         text: '삭제',
@@ -280,9 +285,9 @@ export const DndWindowScreen = ({ navigation }: Props) => {
           ) : (
             windows.map(window => (
               <View key={window.id} style={styles.windowRow}>
-                <Text style={styles.windowText}>{window.display_text}</Text>
+                <Text style={styles.windowText}>{dndWindowLabel(window)}</Text>
                 <TouchableOpacity
-                  accessibilityLabel={`${window.display_text} 삭제`}
+                  accessibilityLabel={`${dndWindowLabel(window)} 삭제`}
                   accessibilityRole="button"
                   activeOpacity={0.8}
                   disabled={creating || deletingId !== null}
