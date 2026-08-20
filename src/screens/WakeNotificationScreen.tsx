@@ -18,6 +18,8 @@ import WakeTimerTrack from '../assets/images/wake-timer-track.svg';
 import WakeTimerProgress from '../assets/images/wake-timer-progress.svg';
 import { ApiError, nunnunApi, type WakeRequest } from '../api';
 import { createWakeProofCompletionState } from '../navigation/selfVerifyNavigation';
+import { poseImageForCode } from '../utils/poseImage';
+import { WakeAlarm } from '../wakeAlarm/WakeAlarm';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -124,6 +126,7 @@ export const WakeNotificationScreen = ({ navigation, route }: Props) => {
             setDeclining(true);
             try {
               await nunnunApi.wake.decline(wakeRequest.id);
+              await WakeAlarm.stop(wakeRequest.id);
               navigation.reset(
                 createWakeProofCompletionState(wakeRequest.group_id),
               );
@@ -245,7 +248,7 @@ export const WakeNotificationScreen = ({ navigation, route }: Props) => {
           accessibilityLabel={
             wakeRequest ? '인증 포즈 참고 이미지' : '오늘의 인증 포즈'
           }
-          source={require('../assets/images/wake-pose-reference.png')}
+          source={poseImageForCode(wakeRequest?.pose.code)}
           resizeMode="cover"
           style={[
             styles.poseImage,

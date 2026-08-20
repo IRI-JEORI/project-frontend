@@ -15,6 +15,7 @@ import { Colors } from '../constants/Colors';
 import { getDemoPoseAnalysisResult } from '../utils/analyzePose';
 import { nunnunApi } from '../api';
 import { proofErrorMessage } from '../utils/wakeProofError';
+import { WakeAlarm } from '../wakeAlarm/WakeAlarm';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -41,7 +42,13 @@ export const PhotoAnalysisScreen = ({ navigation, route }: Props) => {
     if (route.params.requestId !== undefined && route.params.photoUri) {
       nunnunApi.wake
         .uploadProof(route.params.requestId, route.params.photoUri)
-        .then(proofResult => {
+        .then(async proofResult => {
+          if (
+            route.params.verificationMode === 'wake-proof' &&
+            (proofResult.pose_match_result === 'SUCCESS' || !proofResult.can_retry)
+          ) {
+            await WakeAlarm.stop(route.params.requestId!);
+          }
           if (!mountedRef.current) return;
           const resultParams = {
             photoPath: route.params.photoPath,

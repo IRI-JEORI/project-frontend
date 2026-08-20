@@ -19,6 +19,7 @@ import { nunnunApi } from '../api/nunnunApi';
 import { tokenStorage } from '../api/tokenStorage';
 import { openWakeNotification } from '../navigation/rootNavigation';
 import { parseWakeRequestPayload } from './wakeRequestPayload';
+import { WakeAlarm } from '../wakeAlarm/WakeAlarm';
 
 const notificationPermissionGranted = async () => {
   if (Platform.OS !== 'android') {
@@ -60,10 +61,11 @@ export const registerDeviceAfterLogin = async () => {
   }
 };
 
-const openWakeRequest = async (requestId: number) => {
+export const openWakeRequest = async (requestId: number) => {
   if (!(await tokenStorage.getAccessToken())) {
     return;
   }
+  await WakeAlarm.start(requestId);
   openWakeNotification(requestId);
 };
 
@@ -80,7 +82,13 @@ export const registerBackgroundMessageHandler = () => {
   }
 
   const messaging = getMessaging();
-  setBackgroundMessageHandler(messaging, async () => undefined);
+  setBackgroundMessageHandler(messaging, async message => {
+    const params = parseWakeRequestPayload(message.data);
+    if (!params || !(await tokenStorage.getAccessToken())) {
+      return;
+    }
+    await WakeAlarm.start(params.requestId);
+  });
 };
 
 export const startForegroundMessaging = () => {
@@ -101,6 +109,7 @@ export const startForegroundMessaging = () => {
     if (!(await tokenStorage.getAccessToken())) {
       return;
     }
+    await WakeAlarm.start(params.requestId);
 
     Alert.alert(
       message.notification?.title ?? '깨우기 요청이 왔어요',

@@ -3,6 +3,7 @@ import { Alert, Text } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { nunnunApi, type WakeRequest } from '../../api';
 import { WakeNotificationScreen } from '../WakeNotificationScreen';
+import { WakeAlarm } from '../../wakeAlarm/WakeAlarm';
 
 jest.mock('../../api', () => ({
   ApiError: class ApiError extends Error {},
@@ -12,6 +13,10 @@ jest.mock('../../api', () => ({
       decline: jest.fn(),
     },
   },
+}));
+
+jest.mock('../../wakeAlarm/WakeAlarm', () => ({
+  WakeAlarm: { start: jest.fn(), stop: jest.fn() },
 }));
 
 jest.mock('../../assets/images/wake-timer-track.svg', () => 'WakeTimerTrack');
@@ -56,6 +61,7 @@ describe('WakeNotificationScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(nunnunApi.wake.decline).mockResolvedValue(undefined);
+    jest.mocked(WakeAlarm.stop).mockResolvedValue(undefined);
   });
 
   it('renders an external sender and keeps the existing camera flow', async () => {
@@ -64,6 +70,11 @@ describe('WakeNotificationScreen', () => {
     expect(renderer.root.findAllByType(Text).some(node =>
       Array.isArray(node.props.children) && node.props.children.join('') === '지우님이 깨웠어요',
     )).toBe(true);
+    expect(renderer.root.findAllByType(Text).some(node =>
+      node.props.children === '몸을 낮게 웅크려 앉아주세요.',
+    )).toBe(true);
+    expect(renderer.root.findByProps({ accessibilityLabel: '인증 포즈 참고 이미지' }).props.source)
+      .toBe(require('../../assets/images/pose-low-crouch.png'));
     act(() => {
       renderer.root.findByProps({ accessibilityLabel: '인증사진 찍기' }).props.onPress();
     });
@@ -122,6 +133,7 @@ describe('WakeNotificationScreen', () => {
 
     expect(nunnunApi.wake.decline).toHaveBeenCalledTimes(1);
     expect(nunnunApi.wake.decline).toHaveBeenCalledWith(42);
+    expect(WakeAlarm.stop).toHaveBeenCalledWith(42);
     expect(navigation.reset).toHaveBeenCalledWith({
       index: 1,
       routes: [
@@ -145,6 +157,7 @@ describe('WakeNotificationScreen', () => {
     });
 
     expect(navigation.reset).not.toHaveBeenCalled();
+    expect(WakeAlarm.stop).not.toHaveBeenCalled();
     expect(alert).toHaveBeenLastCalledWith(
       '알림',
       '인증 거부에 실패했어요. 다시 시도해주세요.',

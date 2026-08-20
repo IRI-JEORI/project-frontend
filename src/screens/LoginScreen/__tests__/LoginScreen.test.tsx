@@ -4,6 +4,7 @@ import Button from '../../../components/Button';
 import LoginScreen from '../index';
 import { nunnunApi } from '../../../api';
 import { registerDeviceAfterLogin } from '../../../notifications/messaging';
+import { WakeAlarm } from '../../../wakeAlarm/WakeAlarm';
 
 const mockNavigate = jest.fn();
 const mockReset = jest.fn();
@@ -27,6 +28,10 @@ jest.mock('../../../api', () => ({
 
 jest.mock('../../../notifications/messaging', () => ({
   registerDeviceAfterLogin: jest.fn(),
+}));
+
+jest.mock('../../../wakeAlarm/WakeAlarm', () => ({
+  WakeAlarm: { start: jest.fn(), stop: jest.fn() },
 }));
 
 jest.mock('../../../navigation/rootNavigation', () => ({
@@ -60,6 +65,7 @@ describe('LoginScreen demo account selection', () => {
       user: accounts[0],
     });
     jest.mocked(registerDeviceAfterLogin).mockResolvedValue(undefined);
+    jest.mocked(WakeAlarm.start).mockResolvedValue(undefined);
     jest.mocked(nunnunApi.wake.getPendingRequest).mockResolvedValue(null);
   });
 
@@ -128,6 +134,7 @@ describe('LoginScreen demo account selection', () => {
         { name: 'WakeNotification', params: { requestId: 42 } },
       ],
     });
+    expect(WakeAlarm.start).toHaveBeenCalledWith(42);
     expect(mockNavigate).not.toHaveBeenCalledWith('Home');
   });
 

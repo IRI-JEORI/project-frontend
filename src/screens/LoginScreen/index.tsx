@@ -11,6 +11,7 @@ import LoginForm from './components/LoginForm';
 import { registerDeviceAfterLogin } from '../../notifications/messaging';
 import type { User } from '../../api/types';
 import { createAuthenticatedNavigationState } from '../../navigation/rootNavigation';
+import { WakeAlarm } from '../../wakeAlarm/WakeAlarm';
 
 const LOGO_TOP_SPACING = 198;
 const FORM_TOP_SPACING = 60;
@@ -63,6 +64,7 @@ const LoginScreen = () => {
       try {
         const pendingRequest = await nunnunApi.wake.getPendingRequest();
         if (pendingRequest) {
+          await WakeAlarm.start(pendingRequest.id);
           navigation.reset(
             createAuthenticatedNavigationState(pendingRequest.id),
           );

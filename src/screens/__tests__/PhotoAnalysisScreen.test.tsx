@@ -5,6 +5,7 @@ import type { RootStackParamList } from '../../../App';
 import { nunnunApi } from '../../api';
 import { getDemoPoseAnalysisResult } from '../../utils/analyzePose';
 import { PhotoAnalysisScreen } from '../PhotoAnalysisScreen';
+import { WakeAlarm } from '../../wakeAlarm/WakeAlarm';
 
 jest.mock('../../api', () => ({
   ApiError: class ApiError extends Error {},
@@ -12,6 +13,9 @@ jest.mock('../../api', () => ({
 }));
 jest.mock('../../utils/analyzePose', () => ({
   getDemoPoseAnalysisResult: jest.fn(),
+}));
+jest.mock('../../wakeAlarm/WakeAlarm', () => ({
+  WakeAlarm: { start: jest.fn(), stop: jest.fn() },
 }));
 
 const realParams: RootStackParamList['PhotoAnalysis'] = {
@@ -56,6 +60,7 @@ describe('PhotoAnalysisScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useRealTimers();
+    jest.mocked(WakeAlarm.stop).mockResolvedValue(undefined);
   });
 
   it('uploads a real proof once and preserves success params across a re-render', async () => {
@@ -80,6 +85,7 @@ describe('PhotoAnalysisScreen', () => {
         proofResult: successResult,
       }),
     );
+    expect(WakeAlarm.stop).not.toHaveBeenCalled();
   });
 
   it('routes a real FAIL result with retry data preserved', async () => {
@@ -106,6 +112,23 @@ describe('PhotoAnalysisScreen', () => {
         proofResult: failureResult,
       }),
     );
+    expect(WakeAlarm.stop).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['SUCCESS', false],
+    ['FAIL', false],
+  ] as const)('stops a wake-proof alarm for terminal %s', async (result, canRetry) => {
+    jest.mocked(nunnunApi.wake.uploadProof).mockResolvedValue({
+      ...successResult,
+      pose_match_result: result,
+      request_status: result === 'SUCCESS' ? 'VERIFIED' : 'NEEDS_HELP',
+      can_retry: canRetry,
+    });
+
+    await createScreen({ ...realParams, verificationMode: 'wake-proof' });
+
+    expect(WakeAlarm.stop).toHaveBeenCalledWith(31);
   });
 
   it('shows an API error and returns to PhotoReview only after confirmation', async () => {

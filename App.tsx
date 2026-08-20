@@ -33,7 +33,11 @@ import {
   flushPendingWakeRequestNavigation,
   navigationRef,
 } from './src/navigation/rootNavigation';
-import { startForegroundMessaging } from './src/notifications/messaging';
+import {
+  openWakeRequest,
+  startForegroundMessaging,
+} from './src/notifications/messaging';
+import { listenForWakeAlarmNavigation } from './src/wakeAlarm/WakeAlarm';
 
 export type RootStackParamList = {
   Splash: undefined;
@@ -126,7 +130,16 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
-  useEffect(() => startForegroundMessaging(), []);
+  useEffect(() => {
+    const stopMessaging = startForegroundMessaging();
+    const stopAlarmNavigation = listenForWakeAlarmNavigation(requestId => {
+      openWakeRequest(requestId).catch(() => undefined);
+    });
+    return () => {
+      stopMessaging();
+      stopAlarmNavigation();
+    };
+  }, []);
 
   return (
     <SafeAreaProvider>
