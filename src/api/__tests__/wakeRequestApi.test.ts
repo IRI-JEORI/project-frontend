@@ -115,4 +115,26 @@ describe('wake request detail API', () => {
 
     await expect(nunnunApi.wake.getPendingRequest()).resolves.toBeNull();
   });
+
+  it('declines a wake request once with JWT and no refresh request', async () => {
+    globalThis.fetch = jest.fn(() =>
+      response({ success: true, data: null }),
+    ) as jest.Mock;
+
+    await expect(nunnunApi.wake.decline(42)).resolves.toBeNull();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/wake-requests\/42\/decline$/),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer access-token',
+        }),
+      }),
+    );
+    expect(fetch).not.toHaveBeenCalledWith(
+      expect.stringMatching(/\/auth\/reissue$/),
+      expect.anything(),
+    );
+  });
 });

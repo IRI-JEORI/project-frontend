@@ -1,5 +1,14 @@
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,15 +17,30 @@ import PaginationDots from '../../components/PaginationDots';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/tokens';
 import { ApiError, nunnunApi } from '../../api';
-import type { WakeGroupDetail, WakeGroupMember } from '../../api/types';
+import type {
+  PendingWakeSuccess,
+  WakeGroupDetail,
+  WakeGroupMember,
+} from '../../api/types';
 import MemberCard from './components/MemberCard';
+import {
+  canOpenWakeConfirmation,
+  memberActionLabel,
+  memberCardStatus,
+} from './memberCardState';
 
 const CARD_ROW_TOP_SPACING = 80;
 const CARD_ROW_HORIZONTAL_MARGIN = 26;
 const DOTS_TOP_SPACING = 40;
+const WAKE_SUCCESS_POLL_INTERVAL_MS = 4000;
 
 const memberPrimary = (member: WakeGroupMember) =>
   member.state === 'AWAKE' ? member.actual_wake_time ?? '--:--' : member.target_wake_time ?? '--:--';
+
+const memberSecondary = (member: WakeGroupMember) =>
+  member.remaining_to_target
+    ? `${member.remaining_to_target.value}${member.remaining_to_target.unit === 'HOUR' ? '시간' : '분'}`
+    : '--';
 
 const WakeGroupScreen = () => {
   const insets = useSafeAreaInsets();
@@ -25,6 +49,15 @@ const WakeGroupScreen = () => {
   const [detail, setDetail] = useState<WakeGroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [wakeConfirmMember, setWakeConfirmMember] = useState<WakeGroupMember | null>(null);
+  const [wakingReceiverId, setWakingReceiverId] = useState<number | null>(null);
+  const wakeInFlightRef = useRef(false);
+  const [wakeSuccessEvent, setWakeSuccessEvent] = useState<PendingWakeSuccess | null>(null);
+  const [acknowledgingSuccess, setAcknowledgingSuccess] = useState(false);
+  const wakeSuccessEventRef = useRef<PendingWakeSuccess | null>(null);
+  const pendingSuccessInFlightRef = useRef(false);
+  const successAckInFlightRef = useRef(false);
+  const screenFocusedRef = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,14 +74,104 @@ const WakeGroupScreen = () => {
 
   useFocusEffect(useCallback(() => { load().catch(() => undefined); }, [load]));
 
+  const checkPendingWakeSuccess = useCallback(async () => {
+    if (
+      wakeSuccessEventRef.current ||
+      pendingSuccessInFlightRef.current ||
+      !screenFocusedRef.current
+    ) {
+      return;
+    }
+    pendingSuccessInFlightRef.current = true;
+    try {
+      const event = await nunnunApi.group.getPendingWakeSuccess(params.groupId);
+      if (screenFocusedRef.current && event && !wakeSuccessEventRef.current) {
+        wakeSuccessEventRef.current = event;
+        setWakeSuccessEvent(event);
+      }
+    } catch {
+      // Polling failure is retried while this screen remains focused.
+    } finally {
+      pendingSuccessInFlightRef.current = false;
+    }
+  }, [params.groupId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      screenFocusedRef.current = true;
+      checkPendingWakeSuccess().catch(() => undefined);
+      const interval = setInterval(() => {
+        checkPendingWakeSuccess().catch(() => undefined);
+      }, WAKE_SUCCESS_POLL_INTERVAL_MS);
+      return () => {
+        screenFocusedRef.current = false;
+        clearInterval(interval);
+      };
+    }, [checkPendingWakeSuccess]),
+  );
+
   const wake = async (member: WakeGroupMember) => {
-    if (!member.can_wake) return;
+    if (!canOpenWakeConfirmation(member)) return false;
     try {
       await nunnunApi.wake.wakeMember(params.groupId, member.user_id);
       await load();
+      return true;
     } catch (error) {
       const message = error instanceof ApiError ? error.message : '깨우기 요청을 보내지 못했어요.';
       Alert.alert('깨우기 실패', message);
+      return false;
+    }
+  };
+
+  const openWakeConfirmation = (member: WakeGroupMember) => {
+    if (canOpenWakeConfirmation(member)) {
+      setWakeConfirmMember(member);
+    }
+  };
+
+  const closeWakeConfirmation = () => {
+    if (!wakeInFlightRef.current) {
+      setWakeConfirmMember(null);
+    }
+  };
+
+  const confirmWake = async () => {
+    if (!wakeConfirmMember || wakeInFlightRef.current) return;
+
+    const receiver = wakeConfirmMember;
+    wakeInFlightRef.current = true;
+    setWakingReceiverId(receiver.user_id);
+    try {
+      if (await wake(receiver)) {
+        setWakeConfirmMember(null);
+      }
+    } finally {
+      wakeInFlightRef.current = false;
+      setWakingReceiverId(null);
+    }
+  };
+
+  const acknowledgeWakeSuccess = async (sendReward: boolean) => {
+    if (!wakeSuccessEvent || successAckInFlightRef.current) return;
+
+    const event = wakeSuccessEvent;
+    successAckInFlightRef.current = true;
+    setAcknowledgingSuccess(true);
+    try {
+      await nunnunApi.wake.acknowledgeSuccess(event.wake_request_id);
+      wakeSuccessEventRef.current = null;
+      setWakeSuccessEvent(null);
+      if (sendReward) {
+        navigation.navigate('RewardList');
+      }
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : '깨우기 성공 알림을 처리하지 못했어요.';
+      Alert.alert('알림 처리 실패', message);
+    } finally {
+      successAckInFlightRef.current = false;
+      setAcknowledgingSuccess(false);
     }
   };
 
@@ -95,19 +218,113 @@ const WakeGroupScreen = () => {
             <MemberCard
               key={member.user_id}
               name={member.nickname}
-              status={awake ? 'done' : 'pending'}
+              status={memberCardStatus(member)}
               primaryValue={memberPrimary(member)}
               primaryLabel={awake ? '기상 시간' : '기상 목표'}
-              secondaryValue={member.state === 'NEEDS_HELP' ? '도움 필요' : member.remaining_to_target ? `${member.remaining_to_target.value}${member.remaining_to_target.unit === 'HOUR' ? '시간' : '분'}` : '--'}
-              secondaryLabel={member.state === 'SLEEPING' ? '취침 중' : member.state}
-              actionLabel={member.is_me ? '셀프 인증' : member.can_wake ? '깨우기' : member.block_reason === 'DND' ? '방해금지' : '대기 중'}
-              onPressAction={member.is_me ? () => selfVerify(member) : () => wake(member)}
+              secondaryValue={memberSecondary(member)}
+              secondaryLabel={member.state === 'SLEEPING' ? '취침 중' : member.remaining_to_target ? '목표까지' : member.state}
+              actionLabel={memberActionLabel(member)}
+              onPressAction={member.is_me ? () => selfVerify(member) : () => openWakeConfirmation(member)}
               photoUri={member.proof_image_url ?? undefined}
             />
           );
         })}
       </View>
       <View style={styles.dotsWrapper}><PaginationDots count={Math.max(1, Math.ceil(detail.members.length / 2))} activeIndex={0} /></View>
+      <Modal
+        animationType="fade"
+        onRequestClose={closeWakeConfirmation}
+        statusBarTranslucent
+        transparent
+        visible={wakeConfirmMember !== null}
+      >
+        <View style={styles.wakeConfirmOverlay}>
+          <View style={styles.wakeConfirmPanel}>
+            <Image
+              accessibilityLabel="주의"
+              resizeMode="contain"
+              source={require('../../assets/images/wake-caution.png')}
+              style={styles.wakeConfirmIcon}
+            />
+            <Text style={styles.wakeConfirmTitle}>
+              {`${wakeConfirmMember?.nickname ?? ''}님을 깨울까요?`}
+            </Text>
+            <Text style={styles.wakeConfirmDescription}>깨우기 알림을 보낼게요</Text>
+            <View style={styles.wakeConfirmActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="안 깨울래요"
+                activeOpacity={0.8}
+                disabled={wakingReceiverId !== null}
+                onPress={closeWakeConfirmation}
+                style={[styles.wakeConfirmButton, styles.wakeConfirmCancelButton]}
+              >
+                <Text style={styles.wakeConfirmCancelText}>안 깨울래요</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="깨울게요"
+                activeOpacity={0.8}
+                disabled={wakingReceiverId !== null}
+                onPress={() => confirmWake().catch(() => undefined)}
+                style={[styles.wakeConfirmButton, styles.wakeConfirmAcceptButton]}
+              >
+                <Text style={styles.wakeConfirmAcceptText}>
+                  {wakingReceiverId !== null ? '요청 중...' : '깨울게요'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        animationType="fade"
+        onRequestClose={() => acknowledgeWakeSuccess(false).catch(() => undefined)}
+        statusBarTranslucent
+        transparent
+        visible={wakeSuccessEvent !== null}
+      >
+        <View style={styles.wakeConfirmOverlay}>
+          <View style={styles.wakeSuccessPanel}>
+            <Image
+              accessibilityLabel="깨우기 성공"
+              resizeMode="contain"
+              source={require('../../assets/images/wake-success-clock.png')}
+              style={styles.wakeSuccessIcon}
+            />
+            <Text style={styles.wakeSuccessTitle}>
+              {`${wakeSuccessEvent?.receiver.nickname ?? ''}님 깨우기 성공!`}
+            </Text>
+            <Text style={styles.wakeSuccessDescription}>
+              오늘의 리워드를 보내볼까요?
+            </Text>
+            <View style={styles.wakeSuccessActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="리워드 나중에 보내기"
+                activeOpacity={0.8}
+                disabled={acknowledgingSuccess}
+                onPress={() => acknowledgeWakeSuccess(false).catch(() => undefined)}
+                style={[styles.wakeSuccessButton, styles.wakeSuccessLaterButton]}
+              >
+                <Text style={styles.wakeSuccessLaterText}>나중에</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="리워드 보내기"
+                activeOpacity={0.8}
+                disabled={acknowledgingSuccess}
+                onPress={() => acknowledgeWakeSuccess(true).catch(() => undefined)}
+                style={[styles.wakeSuccessButton, styles.wakeSuccessSendButton]}
+              >
+                <Text style={styles.wakeSuccessSendText}>
+                  {acknowledgingSuccess ? '처리 중...' : '보내기'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -118,6 +335,117 @@ const styles = StyleSheet.create({
   dotsWrapper: { alignItems: 'center', marginTop: DOTS_TOP_SPACING },
   feedback: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white },
   error: { color: colors.grayBorder, fontFamily: 'PretendardMedium' },
+  wakeConfirmOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
+  },
+  wakeConfirmPanel: {
+    width: 320,
+    height: 315,
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: colors.bannerBg,
+  },
+  wakeConfirmIcon: { width: 104, height: 104, marginTop: 26 },
+  wakeConfirmTitle: {
+    marginTop: 15,
+    color: colors.black,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+  },
+  wakeConfirmDescription: {
+    marginTop: 6,
+    color: colors.grayText,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  wakeConfirmActions: {
+    position: 'absolute',
+    right: 14,
+    bottom: 39,
+    left: 14,
+    flexDirection: 'row',
+    columnGap: 16,
+  },
+  wakeConfirmButton: {
+    flex: 1,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  wakeConfirmCancelButton: { backgroundColor: colors.gray },
+  wakeConfirmAcceptButton: { backgroundColor: '#FF4B4B' },
+  wakeConfirmCancelText: {
+    color: colors.grayText,
+    fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  wakeConfirmAcceptText: {
+    color: colors.white,
+    fontFamily: 'PretendardMedium',
+    fontSize: 14,
+    lineHeight: 17,
+  },
+  wakeSuccessPanel: {
+    width: 320,
+    height: 315,
+    alignItems: 'center',
+    paddingTop: 27,
+    borderRadius: 24,
+    backgroundColor: colors.bannerBg,
+    overflow: 'hidden',
+  },
+  wakeSuccessIcon: { width: 104, height: 104 },
+  wakeSuccessTitle: {
+    marginTop: 15,
+    color: colors.black,
+    fontFamily: 'PretendardBold',
+    fontSize: 24,
+    lineHeight: 29,
+    textAlign: 'center',
+  },
+  wakeSuccessDescription: {
+    marginTop: 6,
+    color: colors.grayText,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  wakeSuccessActions: {
+    position: 'absolute',
+    right: 16,
+    bottom: 37,
+    left: 16,
+    flexDirection: 'row',
+    columnGap: 16,
+  },
+  wakeSuccessButton: {
+    flex: 1,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  wakeSuccessLaterButton: { backgroundColor: colors.gray },
+  wakeSuccessSendButton: { backgroundColor: '#FF4B4B' },
+  wakeSuccessLaterText: {
+    color: colors.grayText,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  wakeSuccessSendText: {
+    color: colors.white,
+    fontFamily: 'PretendardMedium',
+    fontSize: 16,
+    lineHeight: 19,
+  },
 });
 
 export default WakeGroupScreen;

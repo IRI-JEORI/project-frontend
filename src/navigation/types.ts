@@ -12,6 +12,7 @@ export type RootStackParamList = {
   DndWindows: undefined;
   FixedSchedules: undefined;
   Stats: undefined;
+  RewardList: undefined;
   InviteCode: undefined;
   AddGroupName: { groupType: 'wake' | 'roommate' };
   WaitingForMembers: { groupId: number; groupType: 'wake'; groupName?: string };
@@ -39,6 +40,16 @@ export type RootStackParamList = {
     recipientName?: string;
     photographer?: 'jiwoo' | 'minju';
     onComplete?: (photoUri: string) => void;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
+  };
+  PhotoAnalysis: {
+    photoPath: string;
+    photoUri?: string;
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    attempt?: number;
     requestId?: number;
     groupId?: number;
     verificationMode?: 'wake-proof' | 'self-verify';

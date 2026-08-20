@@ -29,7 +29,8 @@ const baseParams: RootStackParamList['PhotoReview'] = {
 const createScreen = async (params = baseParams) => {
   const navigation = {
     goBack: jest.fn(),
-    replace: jest.fn(),
+    navigate: jest.fn(),
+    addListener: jest.fn(() => jest.fn()),
   };
   let renderer!: ReactTestRenderer.ReactTestRenderer;
   await act(async () => {
@@ -57,64 +58,38 @@ describe('PhotoReviewScreen backend flow', () => {
     jest.clearAllMocks();
   });
 
-  it('uploads the captured photo and preserves self-verify params on success', async () => {
-    const proofResult = {
-      wake_request_id: 31,
-      attempt_no: 1,
-      pose_match_score: 95,
-      pose_match_result: 'SUCCESS' as const,
-      request_status: 'VERIFIED' as const,
-      remaining_attempts: 1,
-      can_retry: false,
-    };
-    jest.mocked(nunnunApi.wake.uploadProof).mockResolvedValue(proofResult);
+  it('opens analysis without uploading and preserves backend params', async () => {
     const { navigation, renderer } = await createScreen();
 
     await press(renderer, '사진 올리기');
 
-    expect(nunnunApi.wake.uploadProof).toHaveBeenCalledWith(
-      31,
-      'file:///cache/photo.jpg',
-    );
-    expect(navigation.replace).toHaveBeenCalledWith(
-      'PhotoAnalysisSuccess',
+    expect(nunnunApi.wake.uploadProof).not.toHaveBeenCalled();
+    expect(navigation.navigate).toHaveBeenCalledWith(
+      'PhotoAnalysis',
       expect.objectContaining({
+        photoPath: '/cache/photo.jpg',
+        photoUri: 'file:///cache/photo.jpg',
         requestId: 31,
         groupId: 17,
         verificationMode: 'self-verify',
-        proofResult,
       }),
     );
   });
 
-  it('preserves wake-proof retry params on analysis failure', async () => {
-    const proofResult = {
-      wake_request_id: 31,
-      attempt_no: 1,
-      pose_match_score: 30,
-      pose_match_result: 'FAIL' as const,
-      request_status: 'SENT' as const,
-      remaining_attempts: 1,
-      can_retry: true,
-    };
-    jest.mocked(nunnunApi.wake.uploadProof).mockResolvedValue(proofResult);
+  it('opens only one analysis screen on a rapid double press', async () => {
     const { navigation, renderer } = await createScreen({
       ...baseParams,
       verificationMode: 'wake-proof',
     });
 
-    await press(renderer, '사진 올리기');
+    const button = renderer.root.findByProps({ accessibilityLabel: '사진 올리기' });
+    await act(async () => {
+      button.props.onPress();
+      button.props.onPress();
+    });
 
-    expect(navigation.replace).toHaveBeenCalledWith(
-      'PhotoAnalysisFailure',
-      expect.objectContaining({
-        attempt: 1,
-        requestId: 31,
-        groupId: 17,
-        verificationMode: 'wake-proof',
-        proofResult,
-      }),
-    );
+    expect(navigation.navigate).toHaveBeenCalledTimes(1);
+    expect(nunnunApi.wake.uploadProof).not.toHaveBeenCalled();
   });
 
   it('returns to CameraCapture when retaking the photo', async () => {
@@ -136,7 +111,7 @@ describe('PhotoReviewScreen backend flow', () => {
     await press(renderer, '사진 올리기');
 
     expect(nunnunApi.wake.uploadProof).not.toHaveBeenCalled();
-    expect(navigation.replace).not.toHaveBeenCalled();
+    expect(navigation.navigate).not.toHaveBeenCalled();
     expect(alert).toHaveBeenCalledWith(
       '인증사진 제출 불가',
       '깨우기 요청 정보가 없어 사진을 제출할 수 없어요.',

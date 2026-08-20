@@ -19,11 +19,13 @@ import type {
   UpdateCurrentUserRequest,
   UpdateFixedScheduleRequest,
   WakeGroupDetail,
+  PendingWakeSuccess,
   WakeGroupCreated,
   WakeGroupPreview,
   WakeGroupJoinResult,
   WakeGroupUpdated,
   WakeProofResult,
+  WakeProofShareResult,
   WakeRequest,
   WakeRequestCreated,
   WakeTarget,
@@ -170,6 +172,10 @@ export const groupApi = {
     apiRequest<{ invite_code: string }>(
       `/wake-groups/${encode(id)}/invite-code`,
     ),
+  getPendingWakeSuccess: (id: number) =>
+    apiRequest<PendingWakeSuccess | null>(
+      `/wake-groups/${encode(id)}/wake-successes/pending`,
+    ),
 };
 
 export const wakeApi = {
@@ -182,6 +188,10 @@ export const wakeApi = {
     apiRequest<WakeRequest>(`/wake-requests/${encode(wakeRequestId)}`),
   getPendingRequest: () =>
     apiRequest<WakeRequest | null>('/me/wake-requests/pending'),
+  decline: (wakeRequestId: number) =>
+    apiRequest<void>(`/wake-requests/${encode(wakeRequestId)}/decline`, {
+      method: 'POST',
+    }),
   uploadProof: (wakeRequestId: number, imagePath: string) =>
     apiRequest<WakeProofResult>(
       `/wake-requests/${encode(wakeRequestId)}/proof`,
@@ -190,6 +200,19 @@ export const wakeApi = {
         bodyFactory: () => createImageFormData(imagePath),
         timeoutMs: UPLOAD_TIMEOUT_MS,
       },
+    ),
+  shareProof: (wakeRequestId: number, groupIds: number[]) =>
+    apiRequest<WakeProofShareResult>(
+      `/wake-requests/${encode(wakeRequestId)}/proof/share`,
+      {
+        method: 'POST',
+        body: { group_ids: groupIds },
+      },
+    ),
+  acknowledgeSuccess: (wakeRequestId: number) =>
+    apiRequest<void>(
+      `/wake-requests/${encode(wakeRequestId)}/success/ack`,
+      { method: 'POST' },
     ),
   startSelfVerify: (groupId: number) =>
     apiRequest<SelfVerifyCreated>(`/wake-groups/${encode(groupId)}/self-verify`, {

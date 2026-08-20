@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   StatusBar,
   StyleSheet,
@@ -16,6 +17,7 @@ import { Colors } from '../constants/Colors';
 import WakeTimerTrack from '../assets/images/wake-timer-track.svg';
 import WakeTimerProgress from '../assets/images/wake-timer-progress.svg';
 import { ApiError, nunnunApi, type WakeRequest } from '../api';
+import { createWakeProofCompletionState } from '../navigation/selfVerifyNavigation';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -54,6 +56,8 @@ export const WakeNotificationScreen = ({ navigation, route }: Props) => {
   const [wakeRequest, setWakeRequest] = useState<WakeRequest | null>(null);
   const [loading, setLoading] = useState(requestId !== undefined);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [declining, setDeclining] = useState(false);
+  const declineInFlight = useRef(false);
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
@@ -74,6 +78,10 @@ export const WakeNotificationScreen = ({ navigation, route }: Props) => {
       .getRequest(requestId)
       .then(request => {
         if (active) {
+          if (request.sender.id === request.receiver.id) {
+            navigation.reset(createWakeProofCompletionState(request.group_id));
+            return;
+          }
           setWakeRequest(request);
         }
       })
@@ -91,7 +99,50 @@ export const WakeNotificationScreen = ({ navigation, route }: Props) => {
     return () => {
       active = false;
     };
-  }, [requestId]);
+  }, [navigation, requestId]);
+
+  const declineRequest = () => {
+    if (!wakeRequest || declineInFlight.current) {
+      return;
+    }
+    declineInFlight.current = true;
+    Alert.alert(
+      '인증을 하지 않을까요?',
+      '인증하지 않으면 그룹원에게 도움이 필요한 상태로 표시돼요.',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+          onPress: () => {
+            declineInFlight.current = false;
+          },
+        },
+        {
+          text: '인증하지 않기',
+          style: 'destructive',
+          onPress: async () => {
+            setDeclining(true);
+            try {
+              await nunnunApi.wake.decline(wakeRequest.id);
+              navigation.reset(
+                createWakeProofCompletionState(wakeRequest.group_id),
+              );
+            } catch {
+              Alert.alert('알림', '인증 거부에 실패했어요. 다시 시도해주세요.');
+              declineInFlight.current = false;
+              setDeclining(false);
+            }
+          },
+        },
+      ],
+      {
+        cancelable: true,
+        onDismiss: () => {
+          declineInFlight.current = false;
+        },
+      },
+    );
+  };
 
   if (loading) {
     return (
@@ -233,6 +284,21 @@ export const WakeNotificationScreen = ({ navigation, route }: Props) => {
         >
           <Text style={styles.cameraButtonText}>인증사진 찍기</Text>
         </TouchableOpacity>
+        {wakeRequest ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="인증하지 않을래요"
+            disabled={declining}
+            onPress={declineRequest}
+            style={[styles.declineButton, { bottom: 91 * scale }]}
+          >
+            {declining ? (
+              <ActivityIndicator color={Colors.textGray} />
+            ) : (
+              <Text style={styles.declineButtonText}>인증하지 않을래요</Text>
+            )}
+          </TouchableOpacity>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -331,5 +397,18 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardSemiBold',
     fontSize: 18,
     lineHeight: 23,
+  },
+  declineButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  declineButtonText: {
+    color: Colors.textGray,
+    fontFamily: 'PretendardMedium',
+    fontSize: 15,
+    lineHeight: 20,
+    textDecorationLine: 'underline',
   },
 });

@@ -5,7 +5,7 @@ import { colors } from '../../../theme/tokens';
 
 export interface MemberCardProps {
   name: string;
-  status: 'pending' | 'done';
+  status: 'pending' | 'done' | 'needsHelp' | 'dnd';
   primaryValue: string;
   primaryLabel: string;
   secondaryValue: string;
@@ -30,12 +30,34 @@ const MemberCard = ({
   photoUri,
 }: MemberCardProps) => {
   const isDone = status === 'done';
-  const textColor = isDone ? colors.brown : 'rgba(172,172,172,0.85)';
+  const needsHelp = status === 'needsHelp';
+  const isDnd = status === 'dnd';
+  const textColor = needsHelp || isDnd ? colors.white : isDone ? colors.brown : 'rgba(172,172,172,0.85)';
 
   return (
     <View style={styles.container}>
-      <View style={styles.photo}>
-        {photoUri ? (
+      <View style={[styles.photo, needsHelp && styles.helpNeededCard, isDnd && styles.dndCard]}>
+        {needsHelp ? (
+          <View style={styles.helpContent}>
+            <Image
+              accessibilityLabel="도움이 필요해요"
+              source={require('../../../assets/images/wake-help-fire.png')}
+              style={styles.helpFire}
+              resizeMode="contain"
+            />
+            <Text style={styles.helpNeededText}>도움이 필요해요!</Text>
+          </View>
+        ) : isDnd ? (
+          <View style={styles.dndContent}>
+            <Image
+              accessibilityLabel="수업 중"
+              source={require('../../../assets/images/class-in-progress-pen.png')}
+              style={styles.dndPen}
+              resizeMode="contain"
+            />
+            <Text style={styles.dndText}>방해하지 말아주세요</Text>
+          </View>
+        ) : photoUri ? (
           <Image
             source={{ uri: photoUri }}
             style={styles.photoImage}
@@ -46,8 +68,8 @@ const MemberCard = ({
           <View style={styles.photoPlaceholder} />
         )}
         <View style={styles.avatarRow}>
-          <View style={styles.avatarDot} />
-          <Text style={styles.name}>{name}</Text>
+          <View style={[styles.avatarDot, (needsHelp || isDnd) && styles.avatarDotOnDark]} />
+          <Text style={[styles.name, (needsHelp || isDnd) && styles.textOnDark]}>{name}</Text>
         </View>
         <View style={styles.statsRow}>
           <View style={styles.statColumn}>
@@ -72,7 +94,8 @@ const MemberCard = ({
         <Button
           label={actionLabel}
           size="medium"
-          onPress={isDone ? undefined : onPressAction}
+          onPress={isDone || isDnd ? undefined : onPressAction}
+          disabled={isDone || isDnd}
         />
       </View>
     </View>
@@ -96,6 +119,42 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.scheduleGridGray,
   },
+  helpNeededCard: {
+    backgroundColor: '#FF4B4B',
+  },
+  dndCard: {
+    backgroundColor: '#202224',
+  },
+  helpContent: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpFire: {
+    width: 80,
+    height: 80,
+  },
+  helpNeededText: {
+    marginTop: 1,
+    color: colors.white,
+    fontFamily: 'PretendardBold',
+    fontSize: 14,
+  },
+  dndContent: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dndPen: {
+    width: 80,
+    height: 80,
+  },
+  dndText: {
+    marginTop: 1,
+    color: colors.white,
+    fontFamily: 'PretendardBold',
+    fontSize: 14,
+  },
   photoImage: {
     position: 'absolute',
     top: 0,
@@ -114,10 +173,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: colors.gray,
   },
+  avatarDotOnDark: {
+    backgroundColor: colors.white,
+  },
   name: {
     fontSize: 8,
     fontFamily: 'PretendardSemiBold',
     color: colors.black,
+  },
+  textOnDark: {
+    color: colors.white,
   },
   statsRow: {
     flexDirection: 'row',

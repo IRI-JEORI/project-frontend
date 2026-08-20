@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   StatusBar,
   StyleSheet,
@@ -26,6 +28,8 @@ import PoseResultRingTrack from '../assets/images/pose-result-ring-track.svg';
 import PoseResultRingProgress from '../assets/images/pose-result-ring-progress.svg';
 import GroupSelectedCheck from '../assets/images/group-selected-check.svg';
 import { createWakeProofCompletionState } from '../navigation/selfVerifyNavigation';
+import { nunnunApi } from '../api';
+import type { GroupSummary } from '../api/types';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -40,6 +44,10 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([
     SHARE_GROUPS[0],
   ]);
+  const [backendGroups, setBackendGroups] = useState<GroupSummary[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [shareSaving, setShareSaving] = useState(false);
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
   const isBackendResult = route.params.proofResult !== undefined;
@@ -83,13 +91,36 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
 
   useEffect(() => {
     if (isBackendResult) {
+      let isActive = true;
       const timer = setTimeout(() => {
-        navigation.reset(
-          createWakeProofCompletionState(route.params.groupId),
-        );
+        setGroupsLoading(true);
+        nunnunApi.group.list()
+          .then(response => {
+            if (!isActive) return;
+            const wakeGroups = response.groups.filter(group => group.type === 'WAKE');
+            setBackendGroups(wakeGroups);
+            setSelectedGroupIds(
+              route.params.groupId !== undefined &&
+                wakeGroups.some(group => group.id === route.params.groupId)
+                ? [route.params.groupId]
+                : [],
+            );
+            setShareSheetVisible(true);
+          })
+          .catch(() => {
+            if (!isActive) return;
+            setShareSheetVisible(true);
+            Alert.alert('그룹 조회 실패', '공유할 그룹을 불러오지 못했어요.');
+          })
+          .finally(() => {
+            if (isActive) setGroupsLoading(false);
+          });
       }, SHARE_SHEET_DELAY_MS);
 
-      return () => clearTimeout(timer);
+      return () => {
+        isActive = false;
+        clearTimeout(timer);
+      };
     }
 
     let isActive = true;
@@ -136,6 +167,24 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
   ]);
 
   const confirmShare = async () => {
+    if (isBackendResult) {
+      if (shareSaving || selectedGroupIds.length === 0) return;
+      const requestId = route.params.requestId ?? route.params.proofResult?.wake_request_id;
+      if (requestId === undefined) {
+        Alert.alert('공유 실패', '인증 요청 정보를 찾을 수 없어요.');
+        return;
+      }
+      setShareSaving(true);
+      try {
+        await nunnunApi.wake.shareProof(requestId, selectedGroupIds);
+        navigation.reset(createWakeProofCompletionState(route.params.groupId));
+      } catch {
+        Alert.alert('공유 실패', '인증 정보를 공유하지 못했어요. 다시 시도해주세요.');
+      } finally {
+        setShareSaving(false);
+      }
+      return;
+    }
     await completeVerification(selectedGroups);
   };
 
@@ -144,6 +193,15 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
       groups.includes(groupName)
         ? groups.filter(group => group !== groupName)
         : [...groups, groupName],
+    );
+  };
+
+  const toggleBackendGroup = (groupId: number) => {
+    if (groupId === route.params.groupId) return;
+    setSelectedGroupIds(groupIds =>
+      groupIds.includes(groupId)
+        ? groupIds.filter(id => id !== groupId)
+        : [...groupIds, groupId],
     );
   };
 
@@ -238,16 +296,25 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
               선택한 그룹에만 내 정보가 입력돼요
             </Text>
 
-            {SHARE_GROUPS.map((groupName, index) => {
-              const selected = selectedGroups.includes(groupName);
+            {(isBackendResult ? backendGroups : SHARE_GROUPS).map((group, index) => {
+              const groupId = typeof group === 'string' ? undefined : group.id;
+              const groupName = typeof group === 'string' ? group : group.name;
+              const selected = groupId === undefined
+                ? selectedGroups.includes(groupName)
+                : selectedGroupIds.includes(groupId);
               return (
                 <TouchableOpacity
-                  key={groupName}
+                  key={groupId ?? groupName}
                   accessibilityRole="checkbox"
                   accessibilityLabel={`${groupName} 공유`}
                   accessibilityState={{ checked: selected }}
                   activeOpacity={0.75}
-                  onPress={() => toggleGroup(groupName)}
+                  disabled={shareSaving || groupId === route.params.groupId}
+                  onPress={() =>
+                    groupId === undefined
+                      ? toggleGroup(groupName)
+                      : toggleBackendGroup(groupId)
+                  }
                   style={[
                     styles.groupOption,
                     { top: (134 + index * 46) * scale },
@@ -275,15 +342,29 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
               );
             })}
 
+            {isBackendResult && groupsLoading && (
+              <ActivityIndicator
+                accessibilityLabel="공유 그룹 불러오는 중"
+                color={Colors.secondary}
+                style={styles.groupsLoading}
+              />
+            )}
+
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel="공유할 그룹 확인"
               activeOpacity={0.8}
-              disabled={selectedGroups.length === 0}
+              disabled={
+                isBackendResult
+                  ? selectedGroupIds.length === 0 || groupsLoading || shareSaving
+                  : selectedGroups.length === 0
+              }
               onPress={() => confirmShare().catch(() => undefined)}
               style={[
                 styles.confirmButton,
-                selectedGroups.length === 0 && styles.confirmButtonDisabled,
+                (isBackendResult
+                  ? selectedGroupIds.length === 0 || groupsLoading || shareSaving
+                  : selectedGroups.length === 0) && styles.confirmButtonDisabled,
                 {
                   left: 15 * scale,
                   top: 407 * scale,
@@ -293,7 +374,9 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
                 },
               ]}
             >
-              <Text style={styles.confirmButtonText}>확인</Text>
+              <Text style={styles.confirmButtonText}>
+                {shareSaving ? '공유 중...' : '확인'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -406,6 +489,11 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardMedium',
     fontSize: 16,
     lineHeight: 19,
+  },
+  groupsLoading: {
+    position: 'absolute',
+    top: 190,
+    alignSelf: 'center',
   },
   unselectedCheck: {
     borderWidth: 1,

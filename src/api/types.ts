@@ -114,6 +114,16 @@ export type WakeGroupDetail = {
   members: WakeGroupMember[];
 };
 
+export type PendingWakeSuccess = {
+  wake_request_id: number;
+  group_id: number;
+  receiver: {
+    id: number;
+    nickname: string;
+  };
+  verified_at: string;
+};
+
 export type WakeGroupCreated = {
   id: number;
   name: string;
@@ -187,6 +197,10 @@ export type WakeProofResult = {
   verified_at?: string;
   cooldown_until?: string;
   proof_expires_at?: string;
+};
+
+export type WakeProofShareResult = {
+  group_ids: number[];
 };
 
 export type FixedSchedule = {

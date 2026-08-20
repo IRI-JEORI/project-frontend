@@ -73,9 +73,13 @@ export type RootStackParamList = {
   WakeNotification: { requestId: number } | undefined;
   PhotoAnalysis: {
     photoPath: string;
+    photoUri?: string;
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
     attempt?: number;
+    requestId?: number;
+    groupId?: number;
+    verificationMode?: 'wake-proof' | 'self-verify';
   };
   PhotoAnalysisSuccess: {
     photoPath: string;

@@ -10,6 +10,7 @@ import { colors } from '../../theme/tokens';
 export interface ButtonProps {
   label: string;
   onPress?: (event: GestureResponderEvent) => void;
+  disabled?: boolean;
   size?: 'large' | 'medium';
   variant?: 'primary' | 'secondary';
 }
@@ -17,6 +18,7 @@ export interface ButtonProps {
 const Button = ({
   label,
   onPress,
+  disabled = false,
   size = 'large',
   variant = 'primary',
 }: ButtonProps) => {
@@ -28,6 +30,8 @@ const Button = ({
         variant === 'secondary' && styles.buttonSecondary,
       ]}
       onPress={onPress}
+      disabled={disabled}
+      accessibilityState={{ disabled }}
       activeOpacity={0.8}
     >
       <Text

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -14,6 +14,7 @@ import SettingsRow from './components/SettingsRow';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
 import AddScheduleMethodModal from './components/AddScheduleMethodModal';
 import ManualScheduleSheet from './components/ManualScheduleSheet';
+import DndWindowSheet from './components/DndWindowSheet';
 
 type SectionKey = 'FIXED' | 'DND' | 'SETTINGS' | 'REWARD';
 type ScheduleModal = 'METHOD' | 'MANUAL' | null;
@@ -28,6 +29,9 @@ const PersonalGroupScreen = () => {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [scheduleModal, setScheduleModal] = useState<ScheduleModal>(null);
   const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [dndSheetVisible, setDndSheetVisible] = useState(false);
+  const [dndSaving, setDndSaving] = useState(false);
+  const dndSavingRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -89,6 +93,28 @@ const PersonalGroupScreen = () => {
     }
   };
 
+  const createDndWindow = async (displayText: string) => {
+    if (dndSavingRef.current) return false;
+    dndSavingRef.current = true;
+    setDndSaving(true);
+    try {
+      await nunnunApi.dnd.create(displayText);
+      const dnd = await nunnunApi.dnd.list();
+      setDndWindows(dnd.windows);
+      setDndSheetVisible(false);
+      return true;
+    } catch (error) {
+      Alert.alert(
+        '저장 실패',
+        error instanceof ApiError ? error.message : '방해금지 시간을 저장하지 못했어요.',
+      );
+      return false;
+    } finally {
+      dndSavingRef.current = false;
+      setDndSaving(false);
+    }
+  };
+
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -104,11 +130,10 @@ const PersonalGroupScreen = () => {
           </AccordionSection>
           <AccordionSection title="방해금지 시간대" rightLabel={`${dndWindows.length}개 적용 중이에요`} expanded={expandedSections.has('DND')} onToggle={() => toggleSection('DND')}>
             {dndWindows.map(item => <ScheduleRow key={item.id} label={item.display_text} />)}
-            <AddRowButton label="방해금지 시간대 관리하기" onPress={() => navigation.navigate('DndWindows')} />
+            <AddRowButton label="방해금지 시간대 추가하기" onPress={() => setDndSheetVisible(true)} />
           </AccordionSection>
           <AccordionSection title="설정" expanded={expandedSections.has('SETTINGS')} onToggle={() => toggleSection('SETTINGS')}>
             <SettingsRow label="로그아웃" onPress={() => setLogoutModalVisible(true)} />
-            <SettingsRow label="상세 설정" onPress={() => navigation.navigate('Settings')} />
             <SettingsRow label="기상 통계" onPress={() => navigation.navigate('Stats')} />
           </AccordionSection>
           <AccordionSection title="내 리워드" expanded={expandedSections.has('REWARD')} onToggle={() => toggleSection('REWARD')}>
@@ -128,6 +153,12 @@ const PersonalGroupScreen = () => {
         submitting={scheduleSaving}
         onClose={() => setScheduleModal(null)}
         onConfirm={createFixedSchedule}
+      />
+      <DndWindowSheet
+        visible={dndSheetVisible}
+        submitting={dndSaving}
+        onClose={() => setDndSheetVisible(false)}
+        onConfirm={createDndWindow}
       />
     </>
   );

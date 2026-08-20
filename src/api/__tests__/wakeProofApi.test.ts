@@ -105,4 +105,54 @@ describe('wake proof API', () => {
     ).rejects.toMatchObject({ status, code, message: 'proof error' });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
+
+  it('shares a successful proof with selected group ids', async () => {
+    const shared = { group_ids: [2, 5] };
+    globalThis.fetch = jest.fn(() =>
+      response({ success: true, data: shared }),
+    ) as jest.Mock;
+
+    await expect(nunnunApi.wake.shareProof(31, [2, 5])).resolves.toEqual(shared);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/wake-requests\/31\/proof\/share$/),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer access-token',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({ group_ids: [2, 5] }),
+      }),
+    );
+  });
+
+  it('loads and acknowledges a pending sender wake success', async () => {
+    const pending = {
+      wake_request_id: 64,
+      group_id: 7,
+      receiver: { id: 22, nickname: '상대 멤버' },
+      verified_at: '2026-08-20T09:03:00+09:00',
+    };
+    globalThis.fetch = jest
+      .fn()
+      .mockImplementationOnce(() => response({ success: true, data: pending }))
+      .mockImplementationOnce(() => response({ success: true, data: null }));
+
+    await expect(nunnunApi.group.getPendingWakeSuccess(7)).resolves.toEqual(pending);
+    await expect(nunnunApi.wake.acknowledgeSuccess(64)).resolves.toBeNull();
+
+    expect(fetch).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/\/wake-groups\/7\/wake-successes\/pending$/),
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer access-token' }),
+      }),
+    );
+    expect(fetch).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/\/wake-requests\/64\/success\/ack$/),
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
 });

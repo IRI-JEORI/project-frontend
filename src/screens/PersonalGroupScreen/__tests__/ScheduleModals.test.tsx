@@ -3,6 +3,8 @@ import { Text, TextInput, TouchableOpacity } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import AddScheduleMethodModal from '../components/AddScheduleMethodModal';
 import ManualScheduleSheet from '../components/ManualScheduleSheet';
+import DndWindowSheet from '../components/DndWindowSheet';
+import { Alert } from 'react-native';
 
 const pressText = (root: ReactTestRenderer.ReactTestInstance, label: string) => {
   const text = root.findAllByType(Text).find(node => node.props.children === label);
@@ -92,5 +94,58 @@ describe('PersonalGroup schedule modals', () => {
       startTime: '09:00',
       endTime: '10:30',
     });
+  });
+
+  it('submits a DND display string using the backend contract', async () => {
+    const onConfirm = jest.fn(() => Promise.resolve(true));
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+    await act(() => {
+      renderer = ReactTestRenderer.create(
+        <DndWindowSheet visible onClose={jest.fn()} onConfirm={onConfirm} />,
+      );
+    });
+
+    const inputs = renderer.root.findAllByType(TextInput);
+    act(() => {
+      pressText(renderer.root, '수');
+      inputs[0].props.onChangeText('09:00');
+      inputs[1].props.onChangeText('10:30');
+    });
+    await act(async () => {
+      const confirm = renderer.root
+        .findAllByType(TouchableOpacity)
+        .find(node => node.props.accessibilityLabel === '방해금지 시간 저장');
+      await confirm?.props.onPress();
+    });
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledWith('수요일, 09:00~10:30');
+  });
+
+  it('blocks an invalid DND time range', async () => {
+    const onConfirm = jest.fn(() => Promise.resolve(true));
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+    await act(() => {
+      renderer = ReactTestRenderer.create(
+        <DndWindowSheet visible onClose={jest.fn()} onConfirm={onConfirm} />,
+      );
+    });
+
+    const inputs = renderer.root.findAllByType(TextInput);
+    act(() => {
+      inputs[0].props.onChangeText('11:00');
+      inputs[1].props.onChangeText('10:00');
+    });
+    await act(async () => {
+      const confirm = renderer.root
+        .findAllByType(TouchableOpacity)
+        .find(node => node.props.accessibilityLabel === '방해금지 시간 저장');
+      await confirm?.props.onPress();
+    });
+
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledWith('입력 확인', '시작 시간은 종료 시간보다 빨라야 해요.');
+    alert.mockRestore();
   });
 });
