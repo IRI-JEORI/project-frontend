@@ -105,7 +105,7 @@ describe('wake group invite preview and join API', () => {
   it.each([
     'INVALID_CODE',
     'GROUP_FULL',
-    'ALREADY_IN_WAKE_GROUP',
+    'WAKE_GROUP_LIMIT_REACHED',
     'ALREADY_MEMBER',
   ])('parses the %s preview reason without treating it as HTTP failure', async reason => {
     const preview = {
@@ -306,13 +306,17 @@ describe('group list API', () => {
         data: {
           groups: [
             { id: 1, type: 'WAKE', name: '아침 야호', status: null },
+            { id: 2, type: 'WAKE', name: '기상 원정대', status: null },
           ],
         },
       }),
     ) as jest.Mock;
 
     await expect(nunnunApi.group.list()).resolves.toEqual({
-      groups: [{ id: 1, type: 'WAKE', name: '아침 야호', status: null }],
+      groups: [
+        { id: 1, type: 'WAKE', name: '아침 야호', status: null },
+        { id: 2, type: 'WAKE', name: '기상 원정대', status: null },
+      ],
     });
     expect(fetch).toHaveBeenCalledWith(
       expect.stringMatching(/\/groups$/),

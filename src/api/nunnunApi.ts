@@ -180,6 +180,8 @@ export const wakeApi = {
     ),
   getRequest: (wakeRequestId: number) =>
     apiRequest<WakeRequest>(`/wake-requests/${encode(wakeRequestId)}`),
+  getPendingRequest: () =>
+    apiRequest<WakeRequest | null>('/me/wake-requests/pending'),
   uploadProof: (wakeRequestId: number, imagePath: string) =>
     apiRequest<WakeProofResult>(
       `/wake-requests/${encode(wakeRequestId)}/proof`,
@@ -189,8 +191,8 @@ export const wakeApi = {
         timeoutMs: UPLOAD_TIMEOUT_MS,
       },
     ),
-  startSelfVerify: () =>
-    apiRequest<SelfVerifyCreated>('/me/self-verify', {
+  startSelfVerify: (groupId: number) =>
+    apiRequest<SelfVerifyCreated>(`/wake-groups/${encode(groupId)}/self-verify`, {
       method: 'POST',
     }),
 };

@@ -6,8 +6,29 @@ export const navigationRef =
 
 let pendingWakeRequestId: number | null = null;
 
+export const createAuthenticatedNavigationState = (requestId?: number) => ({
+  index: requestId === undefined ? 0 : 1,
+  routes: requestId === undefined
+    ? [{ name: 'Home' as const }]
+    : [
+        { name: 'Home' as const },
+        { name: 'WakeNotification' as const, params: { requestId } },
+      ],
+});
+
+export const isSameWakeNotificationRoute = (
+  route: { name: string; params?: unknown } | undefined,
+  requestId: number,
+) =>
+  route?.name === 'WakeNotification' &&
+  (route.params as { requestId?: number } | undefined)?.requestId === requestId;
+
 export const openWakeNotification = (requestId: number) => {
   if (navigationRef.isReady()) {
+    const currentRoute = navigationRef.getCurrentRoute();
+    if (isSameWakeNotificationRoute(currentRoute, requestId)) {
+      return;
+    }
     navigationRef.navigate('WakeNotification', { requestId });
     return;
   }

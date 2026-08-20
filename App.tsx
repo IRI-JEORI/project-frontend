@@ -16,7 +16,7 @@ import type { WakeProofResult } from './src/api';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { InviteCodeScreen as MainInviteCodeScreen } from './src/screens/InviteCodeScreen';
 import { CameraCaptureScreen as MainCameraCaptureScreen } from './src/screens/CameraCaptureScreen';
-import MainPhotoReviewScreen from './src/screens/PhotoReviewScreen/index';
+import { PhotoReviewScreen as MainPhotoReviewScreen } from './src/screens/PhotoReviewScreen.tsx';
 import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
 import { PhotoAnalysisScreen } from './src/screens/PhotoAnalysisScreen';
 import { PhotoAnalysisSuccessScreen } from './src/screens/PhotoAnalysisSuccessScreen';

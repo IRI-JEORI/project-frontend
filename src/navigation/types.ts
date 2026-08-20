@@ -18,6 +18,12 @@ export type RootStackParamList = {
   WakeGroupDetail: { groupId: number };
   WakeAlarm: { memberName: string; onComplete: (photoUri: string) => void };
   WakeNotification: { requestId: number } | undefined;
+  SelfWakeVerification: {
+    recipientName: string;
+    photographer: 'jiwoo' | 'minju';
+    groupId?: number;
+    groupName?: string;
+  };
   CameraCapture: {
     memberName?: string;
     onComplete?: (photoUri: string) => void;

@@ -6,9 +6,10 @@ import { nunnunApi } from '../../../api';
 import { registerDeviceAfterLogin } from '../../../notifications/messaging';
 
 const mockNavigate = jest.fn();
+const mockReset = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: mockNavigate }),
+  useNavigation: () => ({ navigate: mockNavigate, reset: mockReset }),
 }));
 
 jest.mock('../../../api', () => ({
@@ -18,11 +19,26 @@ jest.mock('../../../api', () => ({
       getDemoAccounts: jest.fn(),
       demoLogin: jest.fn(),
     },
+    wake: {
+      getPendingRequest: jest.fn(),
+    },
   },
 }));
 
 jest.mock('../../../notifications/messaging', () => ({
   registerDeviceAfterLogin: jest.fn(),
+}));
+
+jest.mock('../../../navigation/rootNavigation', () => ({
+  createAuthenticatedNavigationState: (requestId?: number) => ({
+    index: requestId === undefined ? 0 : 1,
+    routes: requestId === undefined
+      ? [{ name: 'Home' }]
+      : [
+          { name: 'Home' },
+          { name: 'WakeNotification', params: { requestId } },
+        ],
+  }),
 }));
 
 jest.mock('../../../components/Logo', () => 'Logo');
@@ -44,6 +60,7 @@ describe('LoginScreen demo account selection', () => {
       user: accounts[0],
     });
     jest.mocked(registerDeviceAfterLogin).mockResolvedValue(undefined);
+    jest.mocked(nunnunApi.wake.getPendingRequest).mockResolvedValue(null);
   });
 
   it.each([
@@ -68,7 +85,73 @@ describe('LoginScreen demo account selection', () => {
     expect(nunnunApi.auth.demoLogin).toHaveBeenCalledTimes(1);
     expect(nunnunApi.auth.demoLogin).toHaveBeenCalledWith(accountId);
     expect(registerDeviceAfterLogin).toHaveBeenCalledTimes(1);
-    expect(mockNavigate).toHaveBeenCalledWith('Home');
+    expect(nunnunApi.wake.getPendingRequest).toHaveBeenCalledTimes(1);
+    expect(mockReset).toHaveBeenCalledWith({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
+  });
+
+  it('opens the newest pending wake request after login', async () => {
+    jest.mocked(nunnunApi.wake.getPendingRequest).mockResolvedValue({
+      id: 42,
+      group_id: 7,
+      status: 'SENT',
+      sender: { id: 8, nickname: '지우' },
+      receiver: { id: 7, nickname: '눈눈' },
+      requested_at: '2026-08-20T19:00:00+09:00',
+      pose: {
+        date: '2026-08-20',
+        code: 'LOW_CROUCH',
+        description: '몸을 낮게 웅크려 앉아주세요.',
+      },
+      attempts_used: 0,
+      remaining_attempts: 2,
+    });
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(<LoginScreen />);
+    });
+    await ReactTestRenderer.act(async () => {
+      renderer.root
+        .findByProps({ accessibilityLabel: 'demo-account-7' })
+        .props.onPress();
+    });
+    await ReactTestRenderer.act(async () => {
+      await renderer.root.findByType(Button).props.onPress();
+    });
+
+    expect(mockReset).toHaveBeenCalledWith({
+      index: 1,
+      routes: [
+        { name: 'Home' },
+        { name: 'WakeNotification', params: { requestId: 42 } },
+      ],
+    });
+    expect(mockNavigate).not.toHaveBeenCalledWith('Home');
+  });
+
+  it('keeps Home navigation when pending recovery fails', async () => {
+    jest.mocked(nunnunApi.wake.getPendingRequest).mockRejectedValue(
+      new Error('network failure'),
+    );
+    let renderer!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      renderer = ReactTestRenderer.create(<LoginScreen />);
+    });
+    await ReactTestRenderer.act(async () => {
+      renderer.root
+        .findByProps({ accessibilityLabel: 'demo-account-7' })
+        .props.onPress();
+    });
+    await ReactTestRenderer.act(async () => {
+      await renderer.root.findByType(Button).props.onPress();
+    });
+
+    expect(mockReset).toHaveBeenCalledWith({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
   });
 
   it('does not submit before an account is selected', async () => {

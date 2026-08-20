@@ -30,6 +30,7 @@ describe('wake request detail API', () => {
       requested_at: '2026-08-19T07:32:00+09:00',
       pose: {
         date: '2026-08-19',
+        code: 'HAND_CROSS',
         description: '두 팔을 앞에서 X자로 교차해주세요.',
       },
       attempts_used: 1,
@@ -73,5 +74,45 @@ describe('wake request detail API', () => {
       expect.stringMatching(/\/auth\/reissue$/),
       expect.anything(),
     );
+  });
+
+  it('gets and unwraps the pending wake request with JWT', async () => {
+    const pending = {
+      id: 42,
+      group_id: 9,
+      status: 'SENT',
+      sender: { id: 7, nickname: '눈눈' },
+      receiver: { id: 8, nickname: '지우' },
+      requested_at: '2026-08-20T19:00:00+09:00',
+      pose: {
+        date: '2026-08-20',
+        code: 'LOW_CROUCH',
+        description: '몸을 낮게 웅크려 앉아주세요.',
+      },
+      attempts_used: 0,
+      remaining_attempts: 2,
+    };
+    globalThis.fetch = jest.fn(() =>
+      response({ success: true, data: pending }),
+    ) as jest.Mock;
+
+    await expect(nunnunApi.wake.getPendingRequest()).resolves.toEqual(pending);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringMatching(/\/me\/wake-requests\/pending$/),
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer access-token',
+        }),
+      }),
+    );
+  });
+
+  it('treats null pending data as a normal response', async () => {
+    globalThis.fetch = jest.fn(() =>
+      response({ success: true, data: null }),
+    ) as jest.Mock;
+
+    await expect(nunnunApi.wake.getPendingRequest()).resolves.toBeNull();
   });
 });

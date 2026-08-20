@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
 import { ApiError, nunnunApi } from '../api';
 import { Colors } from '../constants/Colors';
+import { groupCompletionResetState } from '../navigation/groupCompletionNavigation';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -47,12 +48,16 @@ export const InviteCodeScreen = ({ navigation }: Props) => {
           '그룹 확인',
           preview.reason === 'GROUP_FULL'
             ? '이미 정원이 가득 찬 그룹이에요.'
-            : '참여할 수 없는 초대코드예요.',
+            : preview.reason === 'WAKE_GROUP_LIMIT_REACHED'
+              ? '깨우기 그룹은 최대 4개까지 참여할 수 있어요.'
+              : preview.reason === 'ALREADY_MEMBER'
+                ? '이미 참여 중인 그룹이에요.'
+                : '참여할 수 없는 초대코드예요.',
         );
         return;
       }
       const joined = await nunnunApi.group.join(inviteCode);
-      navigation.replace('WakeGroupDetail', { groupId: joined.id });
+      navigation.reset(groupCompletionResetState(joined.id));
     } catch (error) {
       Alert.alert(
         '그룹 참여 실패',

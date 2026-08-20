@@ -10,6 +10,7 @@ import BottomLinks from './components/BottomLinks';
 import LoginForm from './components/LoginForm';
 import { registerDeviceAfterLogin } from '../../notifications/messaging';
 import type { User } from '../../api/types';
+import { createAuthenticatedNavigationState } from '../../navigation/rootNavigation';
 
 const LOGO_TOP_SPACING = 198;
 const FORM_TOP_SPACING = 60;
@@ -59,7 +60,18 @@ const LoginScreen = () => {
     try {
       await nunnunApi.auth.demoLogin(selectedAccountId);
       await registerDeviceAfterLogin();
-      navigation.navigate('Home');
+      try {
+        const pendingRequest = await nunnunApi.wake.getPendingRequest();
+        if (pendingRequest) {
+          navigation.reset(
+            createAuthenticatedNavigationState(pendingRequest.id),
+          );
+          return;
+        }
+      } catch {
+        // Pending recovery must not turn a successful login into a login failure.
+      }
+      navigation.reset(createAuthenticatedNavigationState());
     } catch (error) {
       const message =
         error instanceof ApiError

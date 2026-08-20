@@ -52,19 +52,13 @@ const WakeGroupScreen = () => {
     }
   };
 
-  const selfVerify = async (member: WakeGroupMember) => {
-    try {
-      const created = await nunnunApi.wake.startSelfVerify();
-      navigation.navigate('CameraCapture', {
-        recipientName: member.nickname,
-        photographer: 'jiwoo',
-        requestId: created.wake_request_id,
-        groupId: params.groupId,
-        verificationMode: 'self-verify',
-      });
-    } catch (error) {
-      Alert.alert('셀프 인증 실패', error instanceof ApiError ? error.message : '셀프 인증을 시작하지 못했어요.');
-    }
+  const selfVerify = (member: WakeGroupMember) => {
+    navigation.navigate('SelfWakeVerification', {
+      recipientName: member.nickname,
+      photographer: 'jiwoo',
+      groupId: params.groupId,
+      groupName: detail?.name,
+    });
   };
 
   if (loading) {

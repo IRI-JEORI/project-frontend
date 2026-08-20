@@ -20,6 +20,7 @@ import {
 } from '../constants/DemoUser';
 import PoseFailureRingTrack from '../assets/images/pose-failure-ring-track.svg';
 import PoseFailureRingProgress from '../assets/images/pose-failure-ring-progress.svg';
+import { createWakeProofCompletionState } from '../navigation/selfVerifyNavigation';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -46,11 +47,9 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
     }, 1000);
     const timer = setTimeout(() => {
       if (isBackendResult) {
-        if (route.params.groupId !== undefined) {
-          navigation.replace('WakeGroupDetail', { groupId: route.params.groupId });
-        } else {
-          navigation.replace('Home');
-        }
+        navigation.reset(
+          createWakeProofCompletionState(route.params.groupId),
+        );
         return;
       }
 
@@ -86,7 +85,27 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
     navigation,
     route.params.groupId,
     route.params.photographer,
+    route.params.verificationMode,
   ]);
+
+  const retry = () => {
+    const cameraParams = {
+      recipientName: route.params.recipientName,
+      photographer: route.params.photographer,
+      attempt:
+        (route.params.proofResult?.attempt_no ?? route.params.attempt) + 1,
+      requestId: route.params.requestId,
+      groupId: route.params.groupId,
+      verificationMode: route.params.verificationMode,
+    };
+
+    if (route.params.verificationMode === 'self-verify') {
+      navigation.popTo('CameraCapture', cameraParams);
+      return;
+    }
+
+    navigation.replace('CameraCapture', cameraParams);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -192,18 +211,7 @@ export const PhotoAnalysisFailureScreen = ({ navigation, route }: Props) => {
               accessibilityRole="button"
               accessibilityLabel="사진 다시 찍기"
               activeOpacity={0.8}
-              onPress={() =>
-                navigation.replace('CameraCapture', {
-                  recipientName: route.params.recipientName,
-                  photographer: route.params.photographer,
-                  attempt:
-                    (route.params.proofResult?.attempt_no ??
-                      route.params.attempt) + 1,
-                  requestId: route.params.requestId,
-                  groupId: route.params.groupId,
-                  verificationMode: route.params.verificationMode,
-                })
-              }
+              onPress={retry}
               style={[
                 styles.retryButton,
                 {

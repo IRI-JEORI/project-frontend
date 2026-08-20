@@ -25,6 +25,7 @@ import {
 import PoseResultRingTrack from '../assets/images/pose-result-ring-track.svg';
 import PoseResultRingProgress from '../assets/images/pose-result-ring-progress.svg';
 import GroupSelectedCheck from '../assets/images/group-selected-check.svg';
+import { createWakeProofCompletionState } from '../navigation/selfVerifyNavigation';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -83,12 +84,9 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
   useEffect(() => {
     if (isBackendResult) {
       const timer = setTimeout(() => {
-        if (route.params.groupId !== undefined) {
-          navigation.replace('WakeGroupDetail', { groupId: route.params.groupId });
-          return;
-        }
-
-        navigation.replace('Home');
+        navigation.reset(
+          createWakeProofCompletionState(route.params.groupId),
+        );
       }, SHARE_SHEET_DELAY_MS);
 
       return () => clearTimeout(timer);
@@ -134,6 +132,7 @@ export const PhotoAnalysisSuccessScreen = ({ navigation, route }: Props) => {
     navigation,
     route.params.groupId,
     route.params.photographer,
+    route.params.verificationMode,
   ]);
 
   const confirmShare = async () => {

@@ -27,15 +27,6 @@ export const PhotoReviewScreen = ({ navigation, route }: Props) => {
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
 
-  const demoUploadPhoto = () => {
-    navigation.replace('PhotoAnalysis', {
-      photoPath: route.params.photoPath,
-      recipientName: route.params.recipientName,
-      photographer: route.params.photographer,
-      attempt: route.params.attempt ?? 1,
-    });
-  };
-
   const proofErrorMessage = (error: unknown) => {
     if (!(error instanceof ApiError)) {
       return '인증사진을 전송하지 못했어요. 다시 시도해주세요.';
@@ -86,7 +77,8 @@ export const PhotoReviewScreen = ({ navigation, route }: Props) => {
         );
         return;
       }
-      demoUploadPhoto();
+      route.params.onComplete?.(route.params.photoUri);
+      navigation.goBack();
       return;
     }
 
@@ -94,7 +86,7 @@ export const PhotoReviewScreen = ({ navigation, route }: Props) => {
     try {
       const proofResult = await nunnunApi.wake.uploadProof(
         route.params.requestId,
-        route.params.photoPath,
+        route.params.photoUri,
       );
       const resultParams = {
         photoPath: route.params.photoPath,
@@ -145,7 +137,7 @@ export const PhotoReviewScreen = ({ navigation, route }: Props) => {
           <Image
             accessibilityLabel={`${route.params.recipientName}님에게 보낼 인증사진`}
             resizeMode="cover"
-            source={{ uri: `file://${route.params.photoPath}` }}
+            source={{ uri: route.params.photoUri }}
             style={[
               styles.photo,
               {

@@ -16,6 +16,7 @@ import { Colors } from '../constants/Colors';
 import WakeTimerTrack from '../assets/images/wake-timer-track.svg';
 import WakeTimerProgress from '../assets/images/wake-timer-progress.svg';
 import { ApiError, nunnunApi, type SelfVerifyCreated } from '../api';
+import { poseImageForCode } from '../utils/poseImage';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
@@ -34,6 +35,8 @@ const selfVerifyErrorMessage = (error: unknown) => {
       return '데모 사용자를 다시 선택해주세요.';
     case 'WAKE_GROUP_NOT_FOUND':
       return '가입한 깨우기 그룹을 찾을 수 없어요.';
+    case 'WAKE_GROUP_ACCESS_DENIED':
+      return '이 깨우기 그룹에서 셀프 인증할 수 없어요.';
     case 'ACTIVE_POSE_NOT_FOUND':
       return '오늘의 인증 포즈가 준비되지 않았어요.';
     case 'USER_NOT_FOUND':
@@ -59,7 +62,7 @@ export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
 
     let active = true;
     nunnunApi.wake
-      .startSelfVerify()
+      .startSelfVerify(route.params.groupId as number)
       .then(result => {
         if (active) {
           setSelfVerify(result);
@@ -79,7 +82,7 @@ export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
     return () => {
       active = false;
     };
-  }, [isBackendFlow]);
+  }, [isBackendFlow, route.params.groupId]);
 
   if (loading || errorMessage) {
     return (
@@ -171,7 +174,7 @@ export const SelfWakeVerificationScreen = ({ navigation, route }: Props) => {
             isBackendFlow ? '데모 인증 포즈 이미지' : '오늘의 셀프 인증 포즈'
           }
           resizeMode="cover"
-          source={require('../assets/images/wake-pose-reference.png')}
+          source={poseImageForCode(selfVerify?.pose.code)}
           style={[
             styles.poseImage,
             {

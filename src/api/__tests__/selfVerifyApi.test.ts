@@ -27,6 +27,7 @@ describe('self verify API', () => {
       self_verify: true,
       pose: {
         date: '2026-08-19',
+        code: 'HAND_CROSS',
         description: '두 팔을 앞에서 X자로 교차해주세요.',
       },
     };
@@ -34,9 +35,9 @@ describe('self verify API', () => {
       response({ success: true, data: created }, 201),
     ) as jest.Mock;
 
-    await expect(nunnunApi.wake.startSelfVerify()).resolves.toEqual(created);
+    await expect(nunnunApi.wake.startSelfVerify(7)).resolves.toEqual(created);
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringMatching(/\/me\/self-verify$/),
+      expect.stringMatching(/\/wake-groups\/7\/self-verify$/),
       expect.objectContaining({
         method: 'POST',
         body: undefined,
@@ -45,6 +46,7 @@ describe('self verify API', () => {
         }),
       }),
     );
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -59,7 +61,7 @@ describe('self verify API', () => {
       ),
     ) as jest.Mock;
 
-    await expect(nunnunApi.wake.startSelfVerify()).rejects.toMatchObject({
+    await expect(nunnunApi.wake.startSelfVerify(7)).rejects.toMatchObject({
       status,
       code,
       message: 'self verify error',

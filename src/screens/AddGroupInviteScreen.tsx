@@ -26,6 +26,7 @@ import {
   WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
 } from '../constants/DemoUser';
 import { createInviteCode } from '../utils/inviteCode';
+import { groupCompletionResetState } from '../navigation/groupCompletionNavigation';
 
 const DESIGN_WIDTH = 390;
 const MAX_CONTENT_WIDTH = 430;
@@ -77,7 +78,7 @@ export const AddGroupInviteScreen = ({ navigation, route }: Props) => {
     const groupName = route.params?.groupName?.trim() || '아침 야호';
 
     if (route.params?.groupId !== undefined) {
-      navigation.replace('WakeGroupDetail', { groupId: route.params.groupId });
+      navigation.reset(groupCompletionResetState(route.params.groupId));
       return;
     }
 

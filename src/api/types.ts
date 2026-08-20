@@ -132,7 +132,7 @@ export type WakeGroupPreview = {
   reason:
     | 'INVALID_CODE'
     | 'GROUP_FULL'
-    | 'ALREADY_IN_WAKE_GROUP'
+    | 'WAKE_GROUP_LIMIT_REACHED'
     | 'ALREADY_MEMBER'
     | null;
   group_name: string | null;
@@ -147,6 +147,7 @@ export type WakeGroupJoinResult = {
 
 export type Pose = {
   date: string;
+  code: string;
   description: string;
 };
 

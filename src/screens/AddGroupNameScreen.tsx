@@ -45,6 +45,8 @@ export const AddGroupNameScreen = ({ navigation, route }: Props) => {
         return '그룹 이름을 확인해주세요.';
       case 'ACTIVE_WAKE_GROUP_EXISTS':
         return '이미 참여 중인 깨우기 그룹이 있어요.';
+      case 'WAKE_GROUP_LIMIT_REACHED':
+        return '깨우기 그룹은 최대 4개까지 참여할 수 있어요.';
       case 'INVITE_CODE_GENERATION_FAILED':
         return '초대 코드를 만들지 못했어요. 다시 시도해주세요.';
       default:
