@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Modal,
   StyleSheet,
   Text,
@@ -8,46 +9,63 @@ import {
   View,
 } from 'react-native';
 import { colors } from '../../../theme/tokens';
-
-export type ManualScheduleTarget = 'FIXED' | 'DND';
+import type { CreateFixedScheduleRequest, DayOfWeek } from '../../../api/types';
 
 export interface ManualScheduleSheetProps {
   visible: boolean;
-  target: ManualScheduleTarget;
+  submitting?: boolean;
   onClose: () => void;
-  onConfirm: (value: string) => void;
+  onConfirm: (input: CreateFixedScheduleRequest) => Promise<boolean>;
 }
 
-const COPY: Record<
-  ManualScheduleTarget,
-  { subtitle: string; placeholder: string }
-> = {
-  FIXED: {
-    subtitle: '요일과 시간, 이름을 순서대로 입력하세요',
-    placeholder: '예) 월요일, 오전 8시, 스터디',
-  },
-  DND: {
-    subtitle: '요일과 시간을 순서대로 입력하세요',
-    placeholder: '예) 월요일, 08:00~11:00',
-  },
-};
+const TIME_PATTERN = /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/;
+const DAYS: Array<{ value: DayOfWeek; label: string }> = [
+  { value: 'MONDAY', label: '월' },
+  { value: 'TUESDAY', label: '화' },
+  { value: 'WEDNESDAY', label: '수' },
+  { value: 'THURSDAY', label: '목' },
+  { value: 'FRIDAY', label: '금' },
+  { value: 'SATURDAY', label: '토' },
+  { value: 'SUNDAY', label: '일' },
+];
 
 const ManualScheduleSheet = ({
   visible,
-  target,
+  submitting = false,
   onClose,
   onConfirm,
 }: ManualScheduleSheetProps) => {
-  const [value, setValue] = useState('');
-  const copy = COPY[target];
+  const [title, setTitle] = useState('');
+  const [dayOfWeek, setDayOfWeek] = useState<DayOfWeek>('MONDAY');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
 
-  const handleConfirm = () => {
-    const trimmed = value.trim();
-    if (!trimmed) {
+  const handleConfirm = async () => {
+    const input = {
+      title: title.trim(),
+      dayOfWeek,
+      startTime: startTime.trim(),
+      endTime: endTime.trim(),
+    };
+    if (
+      !input.title ||
+      input.title.length > 100 ||
+      !TIME_PATTERN.test(input.startTime) ||
+      !TIME_PATTERN.test(input.endTime)
+    ) {
+      Alert.alert('입력 확인', '제목과 시간을 HH:mm 형식으로 입력해주세요.');
       return;
     }
-    onConfirm(trimmed);
-    setValue('');
+    if (input.startTime >= input.endTime) {
+      Alert.alert('입력 확인', '시작 시간은 종료 시간보다 빨라야 해요.');
+      return;
+    }
+    if (await onConfirm(input)) {
+      setTitle('');
+      setDayOfWeek('MONDAY');
+      setStartTime('');
+      setEndTime('');
+    }
   };
 
   return (
@@ -62,19 +80,61 @@ const ManualScheduleSheet = ({
         <View style={styles.sheet}>
           <View style={styles.grabber} />
           <Text style={styles.title}>일정 정보를 입력해주세요</Text>
-          <Text style={styles.subtitle}>{copy.subtitle}</Text>
+          <Text style={styles.subtitle}>제목과 요일, 시작 및 종료 시간을 입력하세요</Text>
           <TextInput
             style={styles.input}
-            value={value}
-            onChangeText={setValue}
-            placeholder={copy.placeholder}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="일정 제목"
             placeholderTextColor={colors.grayBorder}
+            maxLength={100}
           />
+          <View style={styles.dayOptions}>
+            {DAYS.map(day => (
+              <TouchableOpacity
+                key={day.value}
+                style={[
+                  styles.dayOption,
+                  dayOfWeek === day.value && styles.dayOptionSelected,
+                ]}
+                onPress={() => setDayOfWeek(day.value)}
+              >
+                <Text
+                  style={[
+                    styles.dayOptionLabel,
+                    dayOfWeek === day.value && styles.dayOptionLabelSelected,
+                  ]}
+                >
+                  {day.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.timeRow}>
+            <TextInput
+              style={[styles.input, styles.timeInput]}
+              value={startTime}
+              onChangeText={setStartTime}
+              placeholder="시작 09:00"
+              placeholderTextColor={colors.grayBorder}
+              maxLength={5}
+            />
+            <Text style={styles.timeSeparator}>~</Text>
+            <TextInput
+              style={[styles.input, styles.timeInput]}
+              value={endTime}
+              onChangeText={setEndTime}
+              placeholder="종료 10:00"
+              placeholderTextColor={colors.grayBorder}
+              maxLength={5}
+            />
+          </View>
           <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirm}
+            style={[styles.confirmButton, submitting && styles.confirmButtonDisabled]}
+            onPress={() => handleConfirm().catch(() => undefined)}
+            disabled={submitting}
           >
-            <Text style={styles.confirmLabel}>확인</Text>
+            <Text style={styles.confirmLabel}>{submitting ? '저장 중...' : '확인'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -128,6 +188,45 @@ const styles = StyleSheet.create({
     fontFamily: 'PretendardMedium',
     color: colors.black,
   },
+  dayOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  dayOption: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: colors.folderGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayOptionSelected: {
+    backgroundColor: colors.red,
+  },
+  dayOptionLabel: {
+    fontSize: 14,
+    fontFamily: 'PretendardMedium',
+    color: colors.black,
+  },
+  dayOptionLabelSelected: {
+    color: colors.white,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 10,
+  },
+  timeInput: {
+    flex: 1,
+    marginTop: 0,
+  },
+  timeSeparator: {
+    fontSize: 16,
+    fontFamily: 'PretendardMedium',
+    color: colors.black,
+  },
   confirmButton: {
     marginTop: 28,
     height: 65,
@@ -140,6 +239,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'PretendardSemiBold',
     color: colors.white,
+  },
+  confirmButtonDisabled: {
+    opacity: 0.6,
   },
 });
 

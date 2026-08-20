@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -11,7 +11,7 @@ import Icon from '../../../components/Icon';
 import { checkSvg } from '../../../assets/icons/mypageIcons';
 import { colors } from '../../../theme/tokens';
 
-export type ScheduleInputMethod = 'MANUAL' | 'ALBUM' | 'CALENDAR';
+export type ScheduleInputMethod = 'MANUAL' | 'ALBUM';
 
 export interface AddScheduleMethodModalProps {
   visible: boolean;
@@ -22,7 +22,6 @@ export interface AddScheduleMethodModalProps {
 const METHOD_OPTIONS: { key: ScheduleInputMethod; label: string }[] = [
   { key: 'MANUAL', label: '수동으로 추가할게요' },
   { key: 'ALBUM', label: '앨범에서 업로드할게요' },
-  { key: 'CALENDAR', label: '캘린더를 연동할게요' },
 ];
 
 const AddScheduleMethodModal = ({
@@ -32,11 +31,16 @@ const AddScheduleMethodModal = ({
 }: AddScheduleMethodModalProps) => {
   const [selected, setSelected] = useState<ScheduleInputMethod>('MANUAL');
 
+  useEffect(() => {
+    if (visible) setSelected('MANUAL');
+  }, [visible]);
+
   const handleConfirm = () => {
     if (selected === 'MANUAL') {
       onConfirmManual();
       return;
     }
+    onClose();
     Alert.alert(
       '준비 중이에요',
       '이 입력 방식은 다음 업데이트에서 지원할 예정이에요.',

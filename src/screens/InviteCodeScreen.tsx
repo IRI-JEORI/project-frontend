@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  Alert,
   Image,
   StatusBar,
   StyleSheet,
@@ -11,59 +12,58 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from '../../App';
+import { ApiError, nunnunApi } from '../api';
 import { Colors } from '../constants/Colors';
-import {
-  MINJU_WAKE_GROUP_STORAGE_KEY,
-  JIWOO_WAKE_GROUP_STORAGE_KEY,
-  WAKE_GROUP_INVITE_CODE_STORAGE_KEY,
-  WAKE_GROUP_MINJU_JOINED_STORAGE_KEY,
-} from '../constants/DemoUser';
 
 const DESIGN_WIDTH = 402;
 const MAX_CONTENT_WIDTH = 430;
 const INVITE_CODE_LENGTH = 6;
-const DEFAULT_GROUP_NAME = '아침 야호';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'InviteCode'>;
 
 export const InviteCodeScreen = ({ navigation }: Props) => {
   const [inviteCode, setInviteCode] = useState('');
-  const [savedInviteCode, setSavedInviteCode] = useState('');
-  const [groupName, setGroupName] = useState(DEFAULT_GROUP_NAME);
+  const [submitting, setSubmitting] = useState(false);
+  const inFlight = useRef(false);
   const inputRef = useRef<TextInput>(null);
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
-  const isComplete = Boolean(savedInviteCode && inviteCode === savedInviteCode);
-
-  useEffect(() => {
-    Promise.all([
-      AsyncStorage.getItem(WAKE_GROUP_INVITE_CODE_STORAGE_KEY),
-      AsyncStorage.getItem(JIWOO_WAKE_GROUP_STORAGE_KEY),
-    ])
-      .then(([savedCode, savedGroupName]) => {
-        setSavedInviteCode(savedCode ?? '');
-        setGroupName(savedGroupName?.trim() || DEFAULT_GROUP_NAME);
-      })
-      .catch(() => undefined);
-  }, []);
+  const isComplete = inviteCode.length === INVITE_CODE_LENGTH;
 
   const updateInviteCode = (value: string) => {
     setInviteCode(value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase());
   };
 
   const enterGroup = async () => {
-    await Promise.all([
-      AsyncStorage.setItem(MINJU_WAKE_GROUP_STORAGE_KEY, groupName),
-      AsyncStorage.setItem(WAKE_GROUP_MINJU_JOINED_STORAGE_KEY, 'true'),
-    ]);
-    navigation.replace('WaitingForMembers', {
-      groupType: 'wake',
-      groupName,
-      viewer: 'minju',
-    });
+    if (!isComplete || inFlight.current) return;
+    inFlight.current = true;
+    setSubmitting(true);
+    try {
+      const preview = await nunnunApi.group.preview(inviteCode);
+      if (!preview.valid) {
+        Alert.alert(
+          '그룹 확인',
+          preview.reason === 'GROUP_FULL'
+            ? '이미 정원이 가득 찬 그룹이에요.'
+            : '참여할 수 없는 초대코드예요.',
+        );
+        return;
+      }
+      const joined = await nunnunApi.group.join(inviteCode);
+      navigation.replace('WakeGroupDetail', { groupId: joined.id });
+    } catch (error) {
+      Alert.alert(
+        '그룹 참여 실패',
+        error instanceof ApiError
+          ? error.message
+          : '그룹에 참여하지 못했어요.',
+      );
+    } finally {
+      inFlight.current = false;
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -152,13 +152,13 @@ export const InviteCodeScreen = ({ navigation }: Props) => {
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel="그룹 들어가기"
-          accessibilityState={{ disabled: !isComplete }}
+          accessibilityState={{ disabled: !isComplete || submitting }}
           activeOpacity={0.8}
-          disabled={!isComplete}
+          disabled={!isComplete || submitting}
           onPress={() => enterGroup().catch(() => undefined)}
           style={[
             styles.enterButton,
-            isComplete && styles.enterButtonActive,
+              isComplete && !submitting && styles.enterButtonActive,
             {
               bottom: 22 * scale,
               width: 346 * scale,
@@ -170,10 +170,10 @@ export const InviteCodeScreen = ({ navigation }: Props) => {
           <Text
             style={[
               styles.enterButtonText,
-              isComplete && styles.enterButtonTextActive,
+              isComplete && !submitting && styles.enterButtonTextActive,
             ]}
           >
-            그룹 들어가기
+            {submitting ? '확인 중...' : '그룹 들어가기'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -185,12 +185,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#F6F6F6',
+    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
     position: 'relative',
-    backgroundColor: '#F6F6F6',
+    backgroundColor: Colors.background,
   },
   backButton: {
     position: 'absolute',

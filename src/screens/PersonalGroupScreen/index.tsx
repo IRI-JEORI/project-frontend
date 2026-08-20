@@ -5,15 +5,18 @@ import { CommonActions, useFocusEffect, useNavigation } from '@react-navigation/
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/tokens';
 import { ApiError, nunnunApi } from '../../api';
-import type { CurrentUser, DndWindow, FixedSchedule, MyStatsResponse } from '../../api/types';
+import type { CreateFixedScheduleRequest, CurrentUser, DndWindow, FixedSchedule, MyStatsResponse } from '../../api/types';
 import ProfileHeader from './components/ProfileHeader';
 import AccordionSection from './components/AccordionSection';
 import ScheduleRow from './components/ScheduleRow';
 import AddRowButton from './components/AddRowButton';
 import SettingsRow from './components/SettingsRow';
 import LogoutConfirmModal from './components/LogoutConfirmModal';
+import AddScheduleMethodModal from './components/AddScheduleMethodModal';
+import ManualScheduleSheet from './components/ManualScheduleSheet';
 
 type SectionKey = 'FIXED' | 'DND' | 'SETTINGS' | 'REWARD';
+type ScheduleModal = 'METHOD' | 'MANUAL' | null;
 
 const PersonalGroupScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'PersonalGroup'>>();
@@ -23,6 +26,8 @@ const PersonalGroupScreen = () => {
   const [fixedSchedules, setFixedSchedules] = useState<FixedSchedule[]>([]);
   const [dndWindows, setDndWindows] = useState<DndWindow[]>([]);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [scheduleModal, setScheduleModal] = useState<ScheduleModal>(null);
+  const [scheduleSaving, setScheduleSaving] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,6 +70,25 @@ const PersonalGroupScreen = () => {
     }
   };
 
+  const createFixedSchedule = async (input: CreateFixedScheduleRequest) => {
+    if (scheduleSaving) return false;
+    setScheduleSaving(true);
+    try {
+      await nunnunApi.schedule.create(input);
+      setScheduleModal(null);
+      setFixedSchedules(await nunnunApi.schedule.list());
+      return true;
+    } catch (error) {
+      Alert.alert(
+        '저장 실패',
+        error instanceof ApiError ? error.message : '고정 일정을 저장하지 못했어요.',
+      );
+      return false;
+    } finally {
+      setScheduleSaving(false);
+    }
+  };
+
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -76,7 +100,7 @@ const PersonalGroupScreen = () => {
         <View style={styles.sections}>
           <AccordionSection title="내 고정 시간표" expanded={expandedSections.has('FIXED')} onToggle={() => toggleSection('FIXED')}>
             {fixedSchedules.map(item => <ScheduleRow key={item.id} label={`${item.dayOfWeek} ${item.startTime}~${item.endTime} ${item.title}`} />)}
-            <AddRowButton label="시간표 관리하기" onPress={() => navigation.navigate('FixedSchedules')} />
+            <AddRowButton label="시간표 추가하기" onPress={() => setScheduleModal('METHOD')} />
           </AccordionSection>
           <AccordionSection title="방해금지 시간대" rightLabel={`${dndWindows.length}개 적용 중이에요`} expanded={expandedSections.has('DND')} onToggle={() => toggleSection('DND')}>
             {dndWindows.map(item => <ScheduleRow key={item.id} label={item.display_text} />)}
@@ -94,6 +118,17 @@ const PersonalGroupScreen = () => {
         <AddRowButton label="목표 기상 시간 설정하기" onPress={() => navigation.navigate('WakeTargets')} />
       </ScrollView>
       <LogoutConfirmModal visible={logoutModalVisible} onCancel={() => setLogoutModalVisible(false)} onConfirm={() => handleLogout().catch(() => undefined)} />
+      <AddScheduleMethodModal
+        visible={scheduleModal === 'METHOD'}
+        onClose={() => setScheduleModal(null)}
+        onConfirmManual={() => setScheduleModal('MANUAL')}
+      />
+      <ManualScheduleSheet
+        visible={scheduleModal === 'MANUAL'}
+        submitting={scheduleSaving}
+        onClose={() => setScheduleModal(null)}
+        onConfirm={createFixedSchedule}
+      />
     </>
   );
 };

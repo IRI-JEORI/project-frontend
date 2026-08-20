@@ -16,7 +16,7 @@ import {
   useCameraPermission,
   usePhotoOutput,
 } from 'react-native-vision-camera';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../App';
 
 const DESIGN_WIDTH = 402;
@@ -25,6 +25,7 @@ const MAX_CONTENT_WIDTH = 430;
 type Props = NativeStackScreenProps<RootStackParamList, 'CameraCapture'>;
 
 export const CameraCaptureScreen = ({ navigation, route }: Props) => {
+  const insets = useSafeAreaInsets();
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState(false);
   const { hasPermission, requestPermission } = useCameraPermission();
@@ -34,6 +35,9 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
   const { width: viewportWidth } = useWindowDimensions();
   const contentWidth = Math.min(viewportWidth, MAX_CONTENT_WIDTH);
   const scale = Math.min(contentWidth / DESIGN_WIDTH, 1);
+  const recipientName =
+    route.params.memberName ?? route.params.recipientName ?? '사용자';
+  const photographer = route.params.photographer ?? 'jiwoo';
 
   useEffect(() => {
     if (!hasPermission) {
@@ -52,10 +56,14 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
         { flashMode: flashEnabled && device?.hasFlash ? 'on' : 'off' },
         {},
       );
+      const photoPath = photo.filePath.replace(/^file:\/\//, '');
       navigation.navigate('PhotoReview', {
-        photoPath: photo.filePath,
-        recipientName: route.params.recipientName,
-        photographer: route.params.photographer,
+        photoPath,
+        photoUri: `file://${photoPath}`,
+        memberName: recipientName,
+        recipientName,
+        photographer,
+        onComplete: route.params.onComplete,
         attempt: route.params.attempt ?? 1,
         requestId: route.params.requestId,
         groupId: route.params.groupId,
@@ -67,7 +75,7 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar backgroundColor="#000000" barStyle="light-content" />
       <View style={[styles.container, { width: contentWidth }]}>
         <TouchableOpacity
@@ -76,7 +84,10 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
           activeOpacity={0.7}
           hitSlop={12}
           onPress={() => navigation.goBack()}
-          style={[styles.closeButton, { left: 24 * scale, top: 22 * scale }]}
+          style={[
+            styles.closeButton,
+            { left: 24 * scale, top: insets.top + 22 * scale },
+          ]}
         >
           <Text style={styles.closeIcon}>×</Text>
         </TouchableOpacity>
@@ -87,7 +98,10 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
           activeOpacity={0.7}
           hitSlop={12}
           onPress={() => setFlashEnabled(enabled => !enabled)}
-          style={[styles.flashButton, { right: 25 * scale, top: 24 * scale }]}
+          style={[
+            styles.flashButton,
+            { right: 25 * scale, top: insets.top + 24 * scale },
+          ]}
         >
           <Text style={[styles.flashIcon, flashEnabled && styles.flashActive]}>
             ϟ
@@ -128,7 +142,7 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
         </View>
 
         <Text style={[styles.helperText, { top: 660 * scale }]}>
-          {route.params.recipientName}님에게 보여줄 인증사진이에요
+          {recipientName}님에게 보여줄 인증사진이에요
         </Text>
 
         <TouchableOpacity
@@ -159,7 +173,7 @@ export const CameraCaptureScreen = ({ navigation, route }: Props) => {
           />
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

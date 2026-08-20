@@ -7,15 +7,15 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import PermissionScreen from './src/screens/PermissionScreen';
 import PersonalGroupScreen from './src/screens/PersonalGroupScreen';
-import MainHomeScreen from './src/screens/HomeScreen/index';
+import { HomeScreen as MainHomeScreen } from './src/screens/HomeScreen';
 import { AddGroupNameScreen } from './src/screens/AddGroupNameScreen';
 import { AddGroupInviteScreen } from './src/screens/AddGroupInviteScreen';
 import { WaitingForMembersScreen } from './src/screens/WaitingForMembersScreen';
 import type { GroupType } from './src/types/group';
 import type { WakeProofResult } from './src/api';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import MainInviteCodeScreen from './src/screens/InviteCodeScreen/index';
-import MainCameraCaptureScreen from './src/screens/CameraCaptureScreen/index';
+import { InviteCodeScreen as MainInviteCodeScreen } from './src/screens/InviteCodeScreen';
+import { CameraCaptureScreen as MainCameraCaptureScreen } from './src/screens/CameraCaptureScreen';
 import MainPhotoReviewScreen from './src/screens/PhotoReviewScreen/index';
 import { WakeNotificationScreen } from './src/screens/WakeNotificationScreen';
 import { PhotoAnalysisScreen } from './src/screens/PhotoAnalysisScreen';
@@ -49,8 +49,10 @@ export type RootStackParamList = {
   Stats: undefined;
   InviteCode: undefined;
   CameraCapture: {
-    recipientName: string;
-    photographer: 'jiwoo' | 'minju';
+    memberName?: string;
+    recipientName?: string;
+    photographer?: 'jiwoo' | 'minju';
+    onComplete?: (photoUri: string) => void;
     attempt?: number;
     requestId?: number;
     groupId?: number;
@@ -58,8 +60,11 @@ export type RootStackParamList = {
   };
   PhotoReview: {
     photoPath: string;
+    photoUri: string;
+    memberName: string;
     recipientName: string;
     photographer: 'jiwoo' | 'minju';
+    onComplete?: (photoUri: string) => void;
     attempt?: number;
     requestId?: number;
     groupId?: number;
